@@ -8,7 +8,7 @@ uses
   //Windows, Messages, SysUtils, Variants, Classes, Dialogs, Forms,
   StrUtils,  IniFiles, ComObj, //, Grids, AdvObj, StdCtrls,
   IdHTTP, Data.DB, ZAbstractRODataset, ZAbstractDataset, ZDataset,
-  ZAbstractConnection, ZConnection, Superobject;
+  ZAbstractConnection, ZConnection, Superobject, _Arrays;
 
 
 type
@@ -42,15 +42,23 @@ type
       function abraBoGet(abraBoName : string) : string;
       //function abraBoGetByRowId(abraBoName, rowId : string) : string;
       function abraBoGetById(abraBoName, sId : string) : string;
-      function abraBoCreate(abraBoName : string; jsonSO: ISuperObject) : string;
-      function abraBoCreateOLE(abraBoName : string; jsonSO: ISuperObject) : string;
-      function abraBoCreateWebApi(abraBoName : string; jsonSO: ISuperObject) : string;
-      function abraBoUpdate(abraBoName, abraBoId : string; jsonSO: ISuperObject) : string; overload;
-      function abraBoUpdate(abraBoName, abraBoId, abraBoChildName, abraBoChildId: string; jsonSO: ISuperObject) : string; overload;
-      function abraBoUpdateOLE(abraBoName, abraBoId : string; jsonSO: ISuperObject) : string; overload;
-      function abraBoUpdateOLE(abraBoName, abraBoId, abraBoChildName, abraBoChildId: string; jsonSO: ISuperObject) : string; overload;
-      function abraBoUpdateWebApi(abraBoName, abraBoId : string; jsonSO: ISuperObject) : string; overload;
-      function abraBoUpdateWebApi(abraBoName, abraBoId, abraBoChildName, abraBoChildId: string; jsonSO: ISuperObject) : string; overload;
+      function abraBoCreate_So(jsonSO: ISuperObject; abraBoName : string) : string;
+      function abraBoCreate_SoOLE(jsonSO: ISuperObject; abraBoName : string) : string;
+      function abraBoCreate_SoWebApi(jsonSO: ISuperObject; abraBoName : string) : string;
+      function abraBoUpdate_So(jsonSO: ISuperObject; abraBoName, abraBoId : string; abraBoChildName: string = ''; abraBoChildId: string = '') : string;
+      function abraBoUpdate_SoOLE(jsonSO: ISuperObject; abraBoName, abraBoId : string; abraBoChildName: string = ''; abraBoChildId: string = '') : string;
+      function abraBoUpdate_SoWebApi(jsonSO: ISuperObject; abraBoName, abraBoId : string; abraBoChildName: string = ''; abraBoChildId: string = '') : string;
+      procedure logJson_So(jsonSO: ISuperObject; header : string);
+
+
+      function abraBoCreate(boAA: TAArray; abraBoName : string) : string;
+      function abraBoCreateOLE(boAA: TAArray; abraBoName : string) : string;
+      function abraBoCreateWebApi(boAA: TAArray; abraBoName : string) : string;
+      function abraBoUpdate(boAA: TAArray; abraBoName, abraBoId : string; abraBoChildName: string = ''; abraBoChildId: string = '') : string;
+      function abraBoUpdateOLE(boAA: TAArray; abraBoName, abraBoId : string; abraBoChildName: string = ''; abraBoChildId: string = '') : string;
+      function abraBoUpdateWebApi(boAA: TAArray; abraBoName, abraBoId : string; abraBoChildName: string = ''; abraBoChildId: string = '') : string;
+
+
 
       function getAbraPeriodId(pYear : string) : string; overload;
       function getAbraPeriodId(pDate : double) : string; overload;
@@ -64,7 +72,7 @@ type
 
     private
       function newAbraIdHttp(timeout : single; isJsonPost : boolean) : TIdHTTP;
-      procedure logJson(jsonSO: ISuperObject; header : string);
+      procedure logJson(boAAjson, header : string);
 
   end;
 
@@ -276,30 +284,30 @@ begin
   end;
 end;
 
-procedure TDesU.logJson(jsonSO: ISuperObject; header : string);
+procedure TDesU.logJson_So(jsonSO: ISuperObject; header : string);
 var
   myDate : TDateTime;
 begin
   myDate := Now;
-  writeToFile(PROGRAM_PATH + '/log/json/' + formatdatetime('yymmdd-hhnnss', Now) +'.txt', header + sLineBreak + jsonSO.AsJSon(true));
+  writeToFile(PROGRAM_PATH + '\log\json\' + formatdatetime('yymmdd-hhnnss', Now) +'.txt', header + sLineBreak + jsonSO.AsJSon(true));
 end;
 
-function TDesU.abraBoCreate(abraBoName : string; jsonSO: ISuperObject) : string;
+function TDesU.abraBoCreate_So(jsonSO: ISuperObject; abraBoName : string) : string;
 begin
   if AnsiLowerCase(abraDefaultCommMethod) = 'webapi' then
-    Result := self.abraBoCreateWebApi(abraBoName, jsonSO)
+    Result := self.abraBoCreate_SoWebApi(jsonSO, abraBoName)
   else
-    Result := self.abraBoCreateOLE(abraBoName, jsonSO);
+    Result := self.abraBoCreate_SoOLE(jsonSO, abraBoName);
 end;
 
-function TDesU.abraBoCreateWebApi(abraBoName : string; jsonSO: ISuperObject) : string;
+function TDesU.abraBoCreate_SoWebApi(jsonSO: ISuperObject; abraBoName : string) : string;
 var
   idHTTP: TIdHTTP;
   sstreamJson: TStringStream;
   newAbraBo : string;
 begin
 
-  self.logJson(jsonSO, 'abraBoCreateWebApi - ' + abraWebApiUrl + abraBoName);
+  self.logJson_So(jsonSO, 'abraBoCreate_SoWebApi - ' + abraWebApiUrl + abraBoName);
 
   //sstreamJson := TStringStream.Create(Utf8Encode(pJson)); // D2007 and earlier only
   sstreamJson := TStringStream.Create(jsonSO.AsJSon(), TEncoding.UTF8);
@@ -321,7 +329,7 @@ begin
   end;
 end;
 
-function TDesU.abraBoCreateOLE(abraBoName : string; jsonSO: ISuperObject) : string;
+function TDesU.abraBoCreate_SoOLE(jsonSO: ISuperObject; abraBoName : string) : string;
 var
   i, j : integer;
   BO_Object,
@@ -391,7 +399,7 @@ begin
 
   //exit;
   }
-  self.logJson(jsonSO, 'abraBoCreateOLE - abraBoName=' + abraBoName);
+  self.logJson_So(jsonSO, 'abraBoCreate_SoOLE - abraBoName=' + abraBoName);
 
   AbraOLE := getAbraOLE();
   BO_Object:= AbraOLE.CreateObject('@'+abraBoName);
@@ -441,33 +449,17 @@ begin
 end;
 
 
-function TDesU.abraBoUpdate(abraBoName, abraBoId : string; jsonSO: ISuperObject) : string;
-begin
-  Result := self.abraBoUpdate(abraBoName, abraBoId, '', '', jsonSO);
-end;
-
-function TDesU.abraBoUpdateOLE(abraBoName, abraBoId : string; jsonSO: ISuperObject) : string;
-begin
-  Result := self.abraBoUpdateOLE(abraBoName, abraBoId, '', '', jsonSO);
-end;
-
-function TDesU.abraBoUpdateWebApi(abraBoName, abraBoId : string; jsonSO: ISuperObject) : string;
-begin
-  Result := self.abraBoUpdateWebApi(abraBoName, abraBoId, '', '', jsonSO);
-end;
-
-
-function TDesU.abraBoUpdate(abraBoName, abraBoId, abraBoChildName, abraBoChildId: string; jsonSO: ISuperObject) : string;
+function TDesU.abraBoUpdate_So(jsonSO: ISuperObject; abraBoName, abraBoId, abraBoChildName, abraBoChildId: string) : string;
 begin
   if AnsiLowerCase(self.abraDefaultCommMethod) = 'webapi' then
-    Result := self.abraBoUpdateWebApi(abraBoName, abraBoId, abraBoChildName, abraBoChildId, jsonSO)
+    Result := self.abraBoUpdate_SoWebApi(jsonSO, abraBoName, abraBoId, abraBoChildName, abraBoChildId)
   else
-    Result := self.abraBoUpdateOLE(abraBoName, abraBoId, abraBoChildName, abraBoChildId, jsonSO);
+    Result := self.abraBoUpdate_SoOLE(jsonSO, abraBoName, abraBoId, abraBoChildName, abraBoChildId);
 end;
 
 
 
-function TDesU.abraBoUpdateWebApi(abraBoName, abraBoId, abraBoChildName, abraBoChildId : string; jsonSO: ISuperObject) : string;
+function TDesU.abraBoUpdate_SoWebApi(jsonSO: ISuperObject; abraBoName, abraBoId, abraBoChildName, abraBoChildId : string) : string;
 var
   idHTTP: TIdHTTP;
   sstreamJson: TStringStream;
@@ -480,7 +472,7 @@ begin
   if abraBoChildName <> '' then
     endpoint := endpoint + '/' + abraBoChildName + 's/' + abraBoChildId;
 
-  self.logJson(jsonSO, 'abraBoUpdateWebApi - ' + endpoint);
+  self.logJson_So(jsonSO, 'abraBoUpdate_SoWebApi - ' + endpoint);
 
 
   //sstreamJson := TStringStream.Create(Utf8Encode(pJson)); // D2007 and earlier only
@@ -500,7 +492,7 @@ begin
 end;
 
 
-function TDesU.abraBoUpdateOLE(abraBoName, abraBoId, abraBoChildName, abraBoChildId : string; jsonSO: ISuperObject) : string;
+function TDesU.abraBoUpdate_SoOLE(jsonSO: ISuperObject; abraBoName, abraBoId, abraBoChildName, abraBoChildId : string) : string;
 var
   i, j : integer;
   BO_Object,
@@ -520,7 +512,7 @@ begin
   if abraBoChildName <> '' then
     abraBoId := abraBoChildId;  //budeme pracovat s ID childa
 
-  self.logJson(jsonSO, 'abraBoUpdateOLE - abraBoName=' + abraBoName + ' abraBoId=' + abraBoId);
+  self.logJson_So(jsonSO, 'abraBoUpdate_SoOLE - abraBoName=' + abraBoName + ' abraBoId=' + abraBoId);
 
 
   AbraOLE := getAbraOLE();
@@ -542,8 +534,181 @@ begin
 end;
 
 
+{** **}
 
 
+procedure TDesU.logJson(boAAjson, header : string);
+var
+  myDate : TDateTime;
+begin
+  myDate := Now;
+  writeToFile(PROGRAM_PATH + '\log\json\' + formatdatetime('yymmdd-hhnnss', Now) +'.txt', header + sLineBreak + boAAjson);
+end;
+
+function TDesU.abraBoCreate(boAA: TAArray; abraBoName : string) : string;
+begin
+  if AnsiLowerCase(abraDefaultCommMethod) = 'webapi' then
+    Result := self.abraBoCreateWebApi(boAA, abraBoName)
+  else
+    Result := self.abraBoCreateOLE(boAA, abraBoName);
+end;
+
+function TDesU.abraBoCreateWebApi(boAA: TAArray; abraBoName : string) : string;
+var
+  idHTTP: TIdHTTP;
+  sstreamJson: TStringStream;
+  newAbraBo : string;
+begin
+
+  self.logJson(boAA.AsJSon(), 'abraBoCreateWebApi_AA - ' + abraWebApiUrl + abraBoName);
+
+  sstreamJson := TStringStream.Create(boAA.AsJSon(), TEncoding.UTF8);
+  idHTTP := newAbraIdHttp(900, true);
+  try
+    try begin
+      newAbraBo := idHTTP.Post(abraWebApiUrl + abraBoName + 's', sstreamJson);
+      Result := SO(newAbraBo).S['id'];
+    end;
+    except
+      on E: Exception do begin
+        ShowMessage('Error on request: '#13#10 + e.Message);
+        ShowMessage(Result);
+      end;
+    end;
+  finally
+    sstreamJson.Free;
+    idHTTP.Free;
+  end;
+end;
+
+function TDesU.abraBoCreateOLE(boAA: TAArray; abraBoName : string) : string;
+var
+  i, j : integer;
+  BO_Object,
+  BO_Data,
+  BORow_Object,
+  BORow_Data,
+  BO_Data_Coll,
+  NewID : variant;
+
+  iBoRowAA : TAArray;
+
+begin
+
+  self.logJson(boAA.AsJSon(), 'abraBoCreateOLE_AA - abraBoName=' + abraBoName);
+  AbraOLE := getAbraOLE();
+  BO_Object:= AbraOLE.CreateObject('@'+abraBoName);
+  BO_Data:= AbraOLE.CreateValues('@'+abraBoName);
+  BO_Object.PrefillValues(BO_Data);
+
+  for i := 0 to boAA.Count - 1 do
+    BO_Data.ValueByName(boAA.Keys[i]) := boAA.Values[i];
+
+  if boAA.RowList.Count > 0 then
+  begin
+    BORow_Object := AbraOLE.CreateObject('@'+abraBoName+'Row');
+    BO_Data_Coll := BO_Data.Value[IndexByName(BO_Data, 'Rows')];
+
+    for i := 0 to boAA.RowList.Count - 1 do
+    begin
+      BORow_Data := AbraOLE.CreateValues('@'+abraBoName+'Row');
+      BORow_Object.PrefillValues(BORow_Data);
+
+      iBoRowAA := TAArray(boAA.RowList[i]);
+      for j := 0 to iBoRowAA.Count - 1 do
+        BORow_Data.ValueByName(iBoRowAA.Keys[j]) := iBoRowAA.Values[j];
+
+      BO_Data_Coll.Add(BORow_Data);
+    end;
+  end;
+
+  try begin
+    NewID := BO_Object.CreateNewFromValues(BO_Data); //NewID je ID Abry
+    Result := Result + 'ppp Èíslo nového BO je ' + NewID;
+  end;
+  except on E: exception do
+    begin
+      Application.MessageBox(PChar('Problem ' + ^M + E.Message), 'AbraOLE');
+      Result := Result + 'Chyba pøi zakládání BO';
+    end;
+  end;
+
+end;
+
+
+function TDesU.abraBoUpdate(boAA: TAArray; abraBoName, abraBoId, abraBoChildName, abraBoChildId: string) : string;
+begin
+  if AnsiLowerCase(self.abraDefaultCommMethod) = 'webapi' then
+    Result := self.abraBoUpdateWebApi(boAA, abraBoName, abraBoId, abraBoChildName, abraBoChildId)
+  else
+    Result := self.abraBoUpdateOLE(boAA, abraBoName, abraBoId, abraBoChildName, abraBoChildId);
+end;
+
+
+
+function TDesU.abraBoUpdateWebApi(boAA: TAArray; abraBoName, abraBoId, abraBoChildName, abraBoChildId : string) : string;
+var
+  idHTTP: TIdHTTP;
+  sstreamJson: TStringStream;
+  endpoint : string;
+begin
+
+
+  // http://localhost/DES/issuedinvoices/8L6U000101/rows/5A3K100101
+  endpoint := abraWebApiUrl + abraBoName + 's/' + abraBoId;
+  if abraBoChildName <> '' then
+    endpoint := endpoint + '/' + abraBoChildName + 's/' + abraBoChildId;
+
+  self.logJson(boAA.AsJSon(), 'abraBoUpdateWebApi_AA - ' + endpoint);
+
+
+  //sstreamJson := TStringStream.Create(Utf8Encode(pJson)); // D2007 and earlier only
+  sstreamJson := TStringStream.Create(boAA.AsJSon(), TEncoding.UTF8);
+  idHTTP := newAbraIdHttp(900, true);
+  try
+    try
+      Result := idHTTP.Put(endpoint, sstreamJson);
+    except
+      on E: Exception do
+        ShowMessage('Error on request: '#13#10 + e.Message);
+    end;
+  finally
+    sstreamJson.Free;
+    idHTTP.Free;
+  end;
+end;
+
+
+function TDesU.abraBoUpdateOLE(boAA: TAArray; abraBoName, abraBoId, abraBoChildName, abraBoChildId : string) : string;
+var
+  i: integer;
+  BO_Object,
+  BO_Data,
+  BORow_Object,
+  BORow_Data,
+  BO_Data_Coll : variant;
+
+
+begin
+  abraBoName := abraBoName + abraBoChildName;
+
+  if abraBoChildName <> '' then
+    abraBoId := abraBoChildId;  //budeme pracovat s ID childa
+
+  self.logJson(boAA.AsJSon(), 'abraBoUpdateOLE_AA - abraBoName=' + abraBoName + ' abraBoId=' + abraBoId);
+
+  AbraOLE := getAbraOLE();
+  BO_Object := AbraOLE.CreateObject('@' + abraBoName);
+  BO_Data := AbraOLE.CreateValues('@' + abraBoName);
+
+  BO_Data := BO_Object.GetValues(abraBoId);
+
+  for i := 0 to boAA.Count - 1 do
+    BO_Data.ValueByName(boAA.Keys[i]) := boAA.Values[i];
+
+  BO_Object.UpdateValues(abraBoId, BO_Data);
+
+end;
 
 
 
@@ -587,8 +752,8 @@ begin
   JsonSO.S['PDocumentType'] := PDocumentType;
   JsonSO.S['PDocument_ID'] := PDocument_ID;
 
-  //sResponse := abraBoUpdate('bankstatements/' + Vypis_ID + '/rows/' + RadekVypisu_ID, JsonSO); //bylo pøed refactorem
-  sResponse := abraBoUpdate('bankstatement', Vypis_ID, 'row', RadekVypisu_ID, JsonSO);
+  //sResponse := abraBoUpdate_So('bankstatements/' + Vypis_ID + '/rows/' + RadekVypisu_ID, JsonSO); //bylo pøed refactorem
+  sResponse := abraBoUpdate_So(JsonSO, 'bankstatement', Vypis_ID, 'row', RadekVypisu_ID);
 
 end;
 
@@ -613,11 +778,11 @@ begin
 
   JsonSO := SO;
   JsonSO.S['VarSymbol'] := ''; //odstranit VS aby se Abra chytla pøi pøiøazení
-  sResponse := abraBoUpdate('bankstatement', Vypis_ID, 'rows', RadekVypisu_ID, JsonSO);
+  sResponse := abraBoUpdate_So(JsonSO, 'bankstatement', Vypis_ID, 'rows', RadekVypisu_ID);
 
   JsonSO := SO;
   JsonSO.S['VarSymbol'] := VS;
-  sResponse := abraBoUpdate('bankstatement', Vypis_ID, 'rows', RadekVypisu_ID, JsonSO);
+  sResponse := abraBoUpdate_So(JsonSO, 'bankstatement', Vypis_ID, 'rows', RadekVypisu_ID);
 
 end;
 
@@ -672,10 +837,10 @@ begin
     jsonBo.A['rows'].Add(jsonBoRow);
 
 
-  writeToFile(ExtractFilePath(ParamStr(0)) + '!json.txt', jsonBo.AsJSon(true));
+  //writeToFile(ExtractFilePath(ParamStr(0)) + '!json.txt', jsonBo.AsJSon(true));
 
   try begin
-    newIssuedInvoice := DesU.abraBoCreate('issuedinvoice', jsonBo); //pøi použití OLE
+    newIssuedInvoice := DesU.abraBoCreate_So(jsonBo, 'issuedinvoice');
     Result := newIssuedInvoice;
   end;
   except on E: exception do

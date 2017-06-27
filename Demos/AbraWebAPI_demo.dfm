@@ -85,4 +85,22 @@ object Form1: TForm1
     Height = 200
     TabOrder = 6
   end
+  object btnArrayTest1: TButton
+    Left = 504
+    Top = 8
+    Width = 105
+    Height = 25
+    Caption = 'ArrayTest1'
+    TabOrder = 7
+    OnClick = btnArrayTest1Click
+  end
+  object btnPutAa: TButton
+    Left = 632
+    Top = 176
+    Width = 75
+    Height = 25
+    Caption = 'PUT AA'
+    TabOrder = 8
+    OnClick = btnPutAaClick
+  end
 end

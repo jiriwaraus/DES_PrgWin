@@ -13,7 +13,8 @@ uses
   Superdate in '..\DE$_Common\Superdate.pas',
   Superobject in '..\DE$_Common\Superobject.pas',
   Supertimezone in '..\DE$_Common\Supertimezone.pas',
-  Supertypes in '..\DE$_Common\Supertypes.pas';
+  Supertypes in '..\DE$_Common\Supertypes.pas',
+  _Arrays in '..\DE$_Common\_Arrays.pas';
 
 {$R *.res}
 

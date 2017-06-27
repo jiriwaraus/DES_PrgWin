@@ -8,7 +8,8 @@ uses
   Superdate in '..\DE$_Common\Superdate.pas',
   Supertimezone in '..\DE$_Common\Supertimezone.pas',
   Supertypes in '..\DE$_Common\Supertypes.pas',
-  AbraEntities in '..\DE$_Common\AbraEntities.pas';
+  AbraEntities in '..\DE$_Common\AbraEntities.pas',
+  _Arrays in '..\DE$_Common\_Arrays.pas';
 
 {$R *.res}
 
