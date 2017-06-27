@@ -281,7 +281,7 @@ var
   myDate : TDateTime;
 begin
   myDate := Now;
-  writeToFile(PROGRAM_PATH + '/log_json/' + formatdatetime('yymmdd-hhnnss', Now) +'.txt', header + sLineBreak + jsonSO.AsJSon(true));
+  writeToFile(PROGRAM_PATH + '/log/json/' + formatdatetime('yymmdd-hhnnss', Now) +'.txt', header + sLineBreak + jsonSO.AsJSon(true));
 end;
 
 function TDesU.abraBoCreate(abraBoName : string; jsonSO: ISuperObject) : string;
