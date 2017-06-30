@@ -557,7 +557,6 @@ object fmMain: TfmMain
     Height = 655
     Align = alLeft
     TabOrder = 3
-    ExplicitLeft = -3
     object lbZobrazit: TLabel
       Left = 8
       Top = 72

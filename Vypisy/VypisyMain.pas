@@ -267,7 +267,8 @@ begin
         iPlatbaZVypisu := TPlatbaZVypisu.Create(GpcFileLine);
         kontrolaDvojitaPlatba := Vypis.prictiCastkuPokudDvojitaPlatba(iPlatbaZVypisu);
         if kontrolaDvojitaPlatba > -1 then begin
-          Dialogs.MessageDlg('dvakrat VS '+ iPlatbaZVypisu.VS + ' na cisle uctu ' + iPlatbaZVypisu.cisloUctu, mtInformation, [mbOK], 0);
+          //Dialogs.MessageDlg('dvakrat VS '+ iPlatbaZVypisu.VS + ' na cisle uctu ' + iPlatbaZVypisu.cisloUctu, mtInformation, [mbOK], 0);
+          Memo1.Lines.Add('Dvojnásobná platba:  VS '+ iPlatbaZVypisu.VS + ' na cisle uctu ' + iPlatbaZVypisu.cisloUctuKZobrazeni);
           Parovatko.odparujPlatbu(Vypis.Platby[kontrolaDvojitaPlatba]);
           Parovatko.sparujPlatbu(Vypis.Platby[kontrolaDvojitaPlatba]);
 
