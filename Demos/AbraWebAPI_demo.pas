@@ -19,11 +19,13 @@ type
     Memo3: TMemo;
     btnArrayTest1: TButton;
     btnPutAa: TButton;
+    Button1: TButton;
     procedure btnGetClick(Sender: TObject);
     procedure btnPostClick(Sender: TObject);
     procedure btnPutClick(Sender: TObject);
     procedure btnArrayTest1Click(Sender: TObject);
     procedure btnPutAaClick(Sender: TObject);
+    procedure Button1Click(Sender: TObject);
   private
     { Private declarations }
   public
@@ -180,8 +182,6 @@ var
 begin
 
   boAA := TAArray.Create;
-
-  boAA := TAArray.Create;
   boAA['varsymbol'] := '77989';
   sResponse := DesU.abraBoUpdate(boAA, 'bankstatement', '36E2000101', 'row', '5BRD000101');
 
@@ -202,18 +202,67 @@ var
 begin
 
   //editUrl.Text := 'bankstatements/36E2000101/rows/5BRD000101';
-  {
+
   JsonSO := SO;
   JsonSO.S['varsymbol'] := '1116378';
   Json := JsonSO.AsJSon(true);
   memo1.Lines.Add(Json);
   sResponse := DesU.abraBoUpdate_So(SO(Json), 'bankstatement', '36E2000101', 'row', '5BRD000101');
   memo2.Lines.Add (SO(sResponse).AsJSon(true));
-  }
+
 
 
 
 end;
+
+
+procedure TForm1.Button1Click(Sender: TObject);
+var
+
+
+  boAA, boRowAA: TAArray;
+  TestString, newid: String;
+  i: integer;
+begin
+
+
+
+  boAA := TAArray.Create;
+  boAA['DocQueue_ID'] := 'L000000101';
+  boAA['Period_ID'] := 20117;
+  boAA['VatDate$DATE'] := '2017-06-04';
+  boAA['DocDate$DATE'] := 45665;
+  boAA['Firm_ID'] := 'id firmy "nejlepöÌ" firma';
+  //jsonBo.S['Firm_ID'] :='2SZ1000101';
+  boAA['Description'] := 'Kredit VoIP';
+  boAA['Varsymbol'] := 1200025;
+  boAA['PricesWithVat'] := true;
+
+
+  // 1. ¯·dek
+  boRowAA := boAA.addRow();
+  boRowAA['Rowtype'] := 0;
+  boRowAA['Text'] := ' ';
+
+
+ //2. ¯·dek
+  boRowAA := boAA.addRow();
+  boRowAA['Rowtype'] := 1;
+  boRowAA['Totalprice'] := 12556.32;
+  boRowAA['Text'] := 'Kredit ûluùouËk˝ VoIP';
+
+
+
+  memo2.Lines.Add (boAA.AsJSon());
+
+end;
+
+
+
+
+
+
+
 
 
 end.

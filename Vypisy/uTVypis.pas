@@ -10,6 +10,7 @@ uses
   uTPlatbaZVypisu, AbraEntities;
 
 type
+  TArrayOf2Int = array[0..1] of integer;
 
   TVypis = class
   private
@@ -25,6 +26,7 @@ type
     obratKredit  : currency;
     maxExistujiciPoradoveCislo : integer;
     maxExistujiciExtPoradoveCislo : integer;
+    searchIndex : integer;
 
     constructor create(gpcLine : string);
   published
@@ -32,7 +34,8 @@ type
     procedure setridit();    
     procedure nactiMaxExistujiciPoradoveCislo();
     function isNavazujeNaRadu() : boolean;
-    function prictiCastkuPokudDvojitaPlatba(pPlatbaZVypisu : TPlatbaZVypisu) : boolean;
+    function prictiCastkuPokudDvojitaPlatba(pPlatbaZVypisu : TPlatbaZVypisu) : integer;
+    function hledej(needle : string) : TArrayOf2Int;
   end;
 
 implementation
@@ -185,14 +188,14 @@ begin
 
 end;
 
-function TVypis.prictiCastkuPokudDvojitaPlatba(pPlatbaZVypisu : TPlatbaZVypisu) : boolean;
+function TVypis.prictiCastkuPokudDvojitaPlatba(pPlatbaZVypisu : TPlatbaZVypisu) : integer;
 var
   i : integer;
   iPlatba : TPlatbaZVypisu;
 
 begin
-  Result := false;
-  for i := self.Platby.Count - 1 downto 0 do
+  Result := -1;
+  for i := 0 to self.Platby.Count - 1 do
   begin
     iPlatba := TPlatbaZVypisu(self.Platby[i]);
     if (iPlatba.VS = pPlatbaZVypisu.VS) AND (iPlatba.cisloUctu = pPlatbaZVypisu.cisloUctu)
@@ -200,11 +203,61 @@ begin
       AND (pPlatbaZVypisu.kredit = true) AND (pPlatbaZVypisu.znamyPripad = false)
     then begin
       iPlatba.castka := iPlatba.castka + pPlatbaZVypisu.castka;
-      Result := true;
+      Result := i;
       exit;
     end;
   end;
 end;
+
+function TVypis.hledej(needle : string) : TArrayOf2Int;
+
+  procedure IncSearchIndex(var sIndex: Integer; pCount: Integer); inline;
+  begin
+    Inc(sIndex);
+    if sIndex = pCount then sIndex := 0;
+  end;
+
+var
+  searchedItems : integer;
+  iPlatba : TPlatbaZVypisu;
+
+begin
+  searchedItems := 0;
+
+  for searchedItems := 0 to self.Platby.Count - 1 do
+  begin
+    iPlatba := TPlatbaZVypisu(self.Platby[self.searchIndex]);
+
+    if AnsiContainsStr(iPlatba.VS, needle) then begin
+      Result[0] := self.searchIndex;
+      Result[1] := 2;
+      IncSearchIndex(self.searchIndex, self.Platby.Count);
+      Exit;
+    end;
+
+    if AnsiContainsStr(iPlatba.cisloUctuKZobrazeni, needle) then begin
+      Result[0] := self.searchIndex;
+      Result[1] := 4;
+      IncSearchIndex(self.searchIndex, self.Platby.Count);
+      Exit;
+    end;
+
+
+    if AnsiContainsStr(AnsiLowerCase(iPlatba.nazevKlienta), AnsiLowerCase(needle)) then begin
+      Result[0] := self.searchIndex;
+      Result[1] := 5;
+      IncSearchIndex(self.searchIndex, self.Platby.Count);
+      Exit;
+    end;
+
+  IncSearchIndex(self.searchIndex, self.Platby.Count);
+  end;
+
+  Result[0] := 0;
+  Result[1] := 0;
+
+end;
+
 
 
 

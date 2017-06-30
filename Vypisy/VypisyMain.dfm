@@ -280,8 +280,8 @@ object fmMain: TfmMain
       ParentFont = False
     end
     object Memo1: TMemo
-      Left = 3
-      Top = 406
+      Left = 4
+      Top = 408
       Width = 435
       Height = 131
       TabOrder = 0
@@ -542,9 +542,9 @@ object fmMain: TfmMain
     end
     object Memo2: TMemo
       Left = 2
-      Top = 424
+      Top = 545
       Width = 436
-      Height = 337
+      Height = 216
       Lines.Strings = (
         'Memo2')
       TabOrder = 4
@@ -557,6 +557,7 @@ object fmMain: TfmMain
     Height = 655
     Align = alLeft
     TabOrder = 3
+    ExplicitLeft = -3
     object lbZobrazit: TLabel
       Left = 8
       Top = 72
@@ -565,9 +566,9 @@ object fmMain: TfmMain
       Caption = 'Zobrazit'
     end
     object btnNacti: TButton
-      Left = 22
-      Top = 18
-      Width = 65
+      Left = 8
+      Top = 26
+      Width = 81
       Height = 21
       Caption = '&Na'#269'ti GPC'
       Font.Charset = DEFAULT_CHARSET
@@ -580,9 +581,9 @@ object fmMain: TfmMain
       OnClick = btnNactiClick
     end
     object btnZapisDoAbry: TButton
-      Left = 22
-      Top = 164
-      Width = 65
+      Left = 8
+      Top = 233
+      Width = 79
       Height = 21
       Caption = '&Do Abry'
       Enabled = False
@@ -595,21 +596,13 @@ object fmMain: TfmMain
       TabOrder = 1
       OnClick = btnZapisDoAbryClick
     end
-    object editVstupniSoubor: TEdit
-      Left = 22
-      Top = 612
-      Width = 73
-      Height = 21
-      TabOrder = 2
-      Text = 'vypis_t5.gpc'
-    end
     object btnSparujPlatby: TButton
       Left = 12
       Top = 562
       Width = 75
       Height = 17
       Caption = 'Sp'#225'ruj platby'
-      TabOrder = 3
+      TabOrder = 2
       OnClick = btnSparujPlatbyClick
     end
     object btnReconnect: TButton
@@ -618,17 +611,8 @@ object fmMain: TfmMain
       Width = 65
       Height = 25
       Caption = 'Reconnect'
-      TabOrder = 4
+      TabOrder = 3
       OnClick = btnReconnectClick
-    end
-    object Button2: TButton
-      Left = 6
-      Top = 586
-      Width = 97
-      Height = 17
-      Caption = 'Uka'#382' sp'#225'rov'#225'n'#237
-      TabOrder = 5
-      OnClick = Button2Click
     end
     object chbZobrazitBezproblemove: TCheckBox
       Left = 8
@@ -638,7 +622,7 @@ object fmMain: TfmMain
       Caption = 'bezprobl'#233'mov'#233
       Checked = True
       State = cbChecked
-      TabOrder = 6
+      TabOrder = 4
       OnClick = chbZobrazitBezproblemoveClick
     end
     object chbZobrazitDebety: TCheckBox
@@ -649,7 +633,7 @@ object fmMain: TfmMain
       Caption = 'debety'
       Checked = True
       State = cbChecked
-      TabOrder = 7
+      TabOrder = 5
       OnClick = chbZobrazitDebetyClick
     end
     object chbZobrazitStandardni: TCheckBox
@@ -660,12 +644,12 @@ object fmMain: TfmMain
       Caption = 'standardn'#237
       Checked = True
       State = cbChecked
-      TabOrder = 8
+      TabOrder = 6
       OnClick = chbZobrazitStandardniClick
     end
     object btnShowPrirazeniPnpForm: TButton
-      Left = 8
-      Top = 384
+      Left = 15
+      Top = 377
       Width = 89
       Height = 25
       Caption = 'P'#345'i'#345'azen'#237' PNP'
@@ -675,13 +659,13 @@ object fmMain: TfmMain
       Font.Name = 'MS Sans Serif'
       Font.Style = [fsBold]
       ParentFont = False
-      TabOrder = 9
+      TabOrder = 7
       OnClick = btnShowPrirazeniPnpFormClick
     end
     object Button1: TButton
       Left = 8
-      Top = 296
-      Width = 89
+      Top = 283
+      Width = 93
       Height = 25
       Caption = 'Zav'#345#237't v'#253'pis'
       Font.Charset = DEFAULT_CHARSET
@@ -690,17 +674,33 @@ object fmMain: TfmMain
       Font.Name = 'MS Sans Serif'
       Font.Style = [fsBold]
       ParentFont = False
-      TabOrder = 10
+      TabOrder = 8
       OnClick = Button1Click
     end
     object btnCustomers: TButton
-      Left = 16
-      Top = 448
+      Left = 14
+      Top = 424
       Width = 75
       Height = 25
       Caption = 'Z'#225'kazn'#237'ci'
-      TabOrder = 11
+      TabOrder = 9
       OnClick = btnCustomersClick
+    end
+    object btnHledej: TButton
+      Left = 8
+      Top = 190
+      Width = 63
+      Height = 21
+      Caption = 'hledej...'
+      TabOrder = 10
+      OnClick = btnHledejClick
+    end
+    object editHledej: TEdit
+      Left = 8
+      Top = 163
+      Width = 94
+      Height = 21
+      TabOrder = 11
     end
   end
   object btnVypisFio: TButton
@@ -740,8 +740,8 @@ object fmMain: TfmMain
     TabOrder = 7
   end
   object asgMain: TAdvStringGrid
-    Left = 110
-    Top = 26
+    Left = 112
+    Top = 27
     Width = 787
     Height = 626
     Cursor = crDefault
@@ -879,7 +879,7 @@ object fmMain: TfmMain
       172)
   end
   object NactiGpcDialog: TOpenDialog
-    Left = 276
-    Top = 142
+    Left = 156
+    Top = 166
   end
 end

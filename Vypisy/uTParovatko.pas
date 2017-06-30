@@ -34,8 +34,8 @@ type
     procedure vytvorPDPar(Platba : TPlatbaZVypisu; Doklad : TDoklad;
                 Castka: currency; popis : string; vazbaNaDoklad : boolean);
     function zapisDoAbry() : string;
-    function zapisDoAbryOLE() : string;
-    function zapisDoAbryWebApi() : string;
+    function zapisDoAbryOLE_naprimo() : string;
+    function zapisDoAbry_AA() : string;
     function getUzSparovano(Doklad_ID : string) : currency;
     function getPDParyAsText() : AnsiString;
     function getPDParyPlatbyAsText(currPlatba : TPlatbaZVypisu) : AnsiString;
@@ -48,7 +48,7 @@ type
 implementation
 
 uses
-  DesUtils, Superobject;
+  DesUtils, AArray, Superobject;
 
 
 constructor TParovatko.create(Vypis: TVypis);
@@ -225,12 +225,12 @@ end;
 
 function TParovatko.zapisDoAbry() : string;
 begin
-  Result := self.zapisDoAbryOLE();
-  //Result := self.zapisDoAbryWebApi();
+  //Result := self.zapisDoAbryOLE_naprimo();
+  Result := self.zapisDoAbry_AA();
 end;
 
 
-function TParovatko.zapisDoAbryOLE() : string;
+function TParovatko.zapisDoAbryOLE_naprimo() : string;
 var
   i, j : integer;
   iPDPar : TPlatbaDokladPar;
@@ -240,7 +240,7 @@ var
   BStatementRow_Data,
   BStatement_Data_Coll,
   NewID : variant;
-  mmm : ansistring;
+  faZaVoipKreditId : string;
 begin
 
   if (listPlatbaDokladPar.Count = 0) then Exit;
@@ -251,7 +251,7 @@ begin
   BStatement_Data:= AbraOLE.CreateValues('@BankStatement');
   BStatement_Object.PrefillValues(BStatement_Data);
   BStatement_Data.ValueByName('DocQueue_ID') := self.Vypis.abraBankaccount.bankStatementDocqueueId;
-  BStatement_Data.ValueByName('Period_ID') := '1L20000101'; //rok 2017, TODO automatika
+  BStatement_Data.ValueByName('Period_ID') := DesU.getAbraPeriodId(self.Vypis.Datum);
   BStatement_Data.ValueByName('BankAccount_ID') := self.Vypis.abraBankaccount.id;
   BStatement_Data.ValueByName('ExternalNumber') := self.Vypis.PoradoveCislo;
   BStatement_Data.ValueByName('DocDate$DATE') := self.Vypis.Datum;
@@ -307,8 +307,16 @@ begin
 
     if iPDPar.Platba.isVoipKredit then
     begin
-      BStatementRow_Data.ValueByName('PDocumentType') := '03'; // je to vûdy faktura
-      BStatementRow_Data.ValueByName('PDocument_ID') := DesU.vytvorFaZaVoipKredit(iPDPar.Platba.VS, iPDPar.CastkaPouzita, iPDPar.Platba.Datum);
+      faZaVoipKreditId := DesU.vytvorFaZaVoipKredit(iPDPar.Platba.VS, iPDPar.CastkaPouzita, iPDPar.Platba.Datum);
+      if faZaVoipKreditId = '' then
+        //pokud nenajdeme podle VS firmu, zapÌöeme VS
+        BStatementRow_Data.ValueByName('VarSymbol') := iPDPar.Platba.VS
+      else begin
+        //pokud jsme firmu naöli, byla pro ni vytvo¯ena fa a tu teÔ p¯ipojÌme. VS abra automaticky doplnÌ
+        BStatementRow_Data.ValueByName('PDocumentType') := '03'; // je to vûdy faktura
+        BStatementRow_Data.ValueByName('PDocument_ID') := faZaVoipKreditId;
+      end;
+
     end;
 
     if iPDPar.Platba.Debet then
@@ -335,77 +343,85 @@ begin
 end;
 
 
-function TParovatko.zapisDoAbryWebApi() : string;
+function TParovatko.zapisDoAbry_AA() : string;
 var
   i, j : integer;
   iPDPar : TPlatbaDokladPar;
-  newBankstatement : string;
-  jsonBo,
-  jsonBoRow,
-  newJsonBo: ISuperObject;
+  boAA, boRowAA: TAArray;
+  newID, faZaVoipKreditId : string;
 begin
 
   if (listPlatbaDokladPar.Count = 0) then Exit;
 
-  Result := 'Z·pis pomocÌ ABRA WebApi v˝pisu pro ˙Ëet ' + self.Vypis.abraBankaccount.name + '.';
+  Result := 'Z·pis pomocÌ AArray metoda ' +  DesU.abraDefaultCommMethod + ' v˝pisu pro ˙Ëet ' + self.Vypis.abraBankaccount.name + '.';
 
-  jsonBo := SO;
-  jsonBo.S['DocQueue_ID'] := self.Vypis.abraBankaccount.bankStatementDocqueueId;
-  jsonBo.S['Period_ID'] := DesU.getAbraPeriodId(self.Vypis.Datum);
-  jsonBo.S['BankAccount_ID'] := self.Vypis.abraBankaccount.id;
-  jsonBo.I['ExternalNumber'] := self.Vypis.PoradoveCislo;
-  jsonBo.D['DocDate$DATE'] := self.Vypis.Datum;
-  //jsonBo.D['CreatedAt$DATE'] := Trunc(Date); //nefunkËnÌ, abra tam d· vûdy aktu·lnÌ Ëas
-  jsonBo.O['rows'] := SA([]);
+
+
+  boAA := TAArray.Create;
+  boAA['DocQueue_ID'] := self.Vypis.abraBankaccount.bankStatementDocqueueId;
+  boAA['Period_ID'] := DesU.getAbraPeriodId(self.Vypis.Datum);
+  boAA['BankAccount_ID'] := self.Vypis.abraBankaccount.id;
+  boAA['ExternalNumber'] := self.Vypis.PoradoveCislo;
+  boAA['DocDate$DATE'] := self.Vypis.Datum;
+  boAA['CreatedAt$DATE'] := IntToStr(Trunc(Date));
 
 
   for i := 0 to listPlatbaDokladPar.Count - 1 do
   begin
     iPDPar := TPlatbaDokladPar(listPlatbaDokladPar[i]);
 
-    jsonBoRow := SO;
-    jsonBoRow.S['AccPresetDef_ID'] := '1201000000';
-    jsonBoRow.D['Amount'] := iPDPar.CastkaPouzita;
-    jsonBoRow.I['Credit'] := StrToInt(IfThen(iPDPar.Platba.Kredit,'1','0'));
-    jsonBoRow.S['BankAccount'] := iPDPar.Platba.cisloUctu;
-    jsonBoRow.S['Text'] := Trim(iPDPar.popis + ' ' + iPDPar.Platba.nazevKlienta);
-    jsonBoRow.S['SpecSymbol'] := iPDPar.Platba.SS;
-    jsonBoRow.D['DocDate$DATE'] := iPDPar.Platba.Datum;
-    jsonBoRow.D['AccDate$DATE'] := iPDPar.Platba.Datum;
-    jsonBoRow.S['Division_id'] := '1000000101';
-    jsonBoRow.S['Currency_id'] := '0000CZK000';
+    boRowAA := boAA.addRow();
+    boRowAA['Amount'] := iPDPar.CastkaPouzita;
+    boRowAA['Credit'] := IfThen(iPDPar.Platba.Kredit,'1','0');
+    boRowAA['BankAccount'] := iPDPar.Platba.cisloUctu;
+    boRowAA['Text'] := Trim(iPDPar.popis + ' ' + iPDPar.Platba.nazevKlienta);
+    boRowAA['SpecSymbol'] := iPDPar.Platba.SS;
+    boRowAA['DocDate$DATE'] := iPDPar.Platba.Datum;
+    boRowAA['AccDate$DATE'] := iPDPar.Platba.Datum;
+
 
     if Assigned(iPDPar.Doklad) then
-      jsonBoRow.S['Firm_ID'] := iPDPar.Doklad.Firm_ID
-    else
-      jsonBoRow.S['Firm_ID'] := '3Y90000101';  // pokud nenÌ doklad, tak aù je firma DES. jinak se tam d· jako default "drobn˝ n·kup"
+      if iPDPar.vazbaNaDoklad then //Doklad vyplnime jen pokud chceme vazbu (vazbaNaDoklad je true). Doklad m·me naËten˝ i v situaci kdy vazbu nechceme - kv˘li Firm_ID
+      begin
+        boRowAA['PDocumentType'] := iPDPar.Doklad.DocumentType;
+        boRowAA['PDocument_ID'] := iPDPar.Doklad.ID;
+      end
+      else
+      begin
+        boRowAA['Firm_ID'] := iPDPar.Doklad.Firm_ID;
+      end
+    else //nenÌ Assigned(iPDPar.Doklad)
+      if not(iPDPar.Platba.isVoipKredit) then
+        boRowAA['Firm_ID'] := '3Y90000101'; //aù je firma DES. jinak se tam d· jako default "drobn˝ n·kup" then
 
-    if iPDPar.vazbaNaDoklad AND Assigned(iPDPar.Doklad) then //Doklad vyplnime jen pokud chceme vazbu (vazbaNaDoklad je true). Doklad m·me naËten˝ i v situaci kdy vazbu nechceme - kv˘li Firm_ID
+
+    if iPDPar.Platba.isVoipKredit then
     begin
-      jsonBoRow.S['PDocumentType'] := iPDPar.Doklad.DocumentType;
-      jsonBoRow.S['PDocument_ID'] := iPDPar.Doklad.ID;
+      faZaVoipKreditId := DesU.vytvorFaZaVoipKredit(iPDPar.Platba.VS, iPDPar.CastkaPouzita, iPDPar.Platba.Datum);
+      if faZaVoipKreditId = '' then
+        //pokud nenajdeme podle VS firmu, zapÌöeme VS
+        boRowAA['VarSymbol'] := iPDPar.Platba.VS
+      else begin
+        //pokud jsme firmu naöli, byla pro ni vytvo¯ena fa a tu teÔ p¯ipojÌme. VS abra automaticky doplnÌ
+        boRowAA['PDocumentType'] := '03'; // je to vûdy faktura
+        boRowAA['PDocument_ID'] := faZaVoipKreditId;
+      end;
+
     end;
 
-    //todo p¯i¯azenÌ pr·vÏ vygenerovanÈ VoIP faktury z AbraOLE z·pisu
-
     if iPDPar.Platba.Debet then
-      jsonBoRow.S['VarSymbol'] := iPDPar.Platba.VS; //pro debety aby vûdy z˘stal VS
+      boRowAA['VarSymbol'] := iPDPar.Platba.VS; //pro debety aby vûdy z˘stal VS
 
-    jsonBo.A['rows'].Add(jsonBoRow);
   end;
 
-  writeToFile(ExtractFilePath(ParamStr(0)) + '!json.txt', jsonBo.AsJSon(true));
-  //Dialogs.MessageDlg(jsonBo.AsJSon(true), mtInformation, [mbOK], 0);
-  //exit;
-
   try begin
-    newBankstatement := DesU.abraBoCreate('bankstatement', jsonBo);
-    Result := Result + ' »Ìslo v˝pisu je ' + SO(newBankstatement).S['id'];
+    newId := DesU.abraBoCreate(boAA, 'bankstatement');
+    Result := Result + ' »Ìslo novÈho v˝pisu je ' + newID;
   end;
   except on E: exception do
     begin
-      Application.MessageBox(PChar('Problem ' + ^M + E.Message), 'AbraOLE');
-      Result := 'Chyba p¯i zakl·d·nÌ v˝pisu';
+      Application.MessageBox(PChar('Problem ' + ^M + E.Message), 'Vytv·¯enÌ v˝pisu');
+      Result := 'Chyba p¯i vytv·¯enÌ v˝pisu';
     end;
   end;
 

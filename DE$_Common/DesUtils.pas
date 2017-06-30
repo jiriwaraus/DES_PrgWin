@@ -8,7 +8,7 @@ uses
   //Windows, Messages, SysUtils, Variants, Classes, Dialogs, Forms,
   StrUtils,  IniFiles, ComObj, //, Grids, AdvObj, StdCtrls,
   IdHTTP, Data.DB, ZAbstractRODataset, ZAbstractDataset, ZDataset,
-  ZAbstractConnection, ZConnection, Superobject, _Arrays;
+  ZAbstractConnection, ZConnection, Superobject, AArray;
 
 
 type
@@ -40,8 +40,15 @@ type
 
       function getAbraOLE() : variant;
       function abraBoGet(abraBoName : string) : string;
-      //function abraBoGetByRowId(abraBoName, rowId : string) : string;
       function abraBoGetById(abraBoName, sId : string) : string;
+      function abraBoCreate(boAA: TAArray; abraBoName : string) : string;
+      function abraBoCreateOLE(boAA: TAArray; abraBoName : string) : string;
+      function abraBoCreateWebApi(boAA: TAArray; abraBoName : string) : string;
+      function abraBoUpdate(boAA: TAArray; abraBoName, abraBoId : string; abraBoChildName: string = ''; abraBoChildId: string = '') : string;
+      function abraBoUpdateOLE(boAA: TAArray; abraBoName, abraBoId : string; abraBoChildName: string = ''; abraBoChildId: string = '') : string;
+      function abraBoUpdateWebApi(boAA: TAArray; abraBoName, abraBoId : string; abraBoChildName: string = ''; abraBoChildId: string = '') : string;
+      procedure logJson(boAAjson, header : string);
+
       function abraBoCreate_So(jsonSO: ISuperObject; abraBoName : string) : string;
       function abraBoCreate_SoOLE(jsonSO: ISuperObject; abraBoName : string) : string;
       function abraBoCreate_SoWebApi(jsonSO: ISuperObject; abraBoName : string) : string;
@@ -51,28 +58,21 @@ type
       procedure logJson_So(jsonSO: ISuperObject; header : string);
 
 
-      function abraBoCreate(boAA: TAArray; abraBoName : string) : string;
-      function abraBoCreateOLE(boAA: TAArray; abraBoName : string) : string;
-      function abraBoCreateWebApi(boAA: TAArray; abraBoName : string) : string;
-      function abraBoUpdate(boAA: TAArray; abraBoName, abraBoId : string; abraBoChildName: string = ''; abraBoChildId: string = '') : string;
-      function abraBoUpdateOLE(boAA: TAArray; abraBoName, abraBoId : string; abraBoChildName: string = ''; abraBoChildId: string = '') : string;
-      function abraBoUpdateWebApi(boAA: TAArray; abraBoName, abraBoId : string; abraBoChildName: string = ''; abraBoChildId: string = '') : string;
-
-
-
       function getAbraPeriodId(pYear : string) : string; overload;
       function getAbraPeriodId(pDate : double) : string; overload;
       function getAbraDocqueueId(code, documentType : string) : string;
       function getAbraVatrateId(code : string) : string;
       function getAbraVatindexId(code : string) : string;
       function getAbraIncometypeId(code : string) : string;
+      function getAbraBusorderId(name : string) : string;
+      function getAbraDivisionId() : string;
+
       function getAbracodeByVs(vs : string) : string;
       function getAbracodeByContractNumber(cnumber : string) : string;
       function getFirmIdByCode(code : string) : string;
 
     private
       function newAbraIdHttp(timeout : single; isJsonPost : boolean) : TIdHTTP;
-      procedure logJson(boAAjson, header : string);
 
   end;
 
@@ -96,8 +96,6 @@ const
   Ap = chr(39);
   ApC = Ap + ',';
   ApZ = Ap + ')';
-  sLineBreak = {$IFDEF LINUX} AnsiChar(#10) {$ENDIF}
-               {$IFDEF MSWINDOWS} AnsiString(#13#10) {$ENDIF};
 
 
 var
@@ -128,34 +126,40 @@ begin
 
   PROGRAM_PATH := ExtractFilePath(ParamStr(0));
 
-  if FileExists(PROGRAM_PATH + '..\DE$_Common\abraDesProgramy.ini') then begin
-
-    adpIniFile := TIniFile.Create(PROGRAM_PATH + '..\DE$_Common\abraDesProgramy.ini');
-    with adpIniFile do try
-      abraDefaultCommMethod := ReadString('Preferences', 'AbraDefaultCommMethod', '');
-      abraWebApiUrl := ReadString('Preferences', 'AbraWebApiUrl', '');
-      abraUserUN := ReadString('Preferences', 'AbraUserUN', '');
-      abraUserPW := ReadString('Preferences', 'AbraUserPW', '');
-      GPC_PATH := ReadString('Preferences', 'GpcPath', '');
-
-      dbAbra.HostName := ReadString('Preferences', 'AbraHN', '');
-      dbAbra.Database := ReadString('Preferences', 'AbraDB', '');
-      dbAbra.User := ReadString('Preferences', 'AbraUN', '');
-      dbAbra.Password := ReadString('Preferences', 'AbraPW', '');
-
-
-      dbZakos.HostName := ReadString('Preferences', 'ZakHN', '');
-      dbZakos.Database := ReadString('Preferences', 'ZakDB', '');
-      dbZakos.User := ReadString('Preferences', 'ZakUN', '');
-      dbZakos.Password := ReadString('Preferences', 'ZakPW', '');
-    finally
-      adpIniFile.Free;
-    end;
-  end else begin
-    Application.MessageBox(PChar('Nenalezen soubor ' + PROGRAM_PATH + '..\DE$_Common\abraDesProgramy.ini, program ukonËen'),
+  if not(FileExists(PROGRAM_PATH + 'abraDesProgramy.ini'))
+    AND not(FileExists(PROGRAM_PATH + '..\DE$_Common\abraDesProgramy.ini')) then
+  begin
+    Application.MessageBox(PChar('Nenalezen soubor abraDesProgramy.ini, program ukonËen'),
       'abraDesProgramy.ini', MB_OK + MB_ICONERROR);
     Application.Terminate;
   end;
+
+  if FileExists(PROGRAM_PATH + 'abraDesProgramy.ini') then
+    adpIniFile := TIniFile.Create(PROGRAM_PATH + 'abraDesProgramy.ini')
+  else
+    adpIniFile := TIniFile.Create(PROGRAM_PATH + '..\DE$_Common\abraDesProgramy.ini');
+
+  with adpIniFile do try
+    abraDefaultCommMethod := ReadString('Preferences', 'AbraDefaultCommMethod', 'OLE');
+    abraWebApiUrl := ReadString('Preferences', 'AbraWebApiUrl', '');
+    abraUserUN := ReadString('Preferences', 'AbraUserUN', '');
+    abraUserPW := ReadString('Preferences', 'AbraUserPW', '');
+    GPC_PATH := IncludeTrailingPathDelimiter(ReadString('Preferences', 'GpcPath', ''));
+
+    dbAbra.HostName := ReadString('Preferences', 'AbraHN', '');
+    dbAbra.Database := ReadString('Preferences', 'AbraDB', '');
+    dbAbra.User := ReadString('Preferences', 'AbraUN', '');
+    dbAbra.Password := ReadString('Preferences', 'AbraPW', '');
+
+
+    dbZakos.HostName := ReadString('Preferences', 'ZakHN', '');
+    dbZakos.Database := ReadString('Preferences', 'ZakDB', '');
+    dbZakos.User := ReadString('Preferences', 'ZakUN', '');
+    dbZakos.Password := ReadString('Preferences', 'ZakPW', '');
+  finally
+    adpIniFile.Free;
+  end;
+
 
 
   if not dbAbra.Connected then try
@@ -166,8 +170,8 @@ begin
       Application.Terminate;
     end;
   end;
-  {
-  if not dbZakos.Connected then try
+
+  if (not dbZakos.Connected) AND (dbZakos.Database <> '') then try
     dbZakos.Connect;
   except on E: exception do
     begin
@@ -175,7 +179,7 @@ begin
       Application.Terminate;
     end;
   end;
-  }
+
 
   {
   //if iniNacteno > 0 then Exit;
@@ -254,13 +258,6 @@ begin
   Result := abraBoGetById(abraBoName, '');
 end;
 
-{
-function abraBoGetByRowId(abraBoName, rowId : string) : string;
-begin
-  Result := abraBoGetById(abraBoName, getEnpointPartForRowId(rowId));
-end;
-}
-
 function TDesU.abraBoGetById(abraBoName, sId : string) : string;
 var
   idHTTP: TIdHTTP;
@@ -320,7 +317,6 @@ begin
     except
       on E: Exception do begin
         ShowMessage('Error on request: '#13#10 + e.Message);
-        ShowMessage(Result);
       end;
     end;
   finally
@@ -572,7 +568,6 @@ begin
     except
       on E: Exception do begin
         ShowMessage('Error on request: '#13#10 + e.Message);
-        ShowMessage(Result);
       end;
     end;
   finally
@@ -624,12 +619,13 @@ begin
 
   try begin
     NewID := BO_Object.CreateNewFromValues(BO_Data); //NewID je ID Abry
-    Result := Result + 'ppp »Ìslo novÈho BO je ' + NewID;
+    //Result := Result + '»Ìslo novÈho BO je ' + NewID;
+    Result := NewID;
   end;
   except on E: exception do
     begin
       Application.MessageBox(PChar('Problem ' + ^M + E.Message), 'AbraOLE');
-      Result := Result + 'Chyba p¯i zakl·d·nÌ BO';
+      Result := 'Chyba p¯i zakl·d·nÌ BO';
     end;
   end;
 
@@ -651,9 +647,8 @@ var
   idHTTP: TIdHTTP;
   sstreamJson: TStringStream;
   endpoint : string;
+
 begin
-
-
   // http://localhost/DES/issuedinvoices/8L6U000101/rows/5A3K100101
   endpoint := abraWebApiUrl + abraBoName + 's/' + abraBoId;
   if abraBoChildName <> '' then
@@ -661,17 +656,10 @@ begin
 
   self.logJson(boAA.AsJSon(), 'abraBoUpdateWebApi_AA - ' + endpoint);
 
-
-  //sstreamJson := TStringStream.Create(Utf8Encode(pJson)); // D2007 and earlier only
   sstreamJson := TStringStream.Create(boAA.AsJSon(), TEncoding.UTF8);
   idHTTP := newAbraIdHttp(900, true);
   try
-    try
-      Result := idHTTP.Put(endpoint, sstreamJson);
-    except
-      on E: Exception do
-        ShowMessage('Error on request: '#13#10 + e.Message);
-    end;
+    Result := idHTTP.Put(endpoint, sstreamJson);
   finally
     sstreamJson.Free;
     idHTTP.Free;
@@ -687,7 +675,6 @@ var
   BORow_Object,
   BORow_Data,
   BO_Data_Coll : variant;
-
 
 begin
   abraBoName := abraBoName + abraBoChildName;
@@ -727,63 +714,28 @@ end;
 
 procedure TDesU.opravRadekVypisuPomociPDocument_ID(Vypis_ID, RadekVypisu_ID, PDocument_ID, PDocumentType : string);
 var
-  JsonSO: ISuperObject;
+  boAA: TAArray;
   sResponse: string;
-  {
-  BStatement_Object,
-  BStatement_Data,
-  BStatementRow_Object,
-  BStatementRow_Data,
-  BStatementRow_Coll : variant;
-  }
-
 begin
-  { takhle to bylo pres OLE
-  BStatementRow_Object := AbraOLE.CreateObject('@BankStatementRow');
-  BStatementRow_Data := AbraOLE.CreateValues('@BankStatementRow');
-
-  BStatementRow_Data := BStatementRow_Object.GetValues(Radek_ID);
-  BStatementRow_Data.ValueByName('PDocumentType') := PDocumentType;
-  BStatementRow_Data.ValueByName('PDocument_ID') := PDocument_ID;
-  BStatementRow_Object.UpdateValues(Radek_ID, BStatementRow_Data);
-  }
-
-  JsonSO := SO;
-  JsonSO.S['PDocumentType'] := PDocumentType;
-  JsonSO.S['PDocument_ID'] := PDocument_ID;
-
-  //sResponse := abraBoUpdate_So('bankstatements/' + Vypis_ID + '/rows/' + RadekVypisu_ID, JsonSO); //bylo p¯ed refactorem
-  sResponse := abraBoUpdate_So(JsonSO, 'bankstatement', Vypis_ID, 'row', RadekVypisu_ID);
-
+  boAA := TAArray.Create;
+  boAA['PDocumentType'] := PDocumentType;
+  boAA['PDocument_ID'] := PDocument_ID;
+  sResponse := self.abraBoUpdate(boAA, 'bankstatement', Vypis_ID, 'row', RadekVypisu_ID);
 end;
 
 
 procedure TDesU.opravRadekVypisuPomociVS(Vypis_ID, RadekVypisu_ID, VS : string);
 var
-  JsonSO: ISuperObject;
+  boAA: TAArray;
   sResponse: string;
 begin
-  { takhle to bylo pres OLE
-  BStatementRow_Object := AbraOLE.CreateObject('@BankStatementRow');
-  BStatementRow_Data := AbraOLE.CreateValues('@BankStatementRow');
+  boAA := TAArray.Create;
+  boAA['VarSymbol'] := ''; //odstranit VS aby se Abra chytla p¯i p¯i¯azenÌ
+  sResponse := self.abraBoUpdate(boAA, 'bankstatement', Vypis_ID, 'row', RadekVypisu_ID);
 
-  BStatementRow_Data := BStatementRow_Object.GetValues(Radek_ID);
-  BStatementRow_Data.ValueByName('VarSymbol') := ''; //odstranit VS aby se Abra chytla p¯i p¯i¯azenÌ
-  BStatementRow_Object.UpdateValues(Radek_ID, BStatementRow_Data);
-
-  BStatementRow_Data := BStatementRow_Object.GetValues(Radek_ID);
-  BStatementRow_Data.ValueByName('VarSymbol') := VS;
-  BStatementRow_Object.UpdateValues(Radek_ID, BStatementRow_Data);
-  }
-
-  JsonSO := SO;
-  JsonSO.S['VarSymbol'] := ''; //odstranit VS aby se Abra chytla p¯i p¯i¯azenÌ
-  sResponse := abraBoUpdate_So(JsonSO, 'bankstatement', Vypis_ID, 'rows', RadekVypisu_ID);
-
-  JsonSO := SO;
-  JsonSO.S['VarSymbol'] := VS;
-  sResponse := abraBoUpdate_So(JsonSO, 'bankstatement', Vypis_ID, 'rows', RadekVypisu_ID);
-
+  boAA := TAArray.Create;
+  boAA['VarSymbol'] := VS;
+  sResponse := self.abraBoUpdate(boAA, 'bankstatement', Vypis_ID, 'row', RadekVypisu_ID);
 end;
 
 function TDesU.getOleObjDataDisplay(abraOleObj_Data : variant) : ansistring;
@@ -798,50 +750,52 @@ end;
 
 function TDesU.vytvorFaZaVoipKredit(VS : string; castka : currency; datum : double) : string;
 var
-  newIssuedInvoice : string;
-  jsonBo,
-  jsonBoRow,
-  newJsonBo: ISuperObject;
+  i: integer;
+  boAA, boRowAA: TAArray;
+  newId, firmAbraCode: String;
 begin
 
-  jsonBo := SO;
-  jsonBo.S['DocQueue_ID'] := self.getAbraDocqueueId('FO2', '03');
-  jsonBo.S['Period_ID'] := self.getAbraPeriodId(datum);
-  jsonBo.D['DocDate$DATE'] := datum;
-  jsonBo.D['AccDate$DATE'] := datum;
-  //jsonBo.S['Firm_ID'] := self.getFirmIdByCode(self.getAbracodeByContractNumber(VS));
-  jsonBo.S['Firm_ID'] :='2SZ1000101';
-  jsonBo.S['Description'] := 'kredit VoIP bÏûÌ liötiËka ùukat';
-  jsonBo.S['Varsymbol'] := VS;
-  jsonBo.B['PricesWithVat'] := true;
+  firmAbraCode := self.getAbracodeByContractNumber(VS);
+  if firmAbraCode = '' then begin
+    Result := '';
+    Exit;
+  end;
 
-  jsonBo.O['rows'] := SA([]);
+
+  boAA := TAArray.Create;
+  boAA['DocQueue_ID'] := self.getAbraDocqueueId('FO2', '03');
+  boAA['Period_ID'] := self.getAbraPeriodId(datum);
+  boAA['VatDate$DATE'] := datum;
+  boAA['DocDate$DATE'] := datum;
+  boAA['Firm_ID'] := self.getFirmIdByCode(firmAbraCode);
+  //jsonBo.S['Firm_ID'] :='2SZ1000101';
+  boAA['Description'] := 'Kredit VoIP';
+  boAA['Varsymbol'] := VS;
+  boAA['PricesWithVat'] := true;
+
 
   // 1. ¯·dek
-    jsonBoRow := SO;
-    jsonBoRow.I['Rowtype'] := 0;
-    jsonBoRow.S['Text'] := ' ';
-    jsonBoRow.S['Division_Id'] := '1000000101';
-    jsonBo.A['rows'].Add(jsonBoRow);
+  boRowAA := boAA.addRow();
+  boRowAA['Rowtype'] := 0;
+  boRowAA['Text'] := ' ';
+  boRowAA['Division_Id'] := self.getAbraDivisionId;
 
  //2. ¯·dek
-    jsonBoRow := SO;
-    jsonBoRow.I['Rowtype'] := 1;
-    jsonBoRow.D['Totalprice'] := castka;
-    jsonBoRow.S['Text'] := 'Kredit VoIP snÏûÌ hodÚouËce v˝pis˘';
-    jsonBoRow.S['Vatrate_Id'] := self.getAbraVatrateId('V˝st21');
-    //jsonBoRow.S['Vatindex_Id'] := self.getAbraVatindexId('V˝st21'); //je pot¯eba?
-    jsonBoRow.S['Incometype_Id'] := self.getAbraIncometypeId('SL'); // sluûby
-    jsonBoRow.S['BusOrder_Id'] := '6400000101'; // self.getAbraBusorderId('kredit VoIP');  todo
-    jsonBoRow.S['Division_Id'] := '1000000101';
-    jsonBo.A['rows'].Add(jsonBoRow);
+  boRowAA := boAA.addRow();
+  boRowAA['Rowtype'] := 1;
+  boRowAA['Totalprice'] := castka;
+  boRowAA['Text'] := 'Kredit VoIP';
+  boRowAA['Vatrate_Id'] := self.getAbraVatrateId('V˝st21');
+  //boRowAA.S['Vatindex_Id'] := self.getAbraVatindexId('V˝st21'); //je pot¯eba?
+  boRowAA['Incometype_Id'] := self.getAbraIncometypeId('SL'); // sluûby
+  boRowAA['BusOrder_Id'] := self.getAbraBusorderId('kredit VoIP'); // '6400000101' zkontrolovat ûe je 'kredit VoIP' v DB
+  boRowAA['Division_Id'] := self.getAbraDivisionId;
 
-
-  //writeToFile(ExtractFilePath(ParamStr(0)) + '!json.txt', jsonBo.AsJSon(true));
+  //writeToFile(ExtractFilePath(ParamStr(0)) + '!json' + formatdatetime('hhnnss', Now) + '.txt', jsonBo.AsJSon(true));
 
   try begin
-    newIssuedInvoice := DesU.abraBoCreate_So(jsonBo, 'issuedinvoice');
-    Result := newIssuedInvoice;
+    newId := DesU.abraBoCreate(boAA, 'issuedinvoice');
+    Result := newId;
   end;
   except on E: exception do
     begin
@@ -924,6 +878,25 @@ begin
     end;
     Close;
   end;
+end;
+
+function TDesU.getAbraBusorderId(name : string) : string;
+begin
+
+  with DesU.qrAbra do begin
+    SQL.Text := 'SELECT Id FROM BusOrders'
+              + ' WHERE Name = ''' + name + '''';
+    Open;
+    if not Eof then begin
+      Result := FieldByName('Id').AsString;
+    end;
+    Close;
+  end;
+end;
+
+function TDesU.getAbraDivisionId() : string;
+begin
+  Result := '1000000101';
 end;
 
 function TDesU.getAbracodeByVs(vs : string) : string;
@@ -1122,6 +1095,8 @@ begin
      FileStream.Free;
     end;
 end;
+
+
 
 
 end.

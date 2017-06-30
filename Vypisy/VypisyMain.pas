@@ -14,7 +14,6 @@ type
 
     btnNacti: TButton;
     btnZapisDoAbry: TButton;
-    editVstupniSoubor: TEdit;
     Memo1: TMemo;
     asgMain: TAdvStringGrid;
     NactiGpcDialog: TOpenDialog;
@@ -26,7 +25,6 @@ type
     btnSparujPlatby: TButton;
     editPocetPredchPlateb: TEdit;
     btnReconnect: TButton;
-    Button2: TButton;
     chbZobrazitBezproblemove: TCheckBox;
     lblHlavicka: TLabel;
     chbZobrazitDebety: TCheckBox;
@@ -47,6 +45,8 @@ type
     lblVypisCsobGpc: TLabel;
     Button1: TButton;
     btnCustomers: TButton;
+    btnHledej: TButton;
+    editHledej: TEdit;
 
     procedure btnNactiClick(Sender: TObject);
     procedure btnZapisDoAbryClick(Sender: TObject);
@@ -65,7 +65,7 @@ type
     procedure asgPredchoziPlatbyVsGetAlignment(Sender: TObject; ARow,
       ACol: Integer; var HAlign: TAlignment; var VAlign: TVAlignment);
     procedure btnReconnectClick(Sender: TObject);
-    procedure Button2Click(Sender: TObject);
+    procedure btnHledejClick(Sender: TObject);
     procedure asgPredchoziPlatbyButtonClick(Sender: TObject; ACol,
       ARow: Integer);
     procedure chbZobrazitBezproblemoveClick(Sender: TObject);
@@ -86,6 +86,7 @@ type
     procedure btnVypisCsobClick(Sender: TObject);
     procedure Button1Click(Sender: TObject);
     procedure btnCustomersClick(Sender: TObject);
+
 
   public
     procedure nactiGpc(GpcFilename : string);
@@ -215,7 +216,7 @@ var
   GpcInputFile : TextFile;
   GpcFileLine : string;
   iPlatbaZVypisu : TPlatbaZVypisu;
-  i, pocetPlatebGpc: integer;
+  i, pocetPlatebGpc, kontrolaDvojitaPlatba: integer;
 begin
   try
     AssignFile(GpcInputFile, GpcFilename);
@@ -264,9 +265,11 @@ begin
       begin
         Inc(i);
         iPlatbaZVypisu := TPlatbaZVypisu.Create(GpcFileLine);
-        if Vypis.prictiCastkuPokudDvojitaPlatba(iPlatbaZVypisu) then begin
-         Dialogs.MessageDlg('dvakrat VS '+ iPlatbaZVypisu.VS + ' na cisle uctu ' + iPlatbaZVypisu.cisloUctu, mtInformation, [mbOK], 0);
-
+        kontrolaDvojitaPlatba := Vypis.prictiCastkuPokudDvojitaPlatba(iPlatbaZVypisu);
+        if kontrolaDvojitaPlatba > -1 then begin
+          Dialogs.MessageDlg('dvakrat VS '+ iPlatbaZVypisu.VS + ' na cisle uctu ' + iPlatbaZVypisu.cisloUctu, mtInformation, [mbOK], 0);
+          Parovatko.odparujPlatbu(Vypis.Platby[kontrolaDvojitaPlatba]);
+          Parovatko.sparujPlatbu(Vypis.Platby[kontrolaDvojitaPlatba]);
 
         end else begin
           iPlatbaZVypisu.init(StrToInt(editPocetPredchPlateb.text));
@@ -699,15 +702,12 @@ var
   jsonstring,
   newIssuedInvoice : string;
 begin
-  jsonstring := LoadFileToStr(DesU.PROGRAM_PATH + '!jsonin.txt');
-  Memo2.Lines.Add(SO(jsonstring).AsJSon(true, true));
-
 
   //Memo2.Lines.Add(DesU.vytvorFaZaVoipKredit('795532', 2561, 42914));
 
   {
   jsonstring := LoadFileToStr(DesU.PROGRAM_PATH + '!jsonin.txt');
-  //Memo2.Lines.Add(jsonstring);
+  Memo2.Lines.Add(SO(jsonstring).AsJSon(true, true));
   newIssuedInvoice := DesU.abraBoCreateOLE('issuedinvoice',  SO(jsonstring));
   //Memo2.Lines.Add(SO(newIssuedInvoice).S['id']);
   Memo2.Lines.Add(newIssuedInvoice);
@@ -719,12 +719,17 @@ begin
   //DesU.getFirmIdByCode();
 end;
 
-
-procedure TfmMain.Button2Click(Sender: TObject);
+procedure TfmMain.btnHledejClick(Sender: TObject);
+var
+  hledejResult : TArrayOf2Int;
+  newIssuedInvoice : string;
 begin
-  Memo2.Clear;
-  Memo2.Lines.Add(Parovatko.getPDParyAsText());
+  hledejResult := Vypis.hledej(editHledej.Text);
+
+  asgMain.row := hledejResult[0] + 1;
+  asgMain.col := hledejResult[1];
 end;
+
 
 
 procedure TfmMain.chbZobrazitBezproblemoveClick(Sender: TObject);
@@ -741,6 +746,8 @@ procedure TfmMain.chbZobrazitStandardniClick(Sender: TObject);
 begin
   filtrujZobrazeniPlateb;
 end;
+
+
 
 procedure TfmMain.asgMainCanEditCell(Sender: TObject; ARow, ACol: Integer;
   var CanEdit: Boolean);
@@ -827,6 +834,7 @@ begin
   asgNalezeneDoklady.ClearNormalCells;
   lblHlavicka.Caption := '';
 end;
+
 
 procedure TfmMain.btnCustomersClick(Sender: TObject);
 begin
