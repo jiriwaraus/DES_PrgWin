@@ -740,7 +740,7 @@ object fmMain: TfmMain
   end
   object asgMain: TAdvStringGrid
     Left = 112
-    Top = 27
+    Top = 29
     Width = 787
     Height = 626
     Cursor = crDefault

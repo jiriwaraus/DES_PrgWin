@@ -39,6 +39,7 @@ type
       AbraOLE: variant;
 
       function getAbraOLE() : variant;
+      procedure abraOLELogout();
       function abraBoGet(abraBoName : string) : string;
       function abraBoGetById(abraBoName, sId : string) : string;
       function abraBoCreate(boAA: TAArray; abraBoName : string) : string;
@@ -203,9 +204,9 @@ begin
       Exit;
     end;
     //Zprava('Pøipojeno k Abøe (connect DES).');
-    if not AbraOLE.Login('SW', '') then begin
+    if not AbraOLE.Login(abraUserUN, abraUserPW) then begin
 //    if not AbraOLE.Login(abraUserUN, abraUserPW) then begin
-      ShowMessage('Problém s Abrou (login Supervisor).');
+      ShowMessage('Problém s Abrou (login ' + abraUserUN +').');
       Exit;
     end;
     //Zprava('Pøihlášeno k Abøe (login Supervisor).');
@@ -218,6 +219,17 @@ begin
   end;
   Result := AbraOLE;
 end;
+
+procedure TDesU.abraOLELogout();
+begin
+  if VarIsEmpty(AbraOLE) then Exit;
+  try
+    self.AbraOLE.Logout;
+  except
+  end;
+  self.AbraOLE := Unassigned;
+end;
+
 
 {
 function TDesU.getQrAbra() : variant;

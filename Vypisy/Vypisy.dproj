@@ -4,7 +4,7 @@
         <MainSource>Vypisy.dpr</MainSource>
         <Base>True</Base>
         <Config Condition="'$(Config)'==''">Debug</Config>
-        <TargetedPlatforms>17</TargetedPlatforms>
+        <TargetedPlatforms>1</TargetedPlatforms>
         <AppType>Application</AppType>
         <FrameworkType>VCL</FrameworkType>
         <ProjectVersion>15.3</ProjectVersion>
@@ -76,7 +76,7 @@
         <DCC_Optimize>false</DCC_Optimize>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_Win32)'!=''">
-        <DCC_DcuOutput>.</DCC_DcuOutput>
+        <DCC_DcuOutput>.\dcu</DCC_DcuOutput>
         <Debugger_DebugSourcePath>C:\Program Files (x86)\Embarcadero\RAD Studio\12.0\source\ZeosDBO\src\dbc\;$(Debugger_DebugSourcePath)</Debugger_DebugSourcePath>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <DCC_ExeOutput>.</DCC_ExeOutput>
@@ -161,7 +161,6 @@
                 </Excluded_Packages>
             </Delphi.Personality>
             <Platforms>
-                <Platform value="Android" ActiveMobileDevice="rsxe5_android">True</Platform>
                 <Platform value="Win32">True</Platform>
                 <Platform value="Win64">False</Platform>
             </Platforms>

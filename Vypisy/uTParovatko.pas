@@ -54,7 +54,7 @@ uses
 constructor TParovatko.create(Vypis: TVypis);
 begin
   self.qrAbra := DesU.qrAbra;
-  self.AbraOLE := DesU.getAbraOLE;
+  //self.AbraOLE := DesU.getAbraOLE;
   self.Vypis := Vypis;
   self.listPlatbaDokladPar := TList.Create();
 end;
@@ -247,6 +247,8 @@ begin
 
   Result := 'Zápis pomocí ABRA OLE výpisu pro úèet ' + self.Vypis.abraBankaccount.name + '.';
 
+  AbraOLE := DesU.getAbraOLE;
+
   BStatement_Object:= AbraOLE.CreateObject('@BankStatement');
   BStatement_Data:= AbraOLE.CreateValues('@BankStatement');
   BStatement_Object.PrefillValues(BStatement_Data);
@@ -339,6 +341,7 @@ begin
     end;
   end;
 
+  DesU.abraOLELogout;
 
 end;
 
@@ -363,7 +366,7 @@ begin
   boAA['BankAccount_ID'] := self.Vypis.abraBankaccount.id;
   boAA['ExternalNumber'] := self.Vypis.PoradoveCislo;
   boAA['DocDate$DATE'] := self.Vypis.Datum;
-  boAA['CreatedAt$DATE'] := IntToStr(Trunc(Date));
+  //boAA['CreatedAt$DATE'] := IntToStr(Trunc(Date));
 
 
   for i := 0 to listPlatbaDokladPar.Count - 1 do
@@ -417,6 +420,7 @@ begin
   try begin
     newId := DesU.abraBoCreate(boAA, 'bankstatement');
     Result := Result + ' Èíslo nového výpisu je ' + newID;
+    DesU.abraOLELogout;
   end;
   except on E: exception do
     begin
