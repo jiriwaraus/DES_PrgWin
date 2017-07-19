@@ -43,7 +43,7 @@ type
     lblVypisFioSporiciInfo: TLabel;
     lblVypisCsobInfo: TLabel;
     lblVypisCsobGpc: TLabel;
-    Button1: TButton;
+    btnZavritVypis: TButton;
     btnCustomers: TButton;
     btnHledej: TButton;
     editHledej: TEdit;
@@ -84,8 +84,10 @@ type
     procedure btnVypisFioClick(Sender: TObject);
     procedure btnVypisFioSporiciClick(Sender: TObject);
     procedure btnVypisCsobClick(Sender: TObject);
-    procedure Button1Click(Sender: TObject);
+    procedure btnZavritVypisClick(Sender: TObject);
     procedure btnCustomersClick(Sender: TObject);
+    procedure asgMainCheckBoxClick(Sender: TObject; ACol, ARow: Integer;
+      State: Boolean);
 
 
   public
@@ -120,9 +122,15 @@ uses
 procedure TfmMain.FormShow(Sender: TObject);
 begin
   //DesU.desUtilsInit('');
-  asgMain.CheckFalse := '0';
-  asgMain.CheckTrue := '1';
+  //asgMain.CheckFalse := '0';
+  //asgMain.CheckTrue := '1';
   vyplnNacitaciButtony;
+
+  if DesU.appMode >= 3 then
+  begin
+    btnReconnect.Visible := true;
+    btnSparujPlatby.Visible := true;
+  end;
 
 end;
 
@@ -364,9 +372,13 @@ begin
   end;
 
   if iPlatbaZVypisu.rozdeleniPlatby > 0 then
-    asgMain.Cells[7, i+1] := IntToStr (iPlatbaZVypisu.rozdeleniPlatby) + ' dìlení, ' + iPlatbaZVypisu.zprava
+    asgMain.Cells[8, i+1] := IntToStr (iPlatbaZVypisu.rozdeleniPlatby) + ' dìlení, ' + iPlatbaZVypisu.zprava
   else
-    asgMain.Cells[7, i+1] := iPlatbaZVypisu.zprava;
+    asgMain.Cells[8, i+1] := iPlatbaZVypisu.zprava;
+
+  //asgMain.RemoveCheckBox(7, i);
+  if iPlatbaZVypisu.potrebaPotvrzeniUzivatelem then
+    asgMain.AddCheckBox(7, i+1, iPlatbaZVypisu.jePotvrzeniUzivatelem, iPlatbaZVypisu.jePotvrzeniUzivatelem);
 end;
 
 procedure TfmMain.filtrujZobrazeniPlateb;
@@ -408,6 +420,8 @@ procedure TfmMain.sparujVsechnyPrichoziPlatby;
 var
   i : integer;
 begin
+  asgMain.RowCount := Vypis.Platby.Count + 1;
+
   Parovatko := TParovatko.create(Vypis);
   for i := 0 to Vypis.Platby.Count - 1 do
     sparujPrichoziPlatbu(i);
@@ -615,6 +629,17 @@ begin
   end;
 end;
 
+procedure TfmMain.asgMainCheckBoxClick(Sender: TObject; ACol, ARow: Integer;
+  State: Boolean);
+begin
+  asgMain.row := ARow;
+  urciCurrPlatbaZVypisu();
+
+  currPlatbaZVypisu.jePotvrzeniUzivatelem := State;
+  Memo1.Lines.Add(BoolToStr(State,true));
+
+end;
+
 procedure TfmMain.asgPredchoziPlatbyButtonClick(Sender: TObject; ACol,
   ARow: Integer);
 begin
@@ -725,7 +750,7 @@ var
   hledejResult : TArrayOf2Int;
   newIssuedInvoice : string;
 begin
-  hledejResult := Vypis.hledej(editHledej.Text);
+  hledejResult := Vypis.hledej(Trim(editHledej.Text));
 
   asgMain.row := hledejResult[0] + 1;
   asgMain.col := hledejResult[1];
@@ -826,7 +851,7 @@ begin
   nactiGpc(lblVypisCsobGpc.caption);
 end;
 
-procedure TfmMain.Button1Click(Sender: TObject);
+procedure TfmMain.btnZavritVypisClick(Sender: TObject);
 begin
   asgMain.Visible := false;
   asgMain.ClearNormalCells;
@@ -834,6 +859,7 @@ begin
   asgPredchoziPlatbyVs.ClearNormalCells;
   asgNalezeneDoklady.ClearNormalCells;
   lblHlavicka.Caption := '';
+  DesU.dbAbra.Reconnect;
 end;
 
 
@@ -841,5 +867,6 @@ procedure TfmMain.btnCustomersClick(Sender: TObject);
 begin
   fmCustomers.Show;
 end;
+
 
 end.

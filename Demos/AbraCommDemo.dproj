@@ -98,7 +98,7 @@
         <DCCReference Include="..\DE$_Common\Supertimezone.pas"/>
         <DCCReference Include="..\DE$_Common\Supertypes.pas"/>
         <DCCReference Include="..\DE$_Common\AbraEntities.pas"/>
-        <DCCReference Include="..\DE$_Common\_Arrays.pas"/>
+        <DCCReference Include="..\DE$_Common\AArray.pas"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>

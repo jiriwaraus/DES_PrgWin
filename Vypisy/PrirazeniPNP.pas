@@ -11,22 +11,24 @@ uses
 
 type
   TfmPrirazeniPnp = class(TForm)
-    asgPNP: TAdvStringGrid;
+    asgPnp: TAdvStringGrid;
     btnNactiPnp: TButton;
     btnPriradPnp: TButton;
     MemoPNP: TMemo;
-    btnNactiPnpInfo: TButton;
+    btnNactiPnpAlt: TButton;
     chbNacistPnp: TCheckBox;
     procedure btnNactiPnpClick(Sender: TObject);
-    procedure btnNactiPnpInfoClick(Sender: TObject);
-    procedure asgPNPButtonClick(Sender: TObject; ACol, ARow: Integer);
+    procedure btnNactiPnpAltClick(Sender: TObject);
 
-    procedure asgPNPGetCellColor(Sender: TObject; ARow, ACol: Integer;
+    procedure asgPnpGetCellColor(Sender: TObject; ARow, ACol: Integer;
       AState: TGridDrawState; ABrush: TBrush; AFont: TFont);
-    procedure asgPNPGetAlignment(Sender: TObject; ARow, ACol: Integer;
+    procedure asgPnpGetAlignment(Sender: TObject; ARow, ACol: Integer;
       var HAlign: TAlignment; var VAlign: TVAlignment);
     procedure FormShow(Sender: TObject);
     procedure btnPriradPnpClick(Sender: TObject);
+    procedure asgPnpClickCell(Sender: TObject; ARow, ACol: Integer);
+    procedure asgPNPCanSort(Sender: TObject; ACol: Integer;
+      var DoSort: Boolean);
   public
     procedure nactiPNPinfo;
     procedure nactiPNP;
@@ -35,6 +37,7 @@ type
 
 var
   fmPrirazeniPnp: TfmPrirazeniPnp;
+  asgPnpAllRowsChecked: boolean;
 
 implementation
 
@@ -43,23 +46,6 @@ implementation
 uses
   DesUtils, Superobject;
 
-
-procedure TfmPrirazeniPnp.asgPNPButtonClick(Sender: TObject; ACol, ARow: Integer);
-begin
-  with asgPNP do begin
-    if ACol = 13 then
-    try
-      DesU.opravRadekVypisuPomociPDocument_ID(Cells[16, ARow], Cells[4, ARow], Cells[7, ARow], '03'); //DocumentType je vždy 03 pro faktury
-      RemoveButton(13, ARow);
-      Cells[13, ARow] := 'pøiøaz. ok';
-    except
-      on E: Exception do begin
-        RemoveButton(13, ARow);
-        Application.MessageBox(PChar('Oprava pøiøazením èísla dokladu SELHALA.' + ^M + E.Message), 'Oprava selhala', MB_ICONERROR + MB_OK);
-      end;
-    end;
-  end;
-end;
 
 
 
@@ -93,9 +79,13 @@ begin
   ;
 
 
-  with DesU.qrAbra, asgPNP do begin
+  with DesU.qrAbra, asgPnp do begin
     ClearNormalCells;
     RowCount := 2;
+    //CheckFalse := '0';
+    //CheckTrue := '1';
+    asgPnpAllRowsChecked := true;
+
     radek := 0;
     SQL.Text := SQLStr;
     Open;
@@ -147,9 +137,10 @@ begin
         Cells[10, radek] := format('%m', [FieldByName('LocalAmount').AsCurrency]);
         Cells[11, radek] := format('%m', [FieldByName('Zaplaceno').AsCurrency]);
         Cells[12, radek] := format('%m', [FieldByName('Dluh').AsCurrency]);
-        AddButton(13,radek,55,16,'pøiøaï',haCenter,vaCenter);
+        AddCheckBox(13, radek, True, True);
 
-        for sloupec := 7 to 12 do asgPNP.Colors[sloupec, radek] := clCream;
+
+        for sloupec := 7 to 12 do asgPnp.Colors[sloupec, radek] := clCream;
 
         Application.ProcessMessages;
         Next;
@@ -164,22 +155,27 @@ end;
 procedure TfmPrirazeniPnp.priradPNP;
 var
   SQLStr: AnsiString;
-  Radek: integer;
+  radek: integer;
+  chbstate: boolean;
 begin
 
-  with DesU.qrAbra, asgPNP do begin
+  with DesU.qrAbra, asgPnp do begin
 
-    for radek := 1 to RowCount - 1 do
-    if Cells[6, radek] <> '' then begin
-      try
-        DesU.opravRadekVypisuPomociPDocument_ID(Cells[16, radek], Cells[4, radek], Cells[7, radek], '03'); //DocumentType je vždy 03 pro faktury
-        RemoveButton(13, radek);
-        Cells[13, radek] := 'opr. ok';
-      except
-        on E: Exception do
-        Cells[13, radek] := 'opr. fail';
+    for radek := FixedRows to RowCount - 1 do begin
+      GetCheckBoxState(13, radek, chbstate);
+      if (Cells[6, radek] <> '') AND (chbstate) then
+      begin
+        Cells[13, radek] := '...';
+        RemoveCheckBox(13, radek);
+        try
+          DesU.opravRadekVypisuPomociPDocument_ID(Cells[16, radek], Cells[4, radek], Cells[7, radek], '03'); //DocumentType je vždy 03 pro faktury
+          Cells[13, radek] := 'ok';
+        except
+          on E: Exception do
+          Cells[13, radek] := 'fail';
+        end;
+        Application.ProcessMessages;
       end;
-      Application.ProcessMessages;
     end;
 
     DesU.dbAbra.Reconnect;
@@ -254,7 +250,7 @@ begin
   ;
 
 
-  with DesU.qrAbra, asgPNP do begin
+  with DesU.qrAbra, asgPnp do begin
     ClearNormalCells;
     RowCount := 2;
     Radek := 0;
@@ -296,7 +292,7 @@ begin
   nactiPNP;
 end;
 
-procedure TfmPrirazeniPnp.btnNactiPnpInfoClick(Sender: TObject);
+procedure TfmPrirazeniPnp.btnNactiPnpAltClick(Sender: TObject);
 begin
   nactiPNPinfo;
 end;
@@ -307,7 +303,7 @@ begin
 end;
 
 
-procedure TfmPrirazeniPnp.asgPNPGetCellColor(Sender: TObject; ARow,
+procedure TfmPrirazeniPnp.asgPnpGetCellColor(Sender: TObject; ARow,
   ACol: Integer; AState: TGridDrawState; ABrush: TBrush; AFont: TFont);
 begin
   if (ARow > 0) then begin
@@ -321,12 +317,28 @@ begin
       12: AFont.Color := clFuchsia;
     end;
     case ACol of
-      7..8:// asgPNP.Colors[ACol, ARow] := clCream;
+      7..8:// asgPnp.Colors[ACol, ARow] := clCream;
     end;
   end;
 end;
 
-procedure TfmPrirazeniPnp.asgPNPGetAlignment(Sender: TObject; ARow,
+procedure TfmPrirazeniPnp.asgPNPCanSort(Sender: TObject; ACol: Integer;
+  var DoSort: Boolean);
+begin
+  DoSort := ACol <> 13;
+end;
+
+procedure TfmPrirazeniPnp.asgPnpClickCell(Sender: TObject; ARow, ACol: Integer);
+var
+  radek: integer;
+begin
+  asgPnpAllRowsChecked := not asgPnpAllRowsChecked;
+  if (ARow = 0) and (ACol = 13) then
+    for radek := 1 to asgPnp.RowCount-1 do
+      asgPnp.SetCheckBoxState(ACol, radek, asgPnpAllRowsChecked);
+end;
+
+procedure TfmPrirazeniPnp.asgPnpGetAlignment(Sender: TObject; ARow,
   ACol: Integer; var HAlign: TAlignment; var VAlign: TVAlignment);
 begin
   case ACol of
@@ -336,6 +348,9 @@ end;
 
 procedure TfmPrirazeniPnp.FormShow(Sender: TObject);
 begin
+  if DesU.appMode >= 3 then
+    btnNactiPnpAlt.Visible := true;
+
   nactiPNP;
 end;
 

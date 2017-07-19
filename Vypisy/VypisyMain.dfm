@@ -3,7 +3,7 @@ object fmMain: TfmMain
   Top = 0
   Caption = 'Na'#269'ten'#237', oprava a ulo'#382'en'#237' bankovn'#237'ho v'#253'pisu'
   ClientHeight = 801
-  ClientWidth = 1346
+  ClientWidth = 1387
   Color = clBtnFace
   Constraints.MinHeight = 721
   Constraints.MinWidth = 1312
@@ -16,7 +16,7 @@ object fmMain: TfmMain
   OnClose = FormClose
   OnShow = FormShow
   DesignSize = (
-    1346
+    1387
     801)
   PixelsPerInch = 96
   TextHeight = 13
@@ -81,10 +81,11 @@ object fmMain: TfmMain
   object pnBottom: TPanel
     Left = 0
     Top = 655
-    Width = 1346
+    Width = 1387
     Height = 146
     Align = alBottom
     TabOrder = 1
+    ExplicitWidth = 1346
     object lblNalezeneDoklady: TLabel
       Left = 10
       Top = 6
@@ -240,12 +241,13 @@ object fmMain: TfmMain
     end
   end
   object pnRight: TPanel
-    Left = 899
+    Left = 940
     Top = 0
     Width = 447
     Height = 655
     Align = alRight
     TabOrder = 2
+    ExplicitLeft = 899
     object lblPrechoziPlatbyZUctu: TLabel
       Left = 6
       Top = 10
@@ -602,6 +604,7 @@ object fmMain: TfmMain
       Height = 17
       Caption = 'Sp'#225'ruj platby'
       TabOrder = 2
+      Visible = False
       OnClick = btnSparujPlatbyClick
     end
     object btnReconnect: TButton
@@ -611,6 +614,7 @@ object fmMain: TfmMain
       Height = 25
       Caption = 'Reconnect'
       TabOrder = 3
+      Visible = False
       OnClick = btnReconnectClick
     end
     object chbZobrazitBezproblemove: TCheckBox
@@ -661,7 +665,7 @@ object fmMain: TfmMain
       TabOrder = 7
       OnClick = btnShowPrirazeniPnpFormClick
     end
-    object Button1: TButton
+    object btnZavritVypis: TButton
       Left = 8
       Top = 283
       Width = 93
@@ -674,7 +678,7 @@ object fmMain: TfmMain
       Font.Style = [fsBold]
       ParentFont = False
       TabOrder = 8
-      OnClick = Button1Click
+      OnClick = btnZavritVypisClick
     end
     object btnCustomers: TButton
       Left = 14
@@ -741,11 +745,11 @@ object fmMain: TfmMain
   object asgMain: TAdvStringGrid
     Left = 112
     Top = 29
-    Width = 787
+    Width = 824
     Height = 626
     Cursor = crDefault
     Anchors = [akLeft, akTop, akBottom]
-    ColCount = 8
+    ColCount = 9
     DefaultRowHeight = 20
     DrawingStyle = gdsClassic
     Enabled = False
@@ -769,6 +773,7 @@ object fmMain: TfmMain
     OnCanEditCell = asgMainCanEditCell
     OnCellsChanged = asgMainCellsChanged
     OnButtonClick = asgMainButtonClick
+    OnCheckBoxClick = asgMainCheckBoxClick
     ActiveCellFont.Charset = DEFAULT_CHARSET
     ActiveCellFont.Color = clWindowText
     ActiveCellFont.Height = -11
@@ -782,8 +787,8 @@ object fmMain: TfmMain
       #268'. '#250#269'tu'
       'Text'
       'Datum'
-      'pozn.'
-      '')
+      ''
+      'pozn.')
     ControlLook.FixedGradientHoverFrom = clGray
     ControlLook.FixedGradientHoverTo = clWhite
     ControlLook.FixedGradientDownFrom = clGray
@@ -875,7 +880,8 @@ object fmMain: TfmMain
       132
       135
       64
-      172)
+      28
+      190)
   end
   object NactiGpcDialog: TOpenDialog
     Left = 156

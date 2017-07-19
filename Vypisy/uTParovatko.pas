@@ -19,6 +19,7 @@ type
     CastkaPouzita : currency;
     Popis : string;
     vazbaNaDoklad : boolean;
+    pdparTyp : string;
   end;
 
   TParovatko = class
@@ -32,7 +33,7 @@ type
     procedure sparujPlatbu(Platba : TPlatbaZVypisu);
     procedure odparujPlatbu(currPlatba : TPlatbaZVypisu);
     procedure vytvorPDPar(Platba : TPlatbaZVypisu; Doklad : TDoklad;
-                Castka: currency; popis : string; vazbaNaDoklad : boolean);
+                Castka: currency; popis : string; vazbaNaDoklad : boolean; pdparTyp : string = '');
     function zapisDoAbry() : string;
     function zapisDoAbryOLE_naprimo() : string;
     function zapisDoAbry_AA() : string;
@@ -61,6 +62,35 @@ end;
 
 
 procedure TParovatko.sparujPlatbu(Platba : TPlatbaZVypisu);
+
+  procedure zpracujPreplatek(Platba : TPlatbaZVypisu; Doklad : TDoklad; Castka: currency);
+  var
+    vsPatriKreditniSmlouve : boolean;
+  begin
+    vsPatriKreditniSmlouve := DesU.isCreditContract(Platba.VS);
+    if vsPatriKreditniSmlouve then
+      Platba.potrebaPotvrzeniUzivatelem := true;
+
+    if vsPatriKreditniSmlouve AND Platba.jePotvrzeniUzivatelem then
+    begin
+      vytvorPDPar(Platba, nil, Castka, 'kredit Internet |' , false, 'InternetKredit');
+      Platba.zprava := 'kredit ' + FloatToStr(Castka) + ' KË';
+      Platba.problemLevel := 3;
+    end
+    else
+    begin
+      if Platba.getProcentoPredchozichPlatebZeStejnehoUctu() > 0.5 then begin
+        vytvorPDPar(Platba, Doklad, Castka, 'p¯epl. | ' + Platba.VS + ' |' , false);
+        Platba.zprava := 'p¯epl. ' + FloatToStr(Castka) + ' KË';
+        Platba.problemLevel := 1;
+      end else begin
+        vytvorPDPar(Platba, Doklad, Castka, 'p¯epl. | ' + Platba.VS + ' |', false);
+        Platba.zprava := 'nezn·m˝ p¯ep. ' + FloatToStr(Platba.Castka) + ' KË';
+        Platba.problemLevel := 5;
+      end;
+    end;
+  end;
+
 var
   i : integer;
   nezaplaceneDoklady : TList;
@@ -90,7 +120,7 @@ begin
 
     if Platba.isVoipKredit then
     begin
-      vytvorPDPar(Platba, nil, Platba.Castka, '', false);
+      vytvorPDPar(Platba, nil, Platba.Castka, 'kredit VoIP |', false);
       Platba.zprava := 'VoIP kredit';
       Platba.problemLevel := 3;
       Exit;
@@ -111,18 +141,8 @@ begin
         vytvorPDPar(Platba, iDoklad, Platba.Castka, '', false);
         Platba.zprava := 'zn·m˝ kredit';
         Platba.problemLevel := 0;
-      end
-      else
-      begin
-        if Platba.getProcentoPredchozichPlatebZeStejnehoUctu() > 0.5 then begin
-          vytvorPDPar(Platba, iDoklad, Platba.Castka, 'p¯epl. | ' + Platba.VS + ' |', false);
-          Platba.zprava := 'zn·m˝ p¯ep. ' + FloatToStr(Platba.Castka) + ' KË';
-          Platba.problemLevel := 1;
-        end else begin
-          vytvorPDPar(Platba, iDoklad, Platba.Castka, 'p¯epl. | ' + Platba.VS + ' |', false);
-          Platba.zprava := 'nezn·m˝ p¯ep. ' + FloatToStr(Platba.Castka) + ' KË';
-          Platba.problemLevel := 5;
-        end;
+      end else begin
+        zpracujPreplatek(Platba, iDoklad, Platba.Castka);
       end;
       Exit;
     end;
@@ -140,7 +160,7 @@ begin
       begin
         if (kNaparovani = zbyvaCastka) then
         begin
-          vytvorPDPar(Platba, iDoklad, zbyvaCastka, '', true); //p¯esnÏ |
+          vytvorPDPar(Platba, iDoklad, zbyvaCastka, '', true); //p¯esnÏ
           Platba.zprava := 'p¯esnÏ';
           if Platba.rozdeleniPlatby > 0 then
             Platba.problemLevel := 0 //bylo 1
@@ -162,7 +182,8 @@ begin
 
         if (kNaparovani < zbyvaCastka) then
         begin
-          vytvorPDPar(Platba, iDoklad, kNaparovani, '', true); //p¯esnÏ (rozpad) |
+          //vytvorPDPar(Platba, iDoklad, kNaparovani, 'p¯i¯azeno ' + floattostr(kNaparovani), true); // dÏlenÌ
+          vytvorPDPar(Platba, iDoklad, kNaparovani, '', true); // dÏlenÌ
           zbyvaCastka := zbyvaCastka - kNaparovani;
           Inc(Platba.rozdeleniPlatby);
         end;
@@ -172,9 +193,7 @@ begin
 
     if (zbyvaCastka > 0) then
     begin
-      vytvorPDPar(Platba, iDoklad, zbyvaCastka, 'p¯epl. | ' + Platba.VS + ' |' , false);
-      Platba.zprava := 'p¯epl. ' + FloatToStr(zbyvaCastka) + ' KË';
-      Platba.problemLevel := 1;
+      zpracujPreplatek(Platba, iDoklad, zbyvaCastka);
     end;
 
     if (Platba.getPocetPredchozichPlatebZeStejnehoUctu() = 0)
@@ -206,7 +225,7 @@ end;
 
 
 procedure TParovatko.vytvorPDPar(Platba : TPlatbaZVypisu; Doklad : TDoklad;
-            Castka: currency; popis : string; vazbaNaDoklad : boolean);
+            Castka: currency; popis : string; vazbaNaDoklad : boolean; pdparTyp : string = '');
 var
   iPDPar : TPlatbaDokladPar;
 begin
@@ -220,6 +239,7 @@ begin
   iPDPar.CastkaPouzita := Castka;
   iPDPar.Popis := Popis;
   iPDPar.vazbaNaDoklad := vazbaNaDoklad;
+  iPDPar.pdparTyp := pdparTyp;
   self.listPlatbaDokladPar.Add(iPDPar);
 end;
 
@@ -240,7 +260,7 @@ var
   BStatementRow_Data,
   BStatement_Data_Coll,
   NewID : variant;
-  faZaVoipKreditId : string;
+  faId : string;
 begin
 
   if (listPlatbaDokladPar.Count = 0) then Exit;
@@ -309,14 +329,14 @@ begin
 
     if iPDPar.Platba.isVoipKredit then
     begin
-      faZaVoipKreditId := DesU.vytvorFaZaVoipKredit(iPDPar.Platba.VS, iPDPar.CastkaPouzita, iPDPar.Platba.Datum);
-      if faZaVoipKreditId = '' then
+      faId := DesU.vytvorFaZaVoipKredit(iPDPar.Platba.VS, iPDPar.CastkaPouzita, iPDPar.Platba.Datum);
+      if faId = '' then
         //pokud nenajdeme podle VS firmu, zapÌöeme VS
         BStatementRow_Data.ValueByName('VarSymbol') := iPDPar.Platba.VS
       else begin
         //pokud jsme firmu naöli, byla pro ni vytvo¯ena fa a tu teÔ p¯ipojÌme. VS abra automaticky doplnÌ
         BStatementRow_Data.ValueByName('PDocumentType') := '03'; // je to vûdy faktura
-        BStatementRow_Data.ValueByName('PDocument_ID') := faZaVoipKreditId;
+        BStatementRow_Data.ValueByName('PDocument_ID') := faId;
       end;
 
     end;
@@ -351,7 +371,7 @@ var
   i, j : integer;
   iPDPar : TPlatbaDokladPar;
   boAA, boRowAA: TAArray;
-  newID, faZaVoipKreditId : string;
+  newID, faId : string;
 begin
 
   if (listPlatbaDokladPar.Count = 0) then Exit;
@@ -375,12 +395,15 @@ begin
 
     boRowAA := boAA.addRow();
     boRowAA['Amount'] := iPDPar.CastkaPouzita;
-    boRowAA['Credit'] := IfThen(iPDPar.Platba.Kredit,'1','0');
+    //boRowAA['Credit'] := IfThen(iPDPar.Platba.Kredit,'1','0'); //pro WebApi nefungovalo dob¯e
+    boRowAA['Credit'] := iPDPar.Platba.Kredit;
     boRowAA['BankAccount'] := iPDPar.Platba.cisloUctu;
     boRowAA['Text'] := Trim(iPDPar.popis + ' ' + iPDPar.Platba.nazevKlienta);
     boRowAA['SpecSymbol'] := iPDPar.Platba.SS;
     boRowAA['DocDate$DATE'] := iPDPar.Platba.Datum;
     boRowAA['AccDate$DATE'] := iPDPar.Platba.Datum;
+    boRowAA['Division_Id'] := DesU.getAbraDivisionId;
+    boRowAA['Currency_id'] := DesU.getAbraCurrencyId;
 
 
     if Assigned(iPDPar.Doklad) then
@@ -394,22 +417,36 @@ begin
         boRowAA['Firm_ID'] := iPDPar.Doklad.Firm_ID;
       end
     else //nenÌ Assigned(iPDPar.Doklad)
-      if not(iPDPar.Platba.isVoipKredit) then
+      if not(iPDPar.Platba.isVoipKredit) AND not(iPDPar.pdparTyp = 'InternetKredit') then  //tyto podmÌnky nejsou nutnÈ, Abra by Firm_ID p¯ebila hodnotou z fa
         boRowAA['Firm_ID'] := '3Y90000101'; //aù je firma DES. jinak se tam d· jako default "drobn˝ n·kup" then
+
+
+
+    if iPDPar.pdparTyp = 'InternetKredit' then
+    begin
+      faId := DesU.vytvorFaZaInternetKredit(iPDPar.Platba.VS, iPDPar.CastkaPouzita, iPDPar.Platba.Datum);
+      if faId = '' then
+        //pokud nenajdeme podle VS firmu, zapÌöeme VS - nemÏlo by se st·t, ale pro jistotu
+        boRowAA['VarSymbol'] := iPDPar.Platba.VS
+      else begin
+        //byla vytvo¯ena fa a tu teÔ p¯ipojÌme. VS pak abra automaticky doplnÌ
+        boRowAA['PDocumentType'] := '03'; // je to vûdy faktura
+        boRowAA['PDocument_ID'] := faId;
+      end;
+    end;
 
 
     if iPDPar.Platba.isVoipKredit then
     begin
-      faZaVoipKreditId := DesU.vytvorFaZaVoipKredit(iPDPar.Platba.VS, iPDPar.CastkaPouzita, iPDPar.Platba.Datum);
-      if faZaVoipKreditId = '' then
-        //pokud nenajdeme podle VS firmu, zapÌöeme VS
+      faId := DesU.vytvorFaZaVoipKredit(iPDPar.Platba.VS, iPDPar.CastkaPouzita, iPDPar.Platba.Datum);
+      if faId = '' then
+        //pokud nenajdeme podle VS firmu, zapÌöeme VS - nemÏlo by se st·t, ale pro jistotu
         boRowAA['VarSymbol'] := iPDPar.Platba.VS
       else begin
-        //pokud jsme firmu naöli, byla pro ni vytvo¯ena fa a tu teÔ p¯ipojÌme. VS abra automaticky doplnÌ
+        //byla vytvo¯ena fa a tu teÔ p¯ipojÌme. VS pak abra automaticky doplnÌ
         boRowAA['PDocumentType'] := '03'; // je to vûdy faktura
-        boRowAA['PDocument_ID'] := faZaVoipKreditId;
+        boRowAA['PDocument_ID'] := faId;
       end;
-
     end;
 
     if iPDPar.Platba.Debet then

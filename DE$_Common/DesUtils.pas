@@ -6,7 +6,7 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs,
   //Windows, Messages, SysUtils, Variants, Classes, Dialogs, Forms,
-  StrUtils,  IniFiles, ComObj, //, Grids, AdvObj, StdCtrls,
+  StrUtils,  IOUtils, IniFiles, ComObj, //, Grids, AdvObj, StdCtrls,
   IdHTTP, Data.DB, ZAbstractRODataset, ZAbstractDataset, ZDataset,
   ZAbstractConnection, ZConnection, Superobject, AArray;
 
@@ -26,6 +26,7 @@ type
     procedure opravRadekVypisuPomociPDocument_ID(Vypis_ID, RadekVypisu_ID, PDocument_ID, PDocumentType : string);
     procedure opravRadekVypisuPomociVS(Vypis_ID, RadekVypisu_ID, VS : string);
     function getOleObjDataDisplay(abraOleObj_Data : variant) : ansistring;
+    function vytvorFaZaInternetKredit(VS : string; castka : currency; datum : double) : string;
     function vytvorFaZaVoipKredit(VS : string; castka : currency; datum : double) : string;
 
 
@@ -33,10 +34,13 @@ type
       PROGRAM_PATH,
       GPC_PATH,
       abraDefaultCommMethod,
-      abraWebApiUrl,
+      abraConnName,
       abraUserUN,
-      abraUserPW : string;
+      abraUserPW,
+      abraWebApiUrl : string;
+      appMode: integer;
       AbraOLE: variant;
+
 
       function getAbraOLE() : variant;
       procedure abraOLELogout();
@@ -67,10 +71,13 @@ type
       function getAbraIncometypeId(code : string) : string;
       function getAbraBusorderId(name : string) : string;
       function getAbraDivisionId() : string;
+      function getAbraCurrencyId(code : string = 'CZK') : string;
 
       function getAbracodeByVs(vs : string) : string;
       function getAbracodeByContractNumber(cnumber : string) : string;
       function getFirmIdByCode(code : string) : string;
+      function isVoipContract(cnumber : string) : boolean;
+      function isCreditContract(cnumber : string) : boolean;
 
     private
       function newAbraIdHttp(timeout : single; isJsonPost : boolean) : TIdHTTP;
@@ -91,6 +98,7 @@ function RemoveSpaces(const s: string): string;
 function FindInFolder(sFolder, sFile: string; bUseSubfolders: Boolean): string;
 procedure writeToFile(pFileName, pContent : string);
 function LoadFileToStr(const FileName: TFileName): ansistring;
+function RandString(const stringsize: integer): string;
 
 
 const
@@ -141,10 +149,12 @@ begin
     adpIniFile := TIniFile.Create(PROGRAM_PATH + '..\DE$_Common\abraDesProgramy.ini');
 
   with adpIniFile do try
+    appMode := strtoint(ReadString('Preferences', 'AppMode', '1'));
     abraDefaultCommMethod := ReadString('Preferences', 'AbraDefaultCommMethod', 'OLE');
-    abraWebApiUrl := ReadString('Preferences', 'AbraWebApiUrl', '');
+    abraConnName := ReadString('Preferences', 'abraConnName', '');
     abraUserUN := ReadString('Preferences', 'AbraUserUN', '');
     abraUserPW := ReadString('Preferences', 'AbraUserPW', '');
+    abraWebApiUrl := ReadString('Preferences', 'AbraWebApiUrl', '');
     GPC_PATH := IncludeTrailingPathDelimiter(ReadString('Preferences', 'GpcPath', ''));
 
     dbAbra.HostName := ReadString('Preferences', 'AbraHN', '');
@@ -199,8 +209,8 @@ begin
   Result := null;
   if VarIsEmpty(AbraOLE) then try
     AbraOLE := CreateOLEObject('AbraOLE.Application');
-    if not AbraOLE.Connect('@DES') then begin
-      ShowMessage('Problém s Abrou (connect DES).');
+    if not AbraOLE.Connect('@' + abraConnName) then begin
+      ShowMessage('Problém s Abrou (connect ' + abraConnName + ').');
       Exit;
     end;
     //Zprava('Pøipojeno k Abøe (connect DES).');
@@ -297,8 +307,10 @@ procedure TDesU.logJson_So(jsonSO: ISuperObject; header : string);
 var
   myDate : TDateTime;
 begin
-  myDate := Now;
-  writeToFile(PROGRAM_PATH + '\log\json\' + formatdatetime('yymmdd-hhnnss', Now) +'.txt', header + sLineBreak + jsonSO.AsJSon(true));
+  if appMode >= 3 then begin
+    myDate := Now;
+    writeToFile(PROGRAM_PATH + '\log\json\' + formatdatetime('yymmdd-hhnnss', Now) + '_' + RandString(3) + '.txt', header + sLineBreak + jsonSO.AsJSon(true));
+  end;
 end;
 
 function TDesU.abraBoCreate_So(jsonSO: ISuperObject; abraBoName : string) : string;
@@ -549,8 +561,12 @@ procedure TDesU.logJson(boAAjson, header : string);
 var
   myDate : TDateTime;
 begin
-  myDate := Now;
-  writeToFile(PROGRAM_PATH + '\log\json\' + formatdatetime('yymmdd-hhnnss', Now) +'.txt', header + sLineBreak + boAAjson);
+  if appMode >= 3 then begin
+    if not DirectoryExists(PROGRAM_PATH + '\log\json\') then
+      Forcedirectories(PROGRAM_PATH + '\log\json\');
+    myDate := Now;
+    writeToFile(PROGRAM_PATH + '\log\json\' + formatdatetime('yymmdd-hhnnss', Now) + '_' + RandString(3) + '.txt', header + sLineBreak + boAAjson);
+  end;
 end;
 
 function TDesU.abraBoCreate(boAA: TAArray; abraBoName : string) : string;
@@ -760,6 +776,62 @@ begin
   end;
 end;
 
+function TDesU.vytvorFaZaInternetKredit(VS : string; castka : currency; datum : double) : string;
+var
+  i: integer;
+  boAA, boRowAA: TAArray;
+  newId, firmAbraCode: String;
+begin
+
+  firmAbraCode := self.getAbracodeByContractNumber(VS);
+  if firmAbraCode = '' then begin
+    Result := '';
+    Exit;
+  end;
+
+
+  boAA := TAArray.Create;
+  boAA['DocQueue_ID'] := self.getAbraDocqueueId('FO2', '03');
+  boAA['Period_ID'] := self.getAbraPeriodId(datum);
+  boAA['VatDate$DATE'] := datum;
+  boAA['DocDate$DATE'] := datum;
+  boAA['Firm_ID'] := self.getFirmIdByCode(firmAbraCode);
+  boAA['Description'] := 'Kredit Internet';
+  boAA['Varsymbol'] := VS;
+  boAA['PricesWithVat'] := true;
+
+
+  // 1. øádek
+  boRowAA := boAA.addRow();
+  boRowAA['Rowtype'] := 0;
+  boRowAA['Text'] := ' ';
+  boRowAA['Division_Id'] := self.getAbraDivisionId;
+
+ //2. øádek
+  boRowAA := boAA.addRow();
+  boRowAA['Rowtype'] := 1;
+  boRowAA['Totalprice'] := castka;
+  boRowAA['Text'] := 'Kredit Internet';
+  boRowAA['Vatrate_Id'] := self.getAbraVatrateId('Výst21');
+  boRowAA['Incometype_Id'] := self.getAbraIncometypeId('SL'); // služby
+  //boRowAA['BusOrder_Id'] := self.getAbraBusorderId('kredit Internet');
+  boRowAA['Division_Id'] := self.getAbraDivisionId;
+
+  //writeToFile(ExtractFilePath(ParamStr(0)) + '!json' + formatdatetime('hhnnss', Now) + '.txt', jsonBo.AsJSon(true));
+
+  try begin
+    newId := DesU.abraBoCreate(boAA, 'issuedinvoice');
+    Result := newId;
+  end;
+  except on E: exception do
+    begin
+      Application.MessageBox(PChar('Problem ' + ^M + E.Message), 'Vytvoøení fa');
+      Result := 'Chyba pøi vytváøení faktury';
+    end;
+  end;
+
+end;
+
 function TDesU.vytvorFaZaVoipKredit(VS : string; castka : currency; datum : double) : string;
 var
   i: integer;
@@ -780,7 +852,6 @@ begin
   boAA['VatDate$DATE'] := datum;
   boAA['DocDate$DATE'] := datum;
   boAA['Firm_ID'] := self.getFirmIdByCode(firmAbraCode);
-  //jsonBo.S['Firm_ID'] :='2SZ1000101';
   boAA['Description'] := 'Kredit VoIP';
   boAA['Varsymbol'] := VS;
   boAA['PricesWithVat'] := true;
@@ -911,6 +982,11 @@ begin
   Result := '1000000101';
 end;
 
+function TDesU.getAbraCurrencyId(code : string = 'CZK') : string;
+begin
+  Result := '0000CZK000'; //pouze CZK
+end;
+
 function TDesU.getAbracodeByVs(vs : string) : string;
 begin
 
@@ -954,6 +1030,37 @@ begin
   end;
 end;
 
+function TDesU.isVoipContract(cnumber : string) : boolean;
+begin
+
+  with DesU.qrZakos do begin
+    SQL.Text := 'SELECT co.id FROM contracts co  '
+              + ' WHERE co.number = ''' + cnumber + ''''
+              + ' AND co.type = ''VoipContract''';
+    Open;
+    if not Eof then
+      Result := true
+    else
+      Result := false;
+    Close;
+  end;
+end;
+
+function TDesU.isCreditContract(cnumber : string) : boolean;
+begin
+
+  with DesU.qrZakos do begin
+    SQL.Text := 'SELECT co.id FROM contracts co  '
+              + ' WHERE co.number = ''' + cnumber + ''''
+              + ' AND co.credit = 1';
+    Open;
+    if not Eof then
+      Result := true
+    else
+      Result := false;
+    Close;
+  end;
+end;
 
 
 {***************************************************************************}
@@ -1106,6 +1213,15 @@ begin
     finally
      FileStream.Free;
     end;
+end;
+
+function RandString(const stringsize: integer): string;
+var
+  i: integer;
+  const ss: string = 'abcdefghijklmnopqrstuvwxyz';
+begin
+  for i:=1 to stringsize do
+      Result:=Result + ss[random(length(ss)) + 1];
 end;
 
 
