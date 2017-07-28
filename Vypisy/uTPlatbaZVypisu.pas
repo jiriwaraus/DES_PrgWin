@@ -38,10 +38,10 @@ type
     kodMeny: string[4];
     Datum: double;
     kredit, debet: boolean;
-    isInternetKredit, isVoipKredit: boolean;
+    //isInternetKredit, isVoipKredit: boolean;
     znamyPripad: boolean;
     potrebaPotvrzeniUzivatelem: boolean;
-    jePotvrzeniUzivatelem: boolean;
+    jePotvrzenoUzivatelem: boolean;
     zprava : string;
     vsechnyDoklady: boolean;
     pocetNacitanychPP: integer;
@@ -126,10 +126,10 @@ begin
   self.Datum := Str6digitsToDate(copy(gpcLine, 123, 6));
 
   //self.isInternetKredit := false; //asi nebude vlastost, protoze platba muze but rozdelena a cast bude kredit a cast ne
-  self.isVoipKredit := false;
+  //self.isVoipKredit := false; //dtto
   self.znamyPripad := false;
   self.potrebaPotvrzeniUzivatelem := false;
-  self.jePotvrzeniUzivatelem := true;
+  self.jePotvrzenoUzivatelem := true;
   self.pocetNacitanychPP := 5;
   self.vsechnyDoklady := false;
   self.VS_orig := self.VS;
@@ -138,11 +138,14 @@ begin
   if (self.kodUctovani = '2') OR (self.kodUctovani = '4') then self.kredit := true; //2 je kredit, 4 je storno debetu
   self.debet := not self.kredit;
 
+  { pøepsáno chování VoIP kreditu, bude se brát až z toho co zbyde po napárování na faktury
   //pokud je VS ve VoIP formátu nebo je SS 8888 tak se podívám jestli je v dbZakos contract oznacen jako VoipContract
   //nedívám se tedy pro všechny záznamy kvùli šetøení èasu a možným chybám v dbZakos
   if ((copy(self.VS, 5, 1) = '9') AND (copy(self.VS, 1, 2) = '20')) OR (self.SS = '8888') then
     //self.isVoipKredit := true; //bylo, ale navíc kontrola na typ
     self.isVoipKredit := DesU.isVoipContract(self.VS);
+  }
+
 
   self.cisloUctuKZobrazeni := removeLeadingZeros(self.cisloUctu);
   if kredit AND (cisloUctuKZobrazeni = '2100098382/2010') then setZnamyPripad('z BÚ');

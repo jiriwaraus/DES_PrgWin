@@ -227,6 +227,7 @@ var
   i, pocetPlatebGpc, kontrolaDvojitaPlatba: integer;
 begin
   try
+    DesU.dbAbra.Reconnect;
     AssignFile(GpcInputFile, GpcFilename);
     Reset(GpcInputFile);
 
@@ -335,7 +336,6 @@ begin
     begin
       RemoveButton(0, i+1);
       iPlatbaZVypisu := TPlatbaZVypisu(Vypis.Platby[i]);
-      //AddCheckBox(0, i+1, True, True);
       if iPlatbaZVypisu.VS <> iPlatbaZVypisu.VS_orig then
         AddButton(0, i+1, 76, 16, iPlatbaZVypisu.VS_orig, haCenter, vaCenter);
       if (iPlatbaZVypisu.kredit) then
@@ -376,9 +376,9 @@ begin
   else
     asgMain.Cells[8, i+1] := iPlatbaZVypisu.zprava;
 
-  //asgMain.RemoveCheckBox(7, i);
+  asgMain.RemoveCheckBox(7, i+1);
   if iPlatbaZVypisu.potrebaPotvrzeniUzivatelem then
-    asgMain.AddCheckBox(7, i+1, iPlatbaZVypisu.jePotvrzeniUzivatelem, iPlatbaZVypisu.jePotvrzeniUzivatelem);
+    asgMain.AddCheckBox(7, i+1, iPlatbaZVypisu.jePotvrzenoUzivatelem, false);
 end;
 
 procedure TfmMain.filtrujZobrazeniPlateb;
@@ -635,8 +635,8 @@ begin
   asgMain.row := ARow;
   urciCurrPlatbaZVypisu();
 
-  currPlatbaZVypisu.jePotvrzeniUzivatelem := State;
-  Memo1.Lines.Add(BoolToStr(State,true));
+  currPlatbaZVypisu.jePotvrzenoUzivatelem := State;
+  //Memo1.Lines.Add(BoolToStr(State,true));
 
 end;
 
@@ -809,14 +809,6 @@ end;
 procedure TfmMain.btnShowPrirazeniPnpFormClick(Sender: TObject);
 begin
   fmPrirazeniPnp.Show;
-  {
-  with fmPrirazeniPnp.Create(self) do
-  try
-    ShowModal;
-  finally
-    Free;
-  end;
-  }
 end;
 
 procedure TfmMain.asgMainButtonClick(Sender: TObject; ACol, ARow: Integer);

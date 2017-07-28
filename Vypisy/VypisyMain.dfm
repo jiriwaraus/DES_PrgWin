@@ -85,7 +85,6 @@ object fmMain: TfmMain
     Height = 146
     Align = alBottom
     TabOrder = 1
-    ExplicitWidth = 1346
     object lblNalezeneDoklady: TLabel
       Left = 10
       Top = 6
@@ -247,7 +246,6 @@ object fmMain: TfmMain
     Height = 655
     Align = alRight
     TabOrder = 2
-    ExplicitLeft = 899
     object lblPrechoziPlatbyZUctu: TLabel
       Left = 6
       Top = 10
@@ -880,8 +878,8 @@ object fmMain: TfmMain
       132
       135
       64
-      28
-      190)
+      22
+      195)
   end
   object NactiGpcDialog: TOpenDialog
     Left = 156
