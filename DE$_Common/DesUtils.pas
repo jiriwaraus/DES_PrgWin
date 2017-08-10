@@ -76,6 +76,7 @@ type
       function getAbracodeByVs(vs : string) : string;
       function getAbracodeByContractNumber(cnumber : string) : string;
       function getFirmIdByCode(code : string) : string;
+      function getZustatekByAccountId (accountId : string; datum : double) : double;
       function isVoipContract(cnumber : string) : boolean;
       function isCreditContract(cnumber : string) : boolean;
 
@@ -98,6 +99,7 @@ function RemoveSpaces(const s: string): string;
 function FindInFolder(sFolder, sFile: string; bUseSubfolders: Boolean): string;
 procedure writeToFile(pFileName, pContent : string);
 function LoadFileToStr(const FileName: TFileName): ansistring;
+function FloatToStrFD (pFloat : extended) : string;
 function RandString(const stringsize: integer): string;
 
 
@@ -475,7 +477,7 @@ begin
     Result := self.abraBoUpdate_SoWebApi(jsonSO, abraBoName, abraBoId, abraBoChildName, abraBoChildId)
   else
     Result := self.abraBoUpdate_SoOLE(jsonSO, abraBoName, abraBoId, abraBoChildName, abraBoChildId);
-end;
+end;
 
 
 
@@ -666,7 +668,7 @@ begin
     Result := self.abraBoUpdateWebApi(boAA, abraBoName, abraBoId, abraBoChildName, abraBoChildId)
   else
     Result := self.abraBoUpdateOLE(boAA, abraBoName, abraBoId, abraBoChildName, abraBoChildId);
-end;
+end;
 
 
 
@@ -1030,6 +1032,25 @@ begin
   end;
 end;
 
+function TDesU.getZustatekByAccountId (accountId : string; datum : double) : double;
+begin
+
+  with DesU.qrAbra do begin
+    SQL.Text := 'SELECT (DEBITBEGINNING - CREDITBEGINNING + DEBITBEGINNIGTURNOVER'
+      + ' - CREDITBEGINNIGTURNOVER + DEBITTURNOVER - CREDITTURNOVER) as zustatek'
+      + ' FROM ACCOUNTCALCULUS'
+      + ' (''%'',''' + accountId + ''',null,null,'
+      + FloatToStrFD(datum) + ',' + FloatToStrFD(datum) + ','
+      + ' '''',''0'','''',''0'','''',''0'','''',''0'','
+      + ' null,null,null,0)';
+    Open;
+    if not Eof then begin
+      Result := FieldByName('zustatek').AsFloat;
+    end;
+    Close;
+  end;
+end;
+
 function TDesU.isVoipContract(cnumber : string) : boolean;
 begin
 
@@ -1224,7 +1245,12 @@ begin
       Result:=Result + ss[random(length(ss)) + 1];
 end;
 
-
+// FloatToStr s nahrazením èárek teèkami
+function FloatToStrFD (pFloat : extended) : string;
+begin
+  Result := AnsiReplaceStr(FloatToStr(pFloat), ',', '.');
+end;
 
 
 end.
+
