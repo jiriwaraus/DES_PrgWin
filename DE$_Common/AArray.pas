@@ -208,7 +208,7 @@ begin
     varString, varUString, varStrArg:
       Result := ' "' + self.Keys[index] +  '" : "' + JsonEscapeString(VarToStr(self.Values[index])) + '",' + sLineBreak;
   else
-      Result := ' "' + self.Keys[index] +  '" : ' + AnsiReplaceStr(VarToStr(self.Values[index]), ',', '.') + ',' + sLineBreak;
+      Result := ' "' + self.Keys[index] +  '" : ' + LowerCase(AnsiReplaceStr(VarToStr(self.Values[index]), ',', '.')) + ',' + sLineBreak;
   end;
 
 end;

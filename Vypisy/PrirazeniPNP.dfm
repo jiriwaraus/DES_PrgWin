@@ -45,7 +45,8 @@ object fmPrirazeniPnp: TfmPrirazeniPnp
     HoverRowCells = [hcNormal, hcSelected]
     OnGetCellColor = asgPNPGetCellColor
     OnGetAlignment = asgPNPGetAlignment
-    OnButtonClick = asgPNPButtonClick
+    OnCanSort = asgPNPCanSort
+    OnClickCell = asgPnpClickCell
     ActiveCellFont.Charset = DEFAULT_CHARSET
     ActiveCellFont.Color = clWindowText
     ActiveCellFont.Height = -11
@@ -183,7 +184,7 @@ object fmPrirazeniPnp: TfmPrirazeniPnp
       64
       72
       72
-      64
+      39
       72
       72
       5)
@@ -216,14 +217,15 @@ object fmPrirazeniPnp: TfmPrirazeniPnp
       '')
     TabOrder = 3
   end
-  object btnNactiPnpInfo: TButton
+  object btnNactiPnpAlt: TButton
     Left = 1240
     Top = 16
     Width = 89
     Height = 25
     Caption = 'alternativn'#237' data'
     TabOrder = 4
-    OnClick = btnNactiPnpInfoClick
+    Visible = False
+    OnClick = btnNactiPnpAltClick
   end
   object chbNacistPnp: TCheckBox
     Left = 96

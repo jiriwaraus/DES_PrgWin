@@ -9,7 +9,7 @@ uses
   Supertimezone in '..\DE$_Common\Supertimezone.pas',
   Supertypes in '..\DE$_Common\Supertypes.pas',
   AbraEntities in '..\DE$_Common\AbraEntities.pas',
-  _Arrays in '..\DE$_Common\_Arrays.pas';
+  AArray in '..\DE$_Common\AArray.pas';
 
 {$R *.res}
 

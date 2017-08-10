@@ -40,7 +40,7 @@ implementation
 
 {$R *.dfm}
 
-uses DesUtils, Superobject, _Arrays;
+uses DesUtils, Superobject, AArray;
 
 
 procedure TForm1.btnArrayTest1Click(Sender: TObject);
@@ -224,9 +224,7 @@ var
   TestString, newid: String;
   i: integer;
 begin
-
-
-
+  {
   boAA := TAArray.Create;
   boAA['DocQueue_ID'] := 'L000000101';
   boAA['Period_ID'] := 20117;
@@ -250,10 +248,36 @@ begin
   boRowAA['Rowtype'] := 1;
   boRowAA['Totalprice'] := 12556.32;
   boRowAA['Text'] := 'Kredit ûluùouËk˝ VoIP';
+  }
+
+  boAA := TAArray.Create;
+  boAA['DocQueue_ID'] := '5600000101';
+  //boAA['Period_ID'] := 20117;
+  boAA['VatDate$DATE'] := '2017-06-04';
+  boAA['DocDate$DATE'] := '2017-06-05';
+  boAA['Firm_ID'] := '3000000101';
+  boAA['Description'] := 'nnn sluzby';
+  boAA['Varsymbol'] := 1200025;
+  boAA['PricesWithVat'] := true;
+
+
+  // 1. ¯·dek
+  boRowAA := boAA.addRow();
+  boRowAA['Rowtype'] := 1;
+  boRowAA['Totalprice'] := 1320;
+  boRowAA['Text'] := 'fakturujume nnn sluzby';
+  boRowAA['Division_id'] := '2100000101';
+  boRowAA['Vatrate_Id'] := '02100X0000';
 
 
 
   memo2.Lines.Add (boAA.AsJSon());
+  memo2.Lines.Add ('Metoda zapisu: ' + DesU.abraDefaultCommMethod);
+
+
+  newid := DesU.abraBoCreate(boAA, 'issuedinvoice');
+
+  memo2.Lines.Add(newid);
 
 end;
 
