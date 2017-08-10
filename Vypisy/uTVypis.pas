@@ -20,10 +20,10 @@ type
     abraBankaccount : TAbraBankaccount;
     poradoveCislo : integer;
     cisloUctuVlastni : string[16];
-    datum  : double;
-    datumZHlavicky  : double;
-    obratDebet  : currency;
-    obratKredit  : currency;
+    datum  : double; //pocatecni datum vypisu
+    datumZHlavicky  : double; //datum posledni platby, tedy konecne datum vypisu
+    zustatekStary, zustatekNovy : currency;
+    obratDebet, obratKredit  : currency;
     maxExistujiciPoradoveCislo : integer;
     maxExistujiciExtPoradoveCislo : integer;
     searchIndex : integer;
@@ -51,6 +51,8 @@ begin
 
   self.poradoveCislo := StrToInt(copy(gpcLine, 106, 3));
   self.cisloUctuVlastni := removeLeadingZeros(copy(gpcLine, 4, 16));
+  self.zustatekStary := StrToInt(copy(gpcLine, 46, 14)) / 100; //todo znamenko
+  self.zustatekNovy := StrToInt(copy(gpcLine, 61, 14)) / 100;
   self.obratDebet := StrToInt(copy(gpcLine, 76, 14)) / 100;
   self.obratKredit := StrToInt(copy(gpcLine, 91, 14)) / 100;
   self.datumZHlavicky := Str6digitsToDate(copy(gpcLine, 109, 6));

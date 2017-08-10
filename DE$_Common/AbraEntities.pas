@@ -35,6 +35,7 @@ type
     id : string[10];
     name : string[50];
     number : string[42];
+    accountId : string[10];
     bankstatementDocqueueId : string[10];
     constructor create();
   published
@@ -43,6 +44,7 @@ type
     function getMaxExtPoradoveCisloVypisu(pYear : string) : integer;
     function getMaxDatumVypisu(pYear : string) : double;    
     function getPocetVypisu(pYear : string) : integer;
+    function getZustatek(pDatum : double) : double;
   end;
 
   TAbraPeriod = class
@@ -93,7 +95,7 @@ procedure TAbraBankAccount.loadByNumber(baNumber : string);
 begin
   with DesU.qrAbra do begin
 
-    SQL.Text := 'SELECT ID, NAME, BANKACCOUNT, BANKSTATEMENT_ID '
+    SQL.Text := 'SELECT ID, NAME, BANKACCOUNT, ACCOUNT_ID, BANKSTATEMENT_ID '
               + 'FROM BANKACCOUNTS '
               + 'WHERE BANKACCOUNT like ''' + baNumber  + '%'' '
               + 'AND HIDDEN = ''N'' ';
@@ -103,6 +105,7 @@ begin
       self.id := FieldByName('ID').AsString;
       self.name := FieldByName('NAME').AsString;
       self.number := FieldByName('BANKACCOUNT').AsString;
+      self.accountId := FieldByName('ACCOUNT_ID').AsString;
       self.bankStatementDocqueueId := FieldByName('BANKSTATEMENT_ID').AsString;
     end;
     Close;
@@ -178,6 +181,11 @@ begin
       Result := 0;
     Close;
   end;
+end;
+
+function TAbraBankAccount.getZustatek(pDatum : double) : double;
+begin
+ Result := DesU.getZustatekByAccountId(self.accountId, pDatum);
 end;
 
 

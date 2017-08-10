@@ -293,7 +293,9 @@ begin
         filtrujZobrazeniPlateb;
         lblHlavicka.Caption := Vypis.abraBankaccount.name + ', ' + Vypis.abraBankaccount.number + ', è.'
                         + IntToStr(Vypis.poradoveCislo) + ' (max è. je ' + IntToStr(Vypis.maxExistujiciPoradoveCislo) + '). Plateb: '
-                        + IntToStr(Vypis.Platby.Count);
+                        + IntToStr(Vypis.Platby.Count)
+                        + ' Poè. zùst. ' + FloatToStr(Vypis.zustatekStary)
+                        + ' bank. zùst. ' + FloatToStr(Vypis.abraBankaccount.getZustatek(Vypis.datum)) ;
         if not Vypis.isNavazujeNaRadu() then
           Dialogs.MessageDlg('Doklad è. '+ IntToStr(Vypis.poradoveCislo) + ' nenavazuje na øadu!', mtInformation, [mbOK], 0);
         //currPlatbaZVypisu := TPlatbaZVypisu(Vypis.Platby[0]); //mùže být ale nemìlo by být potøeba
