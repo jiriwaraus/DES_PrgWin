@@ -99,7 +99,7 @@ begin
 
   self.abraBankaccount.loadByNumber(self.cisloUctuVlastni);
 
-  self.datum := TPlatbaZVypisu(self.Platby[self.Platby.Count - 1]).Datum; //datum vypisy se urci jako datum poslední platby
+  self.datum := TPlatbaZVypisu(self.Platby[self.Platby.Count - 1]).Datum; //datum vypisu se urci jako datum poslední platby
   self.nactiMaxExistujiciPoradoveCislo();
 
   payuProvize := 0;

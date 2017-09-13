@@ -28,9 +28,9 @@ object Form1: TForm1
     Caption = 'data:'
   end
   object btnGet: TButton
-    Left = 8
-    Top = 176
-    Width = 75
+    Left = 472
+    Top = 8
+    Width = 121
     Height = 25
     Caption = 'GET'
     TabOrder = 0
@@ -44,29 +44,29 @@ object Form1: TForm1
     TabOrder = 1
   end
   object Memo2: TMemo
-    Left = 8
-    Top = 222
+    Left = 16
+    Top = 174
     Width = 977
-    Height = 315
+    Height = 243
     Lines.Strings = (
       '')
     TabOrder = 2
   end
   object btnPost: TButton
-    Left = 97
-    Top = 176
-    Width = 75
+    Left = 472
+    Top = 48
+    Width = 121
     Height = 25
-    Caption = 'POST'
+    Caption = 'Create by SO (POST)'
     TabOrder = 3
     OnClick = btnPostClick
   end
   object btnPut: TButton
-    Left = 192
-    Top = 176
-    Width = 75
+    Left = 472
+    Top = 79
+    Width = 121
     Height = 25
-    Caption = 'PUT'
+    Caption = 'Update by SO (PUT)'
     TabOrder = 4
     OnClick = btnPutClick
   end
@@ -80,36 +80,55 @@ object Form1: TForm1
   end
   object Memo3: TMemo
     Left = 8
-    Top = 543
+    Top = 423
     Width = 881
     Height = 200
     TabOrder = 6
   end
-  object btnArrayTest1: TButton
-    Left = 504
-    Top = 8
+  object btnCreateByAA: TButton
+    Left = 616
+    Top = 48
     Width = 105
     Height = 25
-    Caption = 'ArrayTest1'
+    Caption = 'Create by AArray'
     TabOrder = 7
-    OnClick = btnArrayTest1Click
+    OnClick = btnCreateByAAClick
   end
-  object btnPutAa: TButton
-    Left = 416
-    Top = 176
-    Width = 75
+  object btnUpdateByAa: TButton
+    Left = 616
+    Top = 79
+    Width = 105
     Height = 25
-    Caption = 'PUT AA'
+    Caption = 'Update by AArray'
     TabOrder = 8
-    OnClick = btnPutAaClick
+    OnClick = btnUpdateByAaClick
   end
-  object Button1: TButton
-    Left = 568
-    Top = 176
+  object btnSendEmail: TButton
+    Left = 472
+    Top = 133
     Width = 75
     Height = 25
-    Caption = 'POST JSON'
+    Caption = 'send email'
     TabOrder = 9
-    OnClick = Button1Click
+    OnClick = btnSendEmailClick
+  end
+  object IdSMTP1: TIdSMTP
+    SASLMechanisms = <>
+    Left = 576
+    Top = 128
+  end
+  object IdMessage1: TIdMessage
+    AttachmentEncoding = 'MIME'
+    BccList = <>
+    CCList = <>
+    Encoding = meDefault
+    FromList = <
+      item
+      end>
+    Recipients = <>
+    ReplyTo = <>
+    ConvertPreamble = True
+    Left = 640
+    Top = 128
   end
 end

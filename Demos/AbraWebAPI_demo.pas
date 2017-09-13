@@ -4,7 +4,10 @@ interface
 
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
-  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls;
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls,
+  IdBaseComponent, IdComponent, IdTCPConnection, IdTCPClient,
+  IdSMTP, IdMessage, IdMessageParts, IdAttachment, IdEMailAddress, IdAttachmentFile, IdText,
+  IdExplicitTLSClientServerBase, IdMessageClient, IdSMTPBase;
 
 type
   TForm1 = class(TForm)
@@ -17,15 +20,17 @@ type
     lblUrl: TLabel;
     lblReqData: TLabel;
     Memo3: TMemo;
-    btnArrayTest1: TButton;
-    btnPutAa: TButton;
-    Button1: TButton;
+    btnCreateByAA: TButton;
+    btnUpdateByAa: TButton;
+    btnSendEmail: TButton;
+    IdSMTP1: TIdSMTP;
+    IdMessage1: TIdMessage;
     procedure btnGetClick(Sender: TObject);
     procedure btnPostClick(Sender: TObject);
     procedure btnPutClick(Sender: TObject);
-    procedure btnArrayTest1Click(Sender: TObject);
-    procedure btnPutAaClick(Sender: TObject);
-    procedure Button1Click(Sender: TObject);
+    procedure btnCreateByAAClick(Sender: TObject);
+    procedure btnUpdateByAaClick(Sender: TObject);
+    procedure btnSendEmailClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -43,69 +48,9 @@ implementation
 uses DesUtils, Superobject, AArray;
 
 
-procedure TForm1.btnArrayTest1Click(Sender: TObject);
-var
-  FruitColors: TAArray;
-  boAA, boRowAA: TAArray;
-  TestString, newid: String;
-  i: integer;
-begin
 
-  boAA := TAArray.Create;
-
-  boAA['docqueue_id'] := DesU.getAbraDocqueueId('FO1', '03');
-  boAA['period_id'] := DesU.getAbraPeriodId('2017');
-  boAA['docdate$date'] := '2017-06-28';
-  boAA['accdate$date'] := '2017-06-30';
-  boAA['firm_id'] := '2SZ1000101';
-  boAA['varsymbol'] := '911123335';
-  boAA['description'] := 'pppp¯ipojenÌ rychlouËkÈ bÏûÌ';
-  boAA['priceswithvat'] := true;
-
-
-  boRowAA := boAA.addRow();
-  boRowAA['rowtype'] := 0;
-  boRowAA['text'] := 'prvni radek fakturujeme';
-  boRowAA['division_id'] := '1000000101';
-
-
-  boRowAA := boAA.addRow();
-  boRowAA['rowtype'] := 1;
-  boRowAA['text'] := 'Za naöe svÏlÈ Sluûby';
-  boRowAA['totalprice'] := 246;
-  boRowAA['vatrate_id'] := DesU.getAbraVatrateId('V˝st21');;
-  boRowAA['incometype_id'] := DesU.getAbraIncometypeId('SL');
-  boRowAA['division_id'] := '1000000101';
-
-
-  newid := DesU.abraBoCreateOLE(boAA, 'issuedinvoice');
-  //newid := DesU.abraBoCreateWebApi(boAA, 'issuedinvoice');
-
-  memo2.Lines.Add(newid);
-  {
-  FruitColors := TAArray.Create;
-  FruitColors['Apple'] := 'Green';
-  FruitColors['Peach'] := 'bbla'; //TRUE;
-  FruitColors['Some Fruit'] := 'ctrnact'; //14;
-
-  memo2.Lines.Add('Position=' + inttostr(FruitColors.Position) + ' Count=' + inttostr(FruitColors.Count) );
-
-  for i := 0 to FruitColors.Count - 1 do
-    memo2.Lines.Add(FruitColors.Values[i]);
-  }
-  {
-  if FruitColors['Peach'] then
-    memo2.Lines.Add('ttttttttttt')
-  else
-      memo2.Lines.Add('ffffffffff');
-  while FruitColors.Foreach do
-  begin
-    TestString := FruitColors.Value[FruitColors.Position];
-    memo2.Lines.Add(FruitColors[FruitColors.Position]);
-  end;
-  }
-
-end;
+////////////////////////////////////
+// *** SuperObject (SO) demos *** //
 
 procedure TForm1.btnGetClick(Sender: TObject);
 var
@@ -166,33 +111,11 @@ Json := '{'+
   '}';
 
   memo1.Lines.Add(Json);
-
   sResponse := DesU.abraBoCreate_So(SO(Json), editUrl.Text);
-
   memo2.Lines.Add (SO(sResponse).AsJSon(True));
-
   memo2.Lines.Add(sResponse);
 end;
 
-
-procedure TForm1.btnPutAaClick(Sender: TObject);
-var
-  boAA: TAArray;
-  sResponse, newid: String;
-begin
-
-  boAA := TAArray.Create;
-  boAA['varsymbol'] := '77989';
-  sResponse := DesU.abraBoUpdate(boAA, 'bankstatement', '36E2000101', 'row', '5BRD000101');
-
-  memo2.Lines.Add (boAA.AsJSon());
-  memo2.Lines.Add ('-------');
-  // memo2.Lines.Add (sResponse);
-  //memo2.Lines.Add ('-------');
-  memo2.Lines.Add (SO(sResponse).AsJSon(true));
-
-
-end;
 
 procedure TForm1.btnPutClick(Sender: TObject);
 var
@@ -209,84 +132,149 @@ begin
   memo1.Lines.Add(Json);
   sResponse := DesU.abraBoUpdate_So(SO(Json), 'bankstatement', '36E2000101', 'row', '5BRD000101');
   memo2.Lines.Add (SO(sResponse).AsJSon(true));
-
-
-
-
 end;
 
 
-procedure TForm1.Button1Click(Sender: TObject);
+//////////////////////////
+// *** AArray demos *** //
+
+procedure TForm1.btnUpdateByAaClick(Sender: TObject);
 var
+  boAA: TAArray;
+  sResponse, newid: String;
+begin
 
+  boAA := TAArray.Create;
+  boAA['varsymbol'] := '77989';
+  sResponse := DesU.abraBoUpdate(boAA, 'bankstatement', '36E2000101', 'row', '5BRD000101'); //pouûije PUT (pokud je metoda WebApi)
 
+  memo2.Lines.Add (boAA.AsJSon());
+  memo2.Lines.Add ('-------');
+  // memo2.Lines.Add (sResponse);
+  //memo2.Lines.Add ('-------');
+  memo2.Lines.Add (SO(sResponse).AsJSon(true));
+end;
+
+procedure TForm1.btnCreateByAAClick(Sender: TObject);
+var
+  FruitColors: TAArray;
   boAA, boRowAA: TAArray;
   TestString, newid: String;
   i: integer;
 begin
-  {
-  boAA := TAArray.Create;
-  boAA['DocQueue_ID'] := 'L000000101';
-  boAA['Period_ID'] := 20117;
-  boAA['VatDate$DATE'] := '2017-06-04';
-  boAA['DocDate$DATE'] := 45665;
-  boAA['Firm_ID'] := 'id firmy "nejlepöÌ" firma';
-  //jsonBo.S['Firm_ID'] :='2SZ1000101';
-  boAA['Description'] := 'Kredit VoIP';
-  boAA['Varsymbol'] := 1200025;
-  boAA['PricesWithVat'] := true;
-
-
-  // 1. ¯·dek
-  boRowAA := boAA.addRow();
-  boRowAA['Rowtype'] := 0;
-  boRowAA['Text'] := ' ';
-
-
- //2. ¯·dek
-  boRowAA := boAA.addRow();
-  boRowAA['Rowtype'] := 1;
-  boRowAA['Totalprice'] := 12556.32;
-  boRowAA['Text'] := 'Kredit ûluùouËk˝ VoIP';
-  }
 
   boAA := TAArray.Create;
-  boAA['DocQueue_ID'] := '5600000101';
-  //boAA['Period_ID'] := 20117;
-  boAA['VatDate$DATE'] := '2017-06-04';
-  boAA['DocDate$DATE'] := '2017-06-05';
-  boAA['Firm_ID'] := '3000000101';
-  boAA['Description'] := 'nnn sluzby';
-  boAA['Varsymbol'] := 1200025;
-  boAA['PricesWithVat'] := true;
 
+  boAA['docqueue_id'] := DesU.getAbraDocqueueId('FO1', '03');
+  boAA['period_id'] := DesU.getAbraPeriodId('2017');
+  boAA['docdate$date'] := '2017-06-28';
+  boAA['accdate$date'] := '2017-06-30';
+  boAA['firm_id'] := '2SZ1000101';
+  boAA['varsymbol'] := '911123335';
+  boAA['description'] := 'pppp¯ipojenÌ rychlouËkÈ bÏûÌ';
+  boAA['priceswithvat'] := true;
 
-  // 1. ¯·dek
   boRowAA := boAA.addRow();
-  boRowAA['Rowtype'] := 1;
-  boRowAA['Totalprice'] := 1320;
-  boRowAA['Text'] := 'fakturujume nnn sluzby';
-  boRowAA['Division_id'] := '2100000101';
-  boRowAA['Vatrate_Id'] := '02100X0000';
+  boRowAA['rowtype'] := 0;
+  boRowAA['text'] := 'prvni radek fakturujeme';
+  boRowAA['division_id'] := '1000000101';
 
+  boRowAA := boAA.addRow();
+  boRowAA['rowtype'] := 1;
+  boRowAA['text'] := 'Za naöe svÏlÈ Sluûby';
+  boRowAA['totalprice'] := 246;
+  boRowAA['vatrate_id'] := DesU.getAbraVatrateId('V˝st21');;
+  boRowAA['incometype_id'] := DesU.getAbraIncometypeId('SL');
+  boRowAA['division_id'] := '1000000101';
 
-
-  memo2.Lines.Add (boAA.AsJSon());
-  memo2.Lines.Add ('Metoda zapisu: ' + DesU.abraDefaultCommMethod);
-
-
-  newid := DesU.abraBoCreate(boAA, 'issuedinvoice');
+  newid := DesU.abraBoCreate(boAA, 'issuedinvoice'); //pouûije POST (pokud je metoda WebApi)
+  //newid := DesU.abraBoCreateOLE(boAA, 'issuedinvoice');
+  //newid := DesU.abraBoCreateWebApi(boAA, 'issuedinvoice');
 
   memo2.Lines.Add(newid);
+  {
+  FruitColors := TAArray.Create;
+  FruitColors['Apple'] := 'Green';
+  FruitColors['Peach'] := 'bbla'; //TRUE;
+  FruitColors['Some Fruit'] := 'ctrnact'; //14;
+
+  memo2.Lines.Add('Position=' + inttostr(FruitColors.Position) + ' Count=' + inttostr(FruitColors.Count) );
+
+  for i := 0 to FruitColors.Count - 1 do
+    memo2.Lines.Add(FruitColors.Values[i]);
+  }
+  {
+  if FruitColors['Peach'] then
+    memo2.Lines.Add('ttttttttttt')
+  else
+      memo2.Lines.Add('ffffffffff');
+  while FruitColors.Foreach do
+  begin
+    TestString := FruitColors.Value[FruitColors.Position];
+    memo2.Lines.Add(FruitColors[FruitColors.Position]);
+  end;
+  }
 
 end;
 
 
 
 
+procedure TForm1.btnSendEmailClick(Sender: TObject);
+begin
+   Memo2.Clear;
+
+   //setup SMTP
+   IdSMTP1.Host := 'localhost';
+   IdSMTP1.Port := 25;
+
+   //setup mail message
+   IdMessage1.From.Address := 'joeiii@honza.cz';
+   IdMessage1.Recipients.EMailAddresses := 'bazen@bulharsko.sko';
+
+   IdMessage1.Subject := 'm˘j tesssstovacÌ e-mailÌËek3';
+   //IdMessage1.Body.Text := 'Takhle chodÌ m˘j tesssstovacÌ e-mailÌËek'; //nemel by se pouzit, radsi jako part
+
+   { tahle je to Indy9 asi
+   if FileExists('c:\develop\delphi.txt') then
+    TIdAttachment.Create(MailMessage.MessageParts, 'c:\develop\delphi.txt') ;
+   }
+
+    //tohle by melo
+    with TIdText.Create(IdMessage1.MessageParts, nil) do begin
+      Body.Text := '<b>Takhle</b> chodÌ m˘j tesssstovacÌ e-mailÌËek';
+      ContentType := 'text/html';
+    end;
 
 
+    with TIdAttachmentFile.Create(IdMessage1.MessageParts, 'c:\develop\p.jpg') do begin
+      //ContentID := '12345';
+      ContentType := 'image/jpeg';
+      FileName := 'p.jpg';
+    end;
 
+    with TIdAttachmentFile.Create(IdMessage1.MessageParts, 'c:\develop\sella.jpg') do begin
+      //ContentID := '56789';
+      ContentType := 'image/jpeg';
+      FileName := 'sella.jpg';
+    end;
+
+    //IdMessage1.ContentType := 'multipart/related; type="text/html"';
+    IdMessage1.ContentType := 'multipart/mixed';
+
+   //send mail
+   try
+     try
+       IdSMTP1.Connect() ;
+       IdSMTP1.Send(IdMessage1) ;
+     except on E:Exception do
+       Memo2.Lines.Insert(0, 'ERROR: ' + E.Message) ;
+     end;
+   finally
+     if IdSMTP1.Connected then IdSMTP1.Disconnect;
+   end;
+
+end;
 
 
 end.
