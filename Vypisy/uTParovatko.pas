@@ -179,7 +179,7 @@ begin
           Break;
         end;
 
-        if (kNaparovani > zbyvaCastka) AND not(iDoklad.DocumentType = '10') then
+        if (kNaparovani > zbyvaCastka) AND not(iDoklad.DocumentType = '10') then //èásteèná úhrada, doklad nesmí být zálohovým listem
         begin
           vytvorPDPar(Platba, iDoklad, zbyvaCastka, 'èást. ' + floattostr(zbyvaCastka) + ' z ' + floattostr(kNaparovani) + ' Kè |', true);
           Platba.zprava := 'èásteèná úhrada';

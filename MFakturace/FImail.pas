@@ -3,8 +3,11 @@ unit FImail;
 interface
 
 uses
-  Forms, Controls, SysUtils, Classes, IdComponent, IdTCPConnection, IdTCPClient, IdMessageClient, IdSMTP,
-  IdBaseComponent, IdMessage, FImain, IdExplicitTLSClientServerBase, IdSMTPBase;
+  Forms, Controls, SysUtils, Classes,
+  IdBaseComponent, IdComponent, IdTCPConnection, IdTCPClient,
+  IdSMTP, IdMessage, IdMessageParts, IdAttachment, IdEMailAddress, IdAttachmentFile, IdText,
+  IdExplicitTLSClientServerBase, IdMessageClient, IdSMTPBase,
+  FImain;
 
 type
   TdmMail = class(TDataModule)
