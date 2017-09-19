@@ -222,7 +222,8 @@ end;
 
 procedure TForm1.btnSendEmailClick(Sender: TObject);
 begin
-   Memo2.Clear;
+   Memo3.Clear;
+   Memo3.Text := '<b>Takhle</b> chodí mùj luouèkı èø mailíèek';
 
    //setup SMTP
    IdSMTP1.Host := 'localhost';
@@ -232,8 +233,8 @@ begin
    IdMessage1.From.Address := 'joeiii@honza.cz';
    IdMessage1.Recipients.EMailAddresses := 'bazen@bulharsko.sko';
 
-   IdMessage1.Subject := 'mùj tesssstovací e-mailíèek3';
-   //IdMessage1.Body.Text := 'Takhle chodí mùj tesssstovací e-mailíèek'; //nemel by se pouzit, radsi jako part
+   IdMessage1.Subject := 'luouèkı èø mailíèek a5';
+   //IdMessage1.Body.Text := 'Takhle chodí mùj testovací e-mailíèek'; //nemel by se pouzit, radsi jako part
 
    { tahle je to Indy9 asi
    if FileExists('c:\develop\delphi.txt') then
@@ -241,9 +242,14 @@ begin
    }
 
     //tohle by melo
+    //AnsiToUtf8
     with TIdText.Create(IdMessage1.MessageParts, nil) do begin
-      Body.Text := '<b>Takhle</b> chodí mùj tesssstovací e-mailíèek';
-      ContentType := 'text/html';
+      Body.Text := Memo3.Text;
+      //Body.Text := AnsiToUtf8(Memo3.Text);
+      //ContentType := 'text/html';
+      ContentType := 'text/plain';
+      //Charset := 'Windows-1250';
+      Charset := 'utf-8';
     end;
 
 

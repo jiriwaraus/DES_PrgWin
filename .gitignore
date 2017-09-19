@@ -70,6 +70,8 @@ __recovery/
 *.ini
 *.txt
 *.sql
+*.fr3
+*.frf
 Vypisy/HB
 /log
 /zalohy

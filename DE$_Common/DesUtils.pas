@@ -791,9 +791,8 @@ begin
     Exit;
   end;
 
-
   boAA := TAArray.Create;
-  boAA['DocQueue_ID'] := self.getAbraDocqueueId('FO2', '03');
+  boAA['DocQueue_ID'] := self.getAbraDocqueueId('FO4', '03');
   boAA['Period_ID'] := self.getAbraPeriodId(datum);
   boAA['VatDate$DATE'] := datum;
   boAA['DocDate$DATE'] := datum;

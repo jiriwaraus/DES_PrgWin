@@ -26,7 +26,7 @@ uses
   rxToolEdit, ZAbstractRODataset, ZAbstractDataset, ZDataset, ZConnection, IdBaseComponent, IdComponent, IdTCPConnection,
   IdTCPClient, IdMessageClient, IdSMTP, IdMessage, IdHTTP,
   IdAntiFreezeBase, IdAntiFreeze, ZAbstractConnection, AdvObj, IdIOHandler,
-  IdIOHandlerSocket, IdSSLOpenSSL;
+  IdIOHandlerSocket, IdSSLOpenSSL, IdExplicitTLSClientServerBase, IdSMTPBase;
 
 type
   TfmMain = class(TForm)

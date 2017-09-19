@@ -46,7 +46,7 @@ object Form1: TForm1
   object Memo2: TMemo
     Left = 16
     Top = 174
-    Width = 977
+    Width = 433
     Height = 243
     Lines.Strings = (
       '')
@@ -79,10 +79,10 @@ object Form1: TForm1
     Text = 'http://localhost/DES/periods?where=code+gt+2015'
   end
   object Memo3: TMemo
-    Left = 8
-    Top = 423
-    Width = 881
-    Height = 200
+    Left = 472
+    Top = 174
+    Width = 516
+    Height = 243
     TabOrder = 6
   end
   object btnCreateByAA: TButton
@@ -114,11 +114,11 @@ object Form1: TForm1
   end
   object IdSMTP1: TIdSMTP
     SASLMechanisms = <>
-    Left = 576
+    Left = 768
     Top = 128
   end
   object IdMessage1: TIdMessage
-    AttachmentEncoding = 'MIME'
+    AttachmentEncoding = 'UUE'
     BccList = <>
     CCList = <>
     Encoding = meDefault
@@ -128,7 +128,7 @@ object Form1: TForm1
     Recipients = <>
     ReplyTo = <>
     ConvertPreamble = True
-    Left = 640
+    Left = 832
     Top = 128
   end
 end

@@ -1,9 +1,9 @@
 object fmMain: TfmMain
   Left = 308
   Top = 102
-  Width = 838
-  Height = 674
   Caption = 'Nezaplacen'#233' faktury'
+  ClientHeight = 635
+  ClientWidth = 822
   Color = clBtnFace
   Constraints.MinHeight = 674
   Constraints.MinWidth = 590
@@ -20,15 +20,15 @@ object fmMain: TfmMain
   TextHeight = 13
   object pnBottom: TPanel
     Left = 0
-    Top = 527
-    Width = 830
+    Top = 515
+    Width = 822
     Height = 120
     Align = alBottom
     TabOrder = 0
     object mmMail: TMemo
       Left = 1
       Top = 1
-      Width = 828
+      Width = 820
       Height = 118
       Align = alClient
       Lines.Strings = (
@@ -50,8 +50,8 @@ object fmMain: TfmMain
   object pnMain: TPanel
     Left = 0
     Top = 0
-    Width = 830
-    Height = 527
+    Width = 822
+    Height = 515
     Align = alClient
     TabOrder = 1
     object lbDo: TLabel
@@ -68,40 +68,20 @@ object fmMain: TfmMain
       Height = 13
       Caption = 'Vystaveno od'
     end
-    object deDatumOd: TDateEdit
-      Left = 10
-      Top = 20
-      Width = 90
-      Height = 18
-      BorderStyle = bsNone
-      NumGlyphs = 2
-      YearDigits = dyFour
-      TabOrder = 0
-    end
-    object deDatumDo: TDateEdit
-      Left = 10
-      Top = 58
-      Width = 90
-      Height = 18
-      BorderStyle = bsNone
-      NumGlyphs = 2
-      YearDigits = dyFour
-      TabOrder = 1
-    end
     object btKonec: TButton
       Left = 20
       Top = 494
       Width = 71
       Height = 21
       Caption = '&Konec'
-      TabOrder = 3
+      TabOrder = 1
       OnClick = btKonecClick
     end
     object asgPohledavky: TAdvStringGrid
-      Left = 110
+      Left = 102
       Top = 1
       Width = 719
-      Height = 525
+      Height = 513
       Cursor = crDefault
       Align = alRight
       Anchors = [akLeft, akTop, akRight, akBottom]
@@ -109,6 +89,7 @@ object fmMain: TfmMain
       ColCount = 12
       Ctl3D = True
       DefaultRowHeight = 18
+      DrawingStyle = gdsClassic
       FixedCols = 0
       RowCount = 2
       Font.Charset = EASTEUROPE_CHARSET
@@ -120,7 +101,7 @@ object fmMain: TfmMain
       ParentCtl3D = False
       ParentFont = False
       ScrollBars = ssBoth
-      TabOrder = 2
+      TabOrder = 0
       HoverRowCells = [hcNormal, hcSelected]
       OnGetAlignment = asgPohledavkyGetAlignment
       OnGetFormat = asgPohledavkyGetFormat
@@ -227,7 +208,7 @@ object fmMain: TfmMain
       RowHeaders.Strings = (
         ' ')
       ScrollWidth = 16
-      SearchFooter.ColorTo = 13160660
+      SearchFooter.ColorTo = 15790320
       SearchFooter.Font.Charset = DEFAULT_CHARSET
       SearchFooter.Font.Color = clWindowText
       SearchFooter.Font.Height = -11
@@ -269,7 +250,6 @@ object fmMain: TfmMain
       DropWidth = 0
       Enabled = True
       ItemIndex = -1
-      ItemHeight = 13
       Items.Strings = (
         'Mn'#237#353'ek'
         'O'#345'ech'
@@ -285,7 +265,7 @@ object fmMain: TfmMain
       LabelFont.Name = 'MS Sans Serif'
       LabelFont.Style = []
       ParentCtl3D = False
-      TabOrder = 4
+      TabOrder = 2
     end
     object btVyber: TButton
       Left = 20
@@ -293,7 +273,7 @@ object fmMain: TfmMain
       Width = 71
       Height = 21
       Caption = '&Vyber'
-      TabOrder = 5
+      TabOrder = 3
       OnClick = btVyberClick
     end
     object btExport: TButton
@@ -302,7 +282,7 @@ object fmMain: TfmMain
       Width = 71
       Height = 21
       Caption = '&Export'
-      TabOrder = 6
+      TabOrder = 4
       OnClick = btExportClick
     end
     object aedPocet: TAdvEdit
@@ -338,7 +318,7 @@ object fmMain: TfmMain
       Font.Name = 'MS Sans Serif'
       Font.Style = []
       ParentFont = False
-      TabOrder = 7
+      TabOrder = 5
       Text = '1'
       Visible = True
       Version = '3.3.2.3'
@@ -349,7 +329,7 @@ object fmMain: TfmMain
       Width = 71
       Height = 21
       Caption = '&Mail'
-      TabOrder = 8
+      TabOrder = 6
       OnClick = btMailClick
     end
     object acbDruhSmlouvy: TAdvComboBox
@@ -369,7 +349,6 @@ object fmMain: TfmMain
       DropWidth = 0
       Enabled = True
       ItemIndex = -1
-      ItemHeight = 13
       Items.Strings = (
         '%'
         '0'
@@ -389,7 +368,7 @@ object fmMain: TfmMain
       LabelFont.Name = 'MS Sans Serif'
       LabelFont.Style = []
       ParentCtl3D = False
-      TabOrder = 9
+      TabOrder = 7
     end
     object cbCast: TCheckBox
       Left = 12
@@ -399,7 +378,7 @@ object fmMain: TfmMain
       Caption = 'I '#269#225'ste'#269'n'#283
       Checked = True
       State = cbChecked
-      TabOrder = 10
+      TabOrder = 8
     end
     object aedPocetDo: TAdvEdit
       Left = 10
@@ -434,7 +413,7 @@ object fmMain: TfmMain
       Font.Name = 'MS Sans Serif'
       Font.Style = []
       ParentFont = False
-      TabOrder = 11
+      TabOrder = 10
       Text = '1'
       Visible = True
       Version = '3.3.2.3'
@@ -454,7 +433,7 @@ object fmMain: TfmMain
       Width = 71
       Height = 21
       Caption = '&Omezit'
-      TabOrder = 13
+      TabOrder = 9
       OnClick = btOmezitClick
     end
     object rgText: TRadioGroup
@@ -467,7 +446,7 @@ object fmMain: TfmMain
       Items.Strings = (
         'Text 1'
         'Text 2')
-      TabOrder = 14
+      TabOrder = 11
       OnClick = rgTextClick
     end
   end
@@ -483,22 +462,25 @@ object fmMain: TfmMain
     BccList = <>
     CCList = <>
     Encoding = meMIME
+    FromList = <
+      item
+      end>
     Recipients = <>
     ReplyTo = <>
+    ConvertPreamble = True
     Left = 218
     Top = 55
   end
   object idSMTP: TIdSMTP
-    MaxLineAction = maException
-    ReadTimeout = 0
-    Port = 25
-    AuthenticationType = atNone
+    SASLMechanisms = <>
     Left = 246
     Top = 55
   end
   object dbMain: TZConnection
     ControlsCodePage = cGET_ACP
-    AutoEncodeStrings = False
+    Catalog = ''
+    Properties.Strings = (
+      'controls_cp=GET_ACP')
     AfterConnect = dbMainAfterConnect
     HostName = 'test.iquest.cz'
     Port = 0
@@ -537,10 +519,16 @@ object fmMain: TfmMain
   end
   object dbAbra: TZConnection
     ControlsCodePage = cGET_ACP
-    AutoEncodeStrings = False
+    Catalog = ''
+    Properties.Strings = (
+      'controls_cp=GET_ACP')
     ReadOnly = True
     AfterConnect = dbAbraAfterConnect
+    HostName = ''
     Port = 0
+    Database = ''
+    User = ''
+    Password = ''
     Protocol = 'firebird-2.1'
     Left = 162
     Top = 110
@@ -581,9 +569,6 @@ object fmMain: TfmMain
     Top = 55
   end
   object idHTTP: TIdHTTP
-    MaxLineAction = maException
-    ReadTimeout = 0
-    RecvBufferSize = 1024
     AllowCookies = True
     HandleRedirects = True
     ProxyParams.BasicAuthentication = False
@@ -591,20 +576,15 @@ object fmMain: TfmMain
     Request.ContentLength = 0
     Request.ContentRangeEnd = 0
     Request.ContentRangeStart = 0
+    Request.ContentRangeInstanceLength = -1
     Request.ContentType = 'text/html'
     Request.Accept = 'text/html, */*'
     Request.BasicAuthentication = False
     Request.UserAgent = 'Mozilla/3.0 (compatible; Indy Library)'
+    Request.Ranges.Units = 'bytes'
+    Request.Ranges = <>
     HTTPOptions = [hoForceEncodeParams]
     Left = 162
-    Top = 55
-  end
-  object idSSLHandler: TIdSSLIOHandlerSocket
-    SSLOptions.Method = sslvTLSv1
-    SSLOptions.Mode = sslmClient
-    SSLOptions.VerifyMode = []
-    SSLOptions.VerifyDepth = 0
-    Left = 134
     Top = 55
   end
 end
