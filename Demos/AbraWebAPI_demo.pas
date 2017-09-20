@@ -25,12 +25,14 @@ type
     btnSendEmail: TButton;
     IdSMTP1: TIdSMTP;
     IdMessage1: TIdMessage;
+    btnSendSms: TButton;
     procedure btnGetClick(Sender: TObject);
     procedure btnPostClick(Sender: TObject);
     procedure btnPutClick(Sender: TObject);
     procedure btnCreateByAAClick(Sender: TObject);
     procedure btnUpdateByAaClick(Sender: TObject);
     procedure btnSendEmailClick(Sender: TObject);
+    procedure btnSendSmsClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -282,5 +284,13 @@ begin
 
 end;
 
+
+procedure TForm1.btnSendSmsClick(Sender: TObject);
+var
+  callResult : string;
+begin
+  callResult := DesU.sendGodsSms('603260797', 'auto prg volání GODS brána');
+  Memo3.Lines.Add(callResult);
+end;
 
 end.

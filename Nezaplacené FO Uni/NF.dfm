@@ -2,8 +2,8 @@ object fmMain: TfmMain
   Left = 308
   Top = 102
   Caption = 'Nezaplacen'#233' faktury'
-  ClientHeight = 635
-  ClientWidth = 822
+  ClientHeight = 646
+  ClientWidth = 846
   Color = clBtnFace
   Constraints.MinHeight = 674
   Constraints.MinWidth = 590
@@ -20,15 +20,15 @@ object fmMain: TfmMain
   TextHeight = 13
   object pnBottom: TPanel
     Left = 0
-    Top = 515
-    Width = 822
+    Top = 526
+    Width = 846
     Height = 120
     Align = alBottom
     TabOrder = 0
     object mmMail: TMemo
       Left = 1
       Top = 1
-      Width = 820
+      Width = 844
       Height = 118
       Align = alClient
       Lines.Strings = (
@@ -50,8 +50,8 @@ object fmMain: TfmMain
   object pnMain: TPanel
     Left = 0
     Top = 0
-    Width = 822
-    Height = 515
+    Width = 846
+    Height = 526
     Align = alClient
     TabOrder = 1
     object lbDo: TLabel
@@ -80,8 +80,8 @@ object fmMain: TfmMain
     object asgPohledavky: TAdvStringGrid
       Left = 102
       Top = 1
-      Width = 719
-      Height = 513
+      Width = 743
+      Height = 524
       Cursor = crDefault
       Align = alRight
       Anchors = [akLeft, akTop, akRight, akBottom]
@@ -285,7 +285,7 @@ object fmMain: TfmMain
       TabOrder = 4
       OnClick = btExportClick
     end
-    object aedPocet: TAdvEdit
+    object aedPocetOd: TAdvEdit
       Left = 10
       Top = 136
       Width = 61
@@ -413,7 +413,7 @@ object fmMain: TfmMain
       Font.Name = 'MS Sans Serif'
       Font.Style = []
       ParentFont = False
-      TabOrder = 10
+      TabOrder = 9
       Text = '1'
       Visible = True
       Version = '3.3.2.3'
@@ -424,21 +424,12 @@ object fmMain: TfmMain
       Width = 71
       Height = 21
       Caption = 'O&dpojit'
-      TabOrder = 12
+      TabOrder = 11
       OnClick = btOdpojitClick
     end
-    object btOmezit: TButton
-      Left = 20
-      Top = 434
-      Width = 71
-      Height = 21
-      Caption = '&Omezit'
-      TabOrder = 9
-      OnClick = btOmezitClick
-    end
     object rgText: TRadioGroup
-      Left = 21
-      Top = 358
+      Left = 20
+      Top = 390
       Width = 69
       Height = 59
       Caption = 'Mail'
@@ -446,16 +437,42 @@ object fmMain: TfmMain
       Items.Strings = (
         'Text 1'
         'Text 2')
-      TabOrder = 11
+      TabOrder = 10
       OnClick = rgTextClick
+    end
+    object btSMS: TButton
+      Left = 21
+      Top = 351
+      Width = 70
+      Height = 22
+      Caption = 'SMS'
+      TabOrder = 12
+    end
+    object deDatumOd: TDateTimePicker
+      Left = 10
+      Top = 19
+      Width = 81
+      Height = 21
+      Date = 42997.895638668980000000
+      Time = 42997.895638668980000000
+      TabOrder = 13
+    end
+    object deDatumDo: TDateTimePicker
+      Left = 10
+      Top = 58
+      Width = 79
+      Height = 21
+      Date = 42998.983010243060000000
+      Time = 42998.983010243060000000
+      TabOrder = 14
     end
   end
   object dlgExport: TSaveDialog
     DefaultExt = '.xls'
     Filter = 'xls|*.xls'
     Options = [ofHideReadOnly, ofNoReadOnlyReturn, ofEnableSizing]
-    Left = 134
-    Top = 82
+    Left = 118
+    Top = 138
   end
   object idMessage: TIdMessage
     AttachmentEncoding = 'MIME'
@@ -469,27 +486,26 @@ object fmMain: TfmMain
     ReplyTo = <>
     ConvertPreamble = True
     Left = 218
-    Top = 55
+    Top = 39
   end
   object idSMTP: TIdSMTP
     SASLMechanisms = <>
-    Left = 246
-    Top = 55
+    Left = 278
+    Top = 47
   end
   object dbMain: TZConnection
     ControlsCodePage = cGET_ACP
     Catalog = ''
     Properties.Strings = (
       'controls_cp=GET_ACP')
-    AfterConnect = dbMainAfterConnect
     HostName = 'test.iquest.cz'
     Port = 0
     Database = 'eurosignal'
     User = 'eurosignal'
     Password = 'ayQKeWSf9F'
     Protocol = 'mysql-5'
-    Left = 162
-    Top = 82
+    Left = 170
+    Top = 138
   end
   object qrMain: TZQuery
     Connection = dbMain
@@ -501,8 +517,8 @@ object fmMain: TfmMain
     Params = <>
     ShowRecordTypes = [usUnmodified, usModified, usInserted, usDeleted]
     WhereMode = wmWhereAll
-    Left = 190
-    Top = 82
+    Left = 214
+    Top = 138
   end
   object qrRows: TZQuery
     Connection = dbMain
@@ -514,8 +530,8 @@ object fmMain: TfmMain
     Params = <>
     ShowRecordTypes = [usUnmodified, usModified, usInserted, usDeleted]
     WhereMode = wmWhereAll
-    Left = 218
-    Top = 82
+    Left = 274
+    Top = 138
   end
   object dbAbra: TZConnection
     ControlsCodePage = cGET_ACP
@@ -523,15 +539,14 @@ object fmMain: TfmMain
     Properties.Strings = (
       'controls_cp=GET_ACP')
     ReadOnly = True
-    AfterConnect = dbAbraAfterConnect
     HostName = ''
     Port = 0
     Database = ''
     User = ''
     Password = ''
     Protocol = 'firebird-2.1'
-    Left = 162
-    Top = 110
+    Left = 170
+    Top = 262
   end
   object qrAbra: TZQuery
     Connection = dbAbra
@@ -540,8 +555,8 @@ object fmMain: TfmMain
     SQL.Strings = (
       '')
     Params = <>
-    Left = 190
-    Top = 110
+    Left = 214
+    Top = 262
   end
   object qrAbra3: TZQuery
     Connection = dbAbra
@@ -550,8 +565,8 @@ object fmMain: TfmMain
     SQL.Strings = (
       '')
     Params = <>
-    Left = 246
-    Top = 110
+    Left = 302
+    Top = 262
   end
   object qrAbra2: TZQuery
     Connection = dbAbra
@@ -560,13 +575,13 @@ object fmMain: TfmMain
     SQL.Strings = (
       '')
     Params = <>
-    Left = 218
-    Top = 110
+    Left = 258
+    Top = 262
   end
   object IdAntiFreeze1: TIdAntiFreeze
     OnlyWhenIdle = False
-    Left = 190
-    Top = 55
+    Left = 166
+    Top = 39
   end
   object idHTTP: TIdHTTP
     AllowCookies = True
@@ -584,7 +599,7 @@ object fmMain: TfmMain
     Request.Ranges.Units = 'bytes'
     Request.Ranges = <>
     HTTPOptions = [hoForceEncodeParams]
-    Left = 162
-    Top = 55
+    Left = 130
+    Top = 39
   end
 end

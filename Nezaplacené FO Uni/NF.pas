@@ -16,17 +16,23 @@
 // 8.4.15 sjednoceno pro ABAK
 // 17.12. oznaèování zákazníkù pøipojených v jiné síti
 
+// 2017-09: odstranìní omezování, odstranìní ABAK, pøidání zasílání SMS
+
 unit NF;
 
 interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Forms, Controls, StdCtrls, ExtCtrls, ComCtrls, ComObj, Math,
-  Mask, AdvCombo, AdvEdit, Dialogs, Grids, BaseGrid, AdvGrid, DB, IBDatabase, IBCustomDataSet, IBQuery, DateUtils, IniFiles,
-  rxToolEdit, ZAbstractRODataset, ZAbstractDataset, ZDataset, ZConnection, IdBaseComponent, IdComponent, IdTCPConnection,
+  Mask, AdvCombo, AdvEdit, Dialogs, Grids, BaseGrid, AdvGrid, DB,
+  //IBDatabase, IBCustomDataSet, IBQuery,
+  DateUtils, IniFiles,
+  //rxToolEdit,
+  ZAbstractRODataset, ZAbstractDataset, ZDataset, ZConnection, IdBaseComponent, IdComponent, IdTCPConnection,
   IdTCPClient, IdMessageClient, IdSMTP, IdMessage, IdHTTP,
   IdAntiFreezeBase, IdAntiFreeze, ZAbstractConnection, AdvObj, IdIOHandler,
-  IdIOHandlerSocket, IdSSLOpenSSL, IdExplicitTLSClientServerBase, IdSMTPBase;
+  IdIOHandlerSocket, IdSSLOpenSSL, IdExplicitTLSClientServerBase, IdSMTPBase,
+  AdvDateTimePicker;
 
 type
   TfmMain = class(TForm)
@@ -43,17 +49,14 @@ type
     pnMain: TPanel;
     lbDo: TLabel;
     lbOd: TLabel;
-    deDatumOd: TDateEdit;
-    deDatumDo: TDateEdit;
     acbRada: TAdvComboBox;
-    aedPocet: TAdvEdit;
+    aedPocetOd: TAdvEdit;
     aedPocetDo: TAdvEdit;
     acbDruhSmlouvy: TAdvComboBox;
     cbCast: TCheckBox;
     btVyber: TButton;
     btExport: TButton;
     btMail: TButton;
-    btOmezit: TButton;
     btOdpojit: TButton;
     btKonec: TButton;
     asgPohledavky: TAdvStringGrid;
@@ -62,10 +65,10 @@ type
     IdAntiFreeze1: TIdAntiFreeze;
     idHTTP: TIdHTTP;
     rgText: TRadioGroup;
-    idSSLHandler: TIdSSLIOHandlerSocket;
+    btSMS: TButton;
+    deDatumOd: TDateTimePicker;
+    deDatumDo: TDateTimePicker;
     procedure FormShow(Sender: TObject);
-    procedure dbAbraAfterConnect(Sender: TObject);
-    procedure dbMainAfterConnect(Sender: TObject);
     procedure asgPohledavkyGetAlignment(Sender: TObject; ARow, ACol: Integer; var HAlign: TAlignment; var VAlign: TVAlignment);
     procedure asgPohledavkyGetFormat(Sender: TObject; ACol: Integer; var AStyle: TSortStyle; var aPrefix, aSuffix: string);
     procedure asgPohledavkyDblClickCell(Sender: TObject; ARow, ACol: Integer);
@@ -76,7 +79,6 @@ type
     procedure btVyberClick(Sender: TObject);
     procedure btExportClick(Sender: TObject);
     procedure btMailClick(Sender: TObject);
-    procedure btOmezitClick(Sender: TObject);
     procedure btOdpojitClick(Sender: TObject);
     procedure btKonecClick(Sender: TObject);
     procedure rgTextClick(Sender: TObject);
@@ -97,7 +99,7 @@ var
 
 implementation
 
-uses NF2D;
+uses DesUtils, NF2D;
 
 {$R *.dfm}
 
@@ -111,13 +113,13 @@ var
 begin
   deDatumDo.Date := EndOfTheMonth(IncMonth(Now, -1));
   deDatumOd.Date := StartOfTheMonth(IncYear(Now, -1));
-{$IFNDEF ABAK}
+
   rgText.Top := 350;
   rgText.Height := 73;
   rgText.Items.Add('Text 3');
-{$ENDIF}
+
 // 30.12.14 adresáø pro logy
-  LogDir := ExtractFilePath(ParamStr(0)) + '\Nezaplacené FO - logy';
+  LogDir := DesU.PROGRAM_PATH + '\Nezaplacené FO - logy';
   if not DirectoryExists(LogDir) then CreateDir(LogDir);
 // vytvoøení logfile, pokud neexistuje - 20.11.14 do jména pøidáno datum - 8.4.15 jen rok a mìsíc
   LogFileName := LogDir + FormatDateTime('\yyyy.mm".log"', Date);
@@ -127,11 +129,10 @@ begin
   end;
   AssignFile(F, LogFileName);
 // jméno FI.ini
-{$IFDEF ABAK}
-  FIFileName := ExtractFilePath(ParamStr(0)) + 'FIABAK.ini';
-{$ELSE}
+
+{
   FIFileName := ExtractFilePath(ParamStr(0)) + 'FIDES.ini';
-{$ENDIF}
+
   if FileExists(FIFileName) then begin                     // existuje FI.ini ?
     FIIni := TIniFile.Create(FIFileName);
     with FIIni do try
@@ -169,6 +170,8 @@ begin
       Application.Terminate;
     end;
   end;
+  }
+
   with asgPohledavky do begin
     Clear;
     Cells[0, 0] := ' zákazník';
@@ -186,35 +189,24 @@ begin
     CheckFalse := '0';
     CheckTrue := '1';
   end;
-  aedPocet.Text := '1';
+  aedPocetDo.Text := '1';
   aedPocetDo.Text := '12';
-{$IFDEF ABAK}
-  MailText := 'Vážený pane, vážená paní,' + #13#10
-  + 'dovolujeme si Vás upozornit, že Vaše faktura za internetové pøipojení prostøednictvím sítì újezd.net za mìsíc '
-  + FormatDateTime('mmmm', deDatumDo.Date) + ' nebyla dosud uhrazena. Provìøte, prosím, tuto skuteènost a v pøípadì nejasností '
-  + 'nás laskavì kontaktujte.';
-{$ELSE}
+
   MailText := Format('Vážený pane, vážená paní,' + #13#10
   + 'dovolujeme si Vás upozornit, že je %d dní po splatnosti pravidelné mìsíèní faktury za pøipojení k internetu '
   + 'a stále od Vás postrádáme její úhradu.' + #13#10
   + 'I když penále za %d dní zpoždìní platby ve výši %.1f%% je v tuto chvíli zanedbatelné a jistì ho na Vás nebudeme vymáhat, '
   + 'potìšilo by nás, kdybyste dlužnou èástku co nejdøíve uhradili.', [DayOf(Date) - 10, DayOf(Date) - 10, (DayOf(Date) - 10) * 0.3]);
-{$ENDIF}
-  mmMail.Text := MailText;
-end;
 
-procedure TfmMain.dbAbraAfterConnect(Sender: TObject);
-var
-  SQLStr: ShortString;
-begin
-  with qrAbra do begin
-    SQLStr := 'SELECT Code FROM DocQueues'                 // øady faktur
+  mmMail.Text := MailText;
+
+  acbRada.Clear;
+  acbRada.Items.Add('%');
+  with DesU.qrAbra do begin
+    SQL.Text := 'SELECT Code FROM DocQueues'                 // øady faktur
     + ' WHERE DocumentType = ''03'''
     + ' AND Hidden = ''N'''
     + ' ORDER BY Code';
-    SQL.Text := SQLStr;
-    acbRada.Clear;
-    acbRada.Items.Add('%');
     Open;
     while not EOF do begin
       acbRada.Items.Add(FieldByName('Code').AsString);
@@ -222,20 +214,16 @@ begin
     end;
   end;
   acbRada.ItemIndex := 0;
-end;
 
-procedure TfmMain.dbMainAfterConnect(Sender: TObject);
-var
-  SQLStr: ShortString;
-begin
-  with qrMain do begin
-    SQL.Text := 'SET CHARACTER SET cp1250';                // pøeklad z UTF-8
-    ExecSQL;
-    SQLStr := 'SELECT DISTINCT State FROM contracts'       // stav smlouvy
+  acbDruhSmlouvy.Clear;
+  acbDruhSmlouvy.Items.Add('%');
+  with DesU.qrZakos do begin
+    //SQL.Text := 'SET CHARACTER SET cp1250';                // pøeklad z UTF-8
+    //ExecSQL;
+    SQL.Text := 'SELECT DISTINCT State FROM contracts'       // stav smlouvy
     + ' ORDER BY State';
-    SQL.Text := SQLStr;
-    acbDruhSmlouvy.Clear;
-    acbDruhSmlouvy.Items.Add('%');
+
+
     Open;
     while not EOF do begin
       acbDruhSmlouvy.Items.Add(FieldByName('State').AsString);
@@ -245,68 +233,12 @@ begin
   acbDruhSmlouvy.ItemIndex := 0;
 end;
 
-procedure TfmMain.asgPohledavkyGetAlignment(Sender: TObject; ARow, ACol: Integer; var HAlign: TAlignment; var VAlign: TVAlignment);
-begin
-  if ARow = 0 then HAlign := taLeftJustify
-  else if (ACol in [2..4]) then HAlign := taRightJustify;
-end;
 
-procedure TfmMain.asgPohledavkyGetFormat(Sender: TObject; ACol: Integer; var AStyle: TSortStyle; var aPrefix, aSuffix: String);
-begin
-  if ACol in [2..4] then AStyle := ssNumeric
-  else if ACol in [0, 1, 5, 6, 8, 9] then AStyle := ssAlphabetic;
-end;
 
-procedure TfmMain.asgPohledavkyCanSort(Sender: TObject; ACol: Integer; var DoSort: Boolean);
-begin
-  with asgPohledavky do
-    if ACol = 7 then DoSort := False
-    else if RowCount > 2 then RemoveRows(RowCount-1, 1);
-end;
-
-procedure TfmMain.asgPohledavkyCanEditCell(Sender: TObject; ARow, ACol: Integer; var CanEdit: Boolean);
-begin
-  CanEdit := ACol in [6..9];
-end;
-
-procedure TfmMain.asgPohledavkyClickSort(Sender: TObject; ACol: Integer);
-begin
-  with asgPohledavky do
-    if (ACol <> 7) and (RowCount > 2) then begin
-      RowCount := RowCount + 1;
-      Cells[0, RowCount-1] := 'Celkem';
-      Cells[2, RowCount-1] := Format('%d', [Trunc(ColumnSum(2, 1, RowCount-2))]);
-      Floats[3, RowCount-1] := ColumnSum(3, 1, RowCount-2);
-    end;
-end;
-
-procedure TfmMain.asgPohledavkyClickCell(Sender: TObject; ARow, ACol: Integer);
-var
-  Radek: integer;
-begin
-  if (ARow = 0) and (ACol = 7) then with asgPohledavky do
-    if ColumnSum(7, 1, RowCount-2) = 0 then for Radek := 1 to RowCount-2 do Ints[7, Radek] := 1
-    else for Radek := 1 to RowCount-2 do Ints[7, Radek] := 0;
-end;
-
-procedure TfmMain.asgPohledavkyDblClickCell(Sender: TObject; ARow, ACol: Integer);
-begin
-  Radek := ARow;
-  fmDetail.ShowModal;
-end;
 
 procedure TfmMain.rgTextClick(Sender: TObject);
 begin
   case rgText.ItemIndex of
-{$IFDEF ABAK}
-   0: MailText := 'Vážený pane, vážená paní,' + #13#10
-      + 'dovolujeme si Vás upozornit, že Vaše faktura za internetové pøipojení prostøednictvím sítì újezd.net za mìsíc '
-      + FormatDateTime('mmmm', deDatumDo.Date) + ' nebyla dosud uhrazena. Provìøte, prosím tuto skuteènost a v pøípadì nejasností nás laskavì kontaktujte.';
-   1: MailText := 'Vážený pane, vážená paní,' + #13#10
-      + 'dovolujeme si Vás upozornit, že Váš dluh za pøipojení k internetu dosáhl dvou mìsíèních plateb, nebo tuto èástku již pøesáhl. '
-      + 'Nebudou-li dlužné faktury ve výši %%%,- Kè uhrazeny do 5ti pracovních dnù, budeme nuceni Vám linku doèasnì pozastavit. '
-      + 'Poplatek za znovupøipojení èiní 300,- Kè bez DPH.';
-{$ELSE}
    0: MailText := Format('Vážený pane, vážená paní,' + #13#10
       + 'dovolujeme si Vás upozornit, že je %d dní po splatnosti pravidelné mìsíèní faktury za pøipojení k internetu '
       + 'a stále od Vás postrádáme její úhradu.' + #13#10
@@ -320,11 +252,82 @@ begin
       + 'upozoròujeme Vás, že Váš dluh za pøipojení k internetu dosáhl tøí mìsíèních plateb, nebo tuto èástku již pøesáhl. '
       + 'V nejbližší dobì Vám proto bude pøerušeno pøipojení k internetu.' + #13#10
       + 'Další informace mùžete získat v pracovní dny (9-16 h.) na èísle 227 031 807, nebo kdykoli na svém zákaznickém úètu na www.eurosignal.cz';
-{$ENDIF}
   end;
   mmMail.Text := MailText;
 end;
 
+procedure TfmMain.btVyberClick(Sender: TObject);
+var
+  SQLStr: string;
+  fmWidth,
+  Radek: integer;
+begin
+  Screen.Cursor := crHourGlass;
+  with DesU.qrZakos, asgPohledavky do try
+    Radek := 0;
+    ClearNormalCells;
+
+  //if dbMain.Connected then with qrMain do begin
+    Close;
+    SQLStr := 'SELECT DISTINCT Cu.Id AS CuId, C.Id AS CId, Postal_mail, Phone, vip, Number, State, Tag_Id'
+    + ' FROM contracts C'
+    + ' JOIN customers Cu ON Cu.Id = C.Customer_Id'
+    + ' LEFT JOIN contracts_tags CT ON CT.Contract_Id = C.Id'      // 17.12.15
+
+
+    + ' WHERE  phone <> '''' and phone not like ''7%'' and phone not like ''6%'' ';
+    //+ ' WHERE  phone like ''%+420%''';
+
+    if acbDruhSmlouvy.Text <> '%' then SQLStr := SQLStr + ' AND State = ' + Ap + acbDruhSmlouvy.Text + Ap;
+    SQLStr := SQLStr + ' LIMIT 800 ';
+
+    SQL.Text := SQLStr;
+    Open;
+
+// 28.4.11 barvièky
+
+    while not EOF do begin
+      Inc(Radek);                                    // 22.9.11 a každá má svùj øádek
+      RowCount := Radek + 1;
+      Cells[5, Radek] := FieldByName('State').AsString;
+      Cells[6, Radek] := FieldByName('Number').AsString;
+  // 17.12.15 pøipojení v jiné síti
+      if FieldByName('Tag_Id').AsInteger in [20, 21, 25, 26, 27, 30] then Colors[6, Radek] := clRed;
+      Cells[8, Radek] := FieldByName('Postal_mail').AsString;
+      Cells[9, Radek] := FieldByName('Phone').AsString;
+      Cells[10, Radek] := FieldByName('CuId').AsString;
+      Cells[11, Radek] := FieldByName('CId').AsString;
+      if Pos('@', FieldByName('Postal_mail').AsString) > 0 then Ints[7, Radek] := 1;
+
+
+      AddCheckBox(7, Radek, True, True);
+      Ints[7, Radek] := 0;
+
+      Cells[3, Radek] := destilujTelCislo(FieldByName('Phone').AsString);
+
+      Next;
+    end;
+
+    Application.ProcessMessages;
+
+
+// úprava zobrazení
+    AutoSize := True;
+    ColWidths[7] := 18;
+    ColWidths[10] := 0;                 // Cu.Id
+    ColWidths[11] := 0;                 // C.Id
+
+    fmWidth := 0;
+    for Radek := 0 to ColCount-1 do fmWidth := fmWidth +  ColWidths[Radek];
+    fmMain.Width := fmWidth + 120;
+    fmMain.Height := Min(800, RowCount * 19 + 164);
+  finally
+//    ShowMessage(TimeToStr(Time - t));
+    Screen.Cursor := crDefault;
+  end;
+end;
+
+{ //puvodni verze tata
 procedure TfmMain.btVyberClick(Sender: TObject);
 var
   SQLStr: AnsiString;
@@ -332,7 +335,7 @@ var
   Radek: integer;
 begin
   Screen.Cursor := crHourGlass;
-  with qrAbra, asgPohledavky do try
+  with DesU.qrAbra, asgPohledavky do try
     ClearNormalCells;
     SQLStr := 'SELECT F.Name AS Zakaznik, F.Code AS Kod, '
     + ' SUM(II.LocalAmount - II.LocalCreditAmount - (II.LocalPaidAmount - II.LocalPaidCreditAmount)) AS Castka, COUNT(*)'
@@ -355,7 +358,7 @@ begin
     Open;
     Radek := 0;
     while not EOF do begin
-      if (FieldByName('Zakaznik').AsString <> '') and (FieldByName('Count').AsInteger >= StrToInt(aedPocet.Text))
+      if (FieldByName('Zakaznik').AsString <> '') and (FieldByName('Count').AsInteger >= StrToInt(aedPocetDo.Text))
        and (FieldByName('Count').AsInteger <= StrToInt(aedPocetDo.Text)) then begin
         Inc(Radek);
         RowCount := Radek + 1;
@@ -389,9 +392,9 @@ begin
           + ' FROM contracts C'
           + ' JOIN customers Cu ON Cu.Id = C.Customer_Id'
           + ' LEFT JOIN contracts_tags CT ON CT.Contract_Id = C.Id'      // 17.12.15
-{$IFNDEF ABAK}
+
 //          + ' AND Tariff_Id <> 2'                          // 12.4.11 ne EP-Basic
-{$ENDIF}
+
           + ' WHERE Abra_Code = ' + Ap + Cells[1, Radek] + Ap
           + ' AND Activated_at <= ' + Ap + FormatDateTime('yyyy-mm-dd', deDatumDo.Date) + Ap;
           if acbDruhSmlouvy.Text <> '%' then SQLStr := SQLStr + ' AND State = ' + Ap + acbDruhSmlouvy.Text + Ap;
@@ -449,12 +452,11 @@ begin
     fmMain.Width := fmWidth + 120;
     fmMain.Height := Min(800, RowCount * 19 + 164);
   finally
-    qrMain.Close;
-    qrAbra.Close;
 //    ShowMessage(TimeToStr(Time - t));
     Screen.Cursor := crDefault;
   end;
 end;
+}
 
 procedure TfmMain.btExportClick(Sender: TObject);
 begin
@@ -489,12 +491,10 @@ begin
         Clear;
         ContentType := 'text/plain';
         Charset := 'Windows-1250';
-{$IFDEF ABAK}
-        From.Address := 'abak@abak.cz';
-        CCList.Add.Address := 'abak@abak.cz';
-{$ELSE}
+
         From.Address := 'kontrola@eurosignal.cz';
-{$ENDIF}
+        //CCList.Add.Address := 'a@a.cz';
+
         MailStr := Cells[8, Radek];
         MailStr := StringReplace(MailStr, ',', ';', [rfReplaceAll]);    // èárky za støedníky
         while Pos(';', MailStr) > 0 do begin
@@ -508,19 +508,17 @@ begin
         Body.Add(' ');
         Body.Add('S pozdravem');
         Body.Add(' ');
-{$IFDEF ABAK}
-        Body.Add('L.Kotalíková');
-        Body.Add('Tel. 246030670-1');
-{$ELSE}
         Body.Add('Váš Eurosignal');
         Body.Add(' ');
         Body.Add('Na tuto zprávu neodpovídejte, byla generována automaticky.');
-{$ENDIF}
+
+        {
         with idSMTP do begin
           Port := 25;
           if Username = '' then AuthenticationType := atNone
           else AuthenticationType := atLogin;
         end;
+        }
         try
           if not idSMTP.Connected then idSMTP.Connect;
           idSMTP.Send(idMessage);
@@ -564,103 +562,7 @@ begin
   Screen.Cursor := crDefault;
 end;
 
-procedure TfmMain.btOmezitClick(Sender: TObject);
-var
-  RadekDo,
-  Radek,
-  NotesId,
-  SinId: integer;
-  URL,
-  HTTPMessage,
-  SQLStr: AnsiString;
-begin
-  Screen.Cursor := crHourGlass;
-  with asgPohledavky, qrMain do try
-    if RowCount > 2 then RadekDo := RowCount - 2 else RadekDo := 1;
-    Radek := Trunc(ColumnSum (7, 1, RadekDo));             // poèet vybraných øádkù
-// 24.11.13 potvrzení
-    if Application.MessageBox(PChar(Format('Opravdu omezit %d zákazníkù?', [Radek])),
-     'Pozor', MB_ICONQUESTION + MB_YESNO + MB_DEFBUTTON1) = IDNO then Exit;
-    System.Append(F);
-    Writeln (F, FormatDateTime(#13#10 + 'dd.mm.yy hh:nn  ', Now) + 'Omezení rychlosti:' + #13#10);
-    CloseFile(F);
-// 26.6.14
-    idHTTP.Request.Clear;
-    idHTTP.Request.BasicAuthentication := True;
-{$IFDEF ABAK}
-    idHTTP.Request.Username := 'nfo';
-    idHTTP.Request.Password := '9RG16Nu3';
-    idHTTP.IOHandler := idSSLHandler;
-    URL := 'https://iquest.ujd';
-{$ELSE}
-    idHTTP.Request.Username := 'NFO';
-    idHTTP.Request.Password := 'NFO2014';
-    URL := 'http://aplikace.eurosignal.cz';
-{$ENDIF}
-    for Radek := 1 to RadekDo do
-      if Ints[7, Radek] = 1 then try
-        HTTPMessage := idHTTP.Get(Format('%s/api/contracts/change_state?number=%s&state=restricted', [URL, Cells[6, Radek]]));
-        if HTTPMessage <> 'OK' then
-          if Application.MessageBox(PChar(Format('Omezení se nepodaøilo uložit do databáze: %s. Pokraèovat?', [HTTPMessage])),
-           'Pozor', MB_ICONQUESTION + MB_YESNO + MB_DEFBUTTON1) = IDNO then Exit
-          else Continue;
-        if (Colors[7, Radek] <> clSilver) then Colors[7, Radek] := clSilver
-        else Colors[7, Radek] := clWhite;
-        System.Append(F);
-        Writeln (F, Format('%s (%s)', [Cells[0, Radek], Cells[6, Radek]]));
-        CloseFile(F);
-{$IFNDEF ABAK}
-        try                                                  // 7.10.11
-          SQL.Text := 'SELECT MAX(Id) FROM sinners';
-          Open;
-          SinId := Fields[0].AsInteger + 1;
-          SQLStr := 'SELECT Invoice_debt, Account_debt, Enforcement_state FROM sinners'
-          + ' WHERE Customer_id = ' + Cells[10, Radek]
-          + ' AND Id = (SELECT MAX(Id) FROM sinners'
-            + ' WHERE Customer_id = ' + Cells[10, Radek] + ')';
-          Close;
-          SQL.Text := SQLStr;
-          Open;
-          SQLStr := 'INSERT INTO sinners ('
-          + ' Id,'
-          + ' Customer_id,'
-          + ' Contract_id,'
-          + ' Date,'
-          + ' Contract_state,'
-          + ' Due_invoice_no,'
-          + ' Invoice_debt,'
-          + ' Account_debt,'
-          + ' Enforcement_state,'
-          + ' Event,'
-          + ' Comment) VALUES ('
-          + IntToStr(SinId) + ', '
-          + Cells[10, Radek] + ', '
-          + Cells[11, Radek] + ', '
-          + Ap + FormatDateTime('yyyy-mm-dd hh:nn:ss', Now) + ApC
-          + Ap + 'restricted' + ApC                         // stav smlouvy
-          + Cells[2, Radek] + ', '                         // poèet faktur
-          + Ap + FieldByName('Invoice_debt').AsString + ApC
-          + Ap + FieldByName('Account_debt').AsString + ApC
-          + Ap + FieldByName('Enforcement_state').AsString + ApC              // stav vymáhání
-          + Ap + 'omezení' + ApC
-          + Ap + 'program NezaplaceneFaktury' + ApZ;
-          Close;
-          SQL.Text := SQLStr;
-          ExecSQL;
-        except on E: exception do
-          ShowMessage('Omezení se nepodaøilo uložit do sinners: ' + E.Message);
-        end;
-{$ENDIF}
-      except on E: exception do
-        if Application.MessageBox(PChar(E.Message + #13#10 + 'Omezení se nepodaøilo uložit do databáze. Pokraèovat?'),
-         'Pozor', MB_ICONQUESTION + MB_YESNO + MB_DEFBUTTON1) = IDNO then Exit
-        else Continue;
-      end;
-  finally
-    Close;
-    Screen.Cursor := crDefault;
-  end;
-end;
+
 
 procedure TfmMain.btOdpojitClick(Sender: TObject);
 var
@@ -686,18 +588,11 @@ begin
     idHTTP.Request.Clear;
     idHTTP.Request.BasicAuthentication := True;
 //    idHTTP.Request.UserAgent := 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.0; SLCC1)';
-{$IFDEF ABAK}
-// pro ABAK na test 13.9.2016
-    idHTTP.Request.Username := 'nfo';
-    idHTTP.Request.Password := '9RG16Nu3';
-    idHTTP.IOHandler := idSSLHandler;
-//    URL := 'https://iquest.ujd';
-    URL := 'http://portal.ujezd.net';
-{$ELSE}
+
     idHTTP.Request.Username := 'NFO';
     idHTTP.Request.Password := 'NFO2014';
     URL := 'http://aplikace.eurosignal.cz';
-{$ENDIF}
+
     for Radek := 1 to RadekDo do
       if Ints[7, Radek] = 1 then try
         HTTPMessage := idHTTP.Get(Format('%s/api/contracts/change_state?number=%s&state=disconnected', [URL, Cells[6, Radek]]));
@@ -710,7 +605,7 @@ begin
         System.Append(F);
         Writeln (F, Format('%s (%s)', [Cells[0, Radek], Cells[6, Radek]]));
         CloseFile(F);
-{$IFNDEF ABAK}
+
         try                                                  // 7.10.11
           SQL.Text := 'SELECT MAX(Id) FROM sinners';
           Open;
@@ -750,7 +645,7 @@ begin
         except on E: exception do
           ShowMessage('Odpojení se nepodaøilo uložit do sinners: ' + E.Message);
         end;
-{$ENDIF}
+
       except on E: exception do
         if Application.MessageBox(PChar(E.Message + #13#10 + 'Odpojení se nepodaøilo uložit do databáze. Pokraèovat?'),
          'Pozor', MB_ICONQUESTION + MB_YESNO + MB_DEFBUTTON1) = IDNO then Exit
@@ -760,6 +655,59 @@ begin
     Close;
     Screen.Cursor := crDefault;
   end;
+end;
+
+
+{*********************** akce Input elementù **********************************}
+
+procedure TfmMain.asgPohledavkyDblClickCell(Sender: TObject; ARow, ACol: Integer);
+begin
+  Radek := ARow;
+  fmDetail.ShowModal;
+end;
+
+procedure TfmMain.asgPohledavkyGetAlignment(Sender: TObject; ARow, ACol: Integer; var HAlign: TAlignment; var VAlign: TVAlignment);
+begin
+  if ARow = 0 then HAlign := taLeftJustify
+  else if (ACol in [2..4]) then HAlign := taRightJustify;
+end;
+
+procedure TfmMain.asgPohledavkyGetFormat(Sender: TObject; ACol: Integer; var AStyle: TSortStyle; var aPrefix, aSuffix: String);
+begin
+  if ACol in [2..4] then AStyle := ssNumeric
+  else if ACol in [0, 1, 5, 6, 8, 9] then AStyle := ssAlphabetic;
+end;
+
+procedure TfmMain.asgPohledavkyCanSort(Sender: TObject; ACol: Integer; var DoSort: Boolean);
+begin
+  with asgPohledavky do
+    if ACol = 7 then DoSort := False
+    else if RowCount > 2 then RemoveRows(RowCount-1, 1);
+end;
+
+procedure TfmMain.asgPohledavkyCanEditCell(Sender: TObject; ARow, ACol: Integer; var CanEdit: Boolean);
+begin
+  CanEdit := ACol in [6..9];
+end;
+
+procedure TfmMain.asgPohledavkyClickSort(Sender: TObject; ACol: Integer);
+begin
+  with asgPohledavky do
+    if (ACol <> 7) and (RowCount > 2) then begin
+      RowCount := RowCount + 1;
+      Cells[0, RowCount-1] := 'Celkem';
+      Cells[2, RowCount-1] := Format('%d', [Trunc(ColumnSum(2, 1, RowCount-2))]);
+      Floats[3, RowCount-1] := ColumnSum(3, 1, RowCount-2);
+    end;
+end;
+
+procedure TfmMain.asgPohledavkyClickCell(Sender: TObject; ARow, ACol: Integer);
+var
+  Radek: integer;
+begin
+  if (ARow = 0) and (ACol = 7) then with asgPohledavky do
+    if ColumnSum(7, 1, RowCount-2) = 0 then for Radek := 1 to RowCount-2 do Ints[7, Radek] := 1
+    else for Radek := 1 to RowCount-2 do Ints[7, Radek] := 0;
 end;
 
 procedure TfmMain.btKonecClick(Sender: TObject);

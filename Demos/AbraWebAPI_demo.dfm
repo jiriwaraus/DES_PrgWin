@@ -112,6 +112,15 @@ object Form1: TForm1
     TabOrder = 9
     OnClick = btnSendEmailClick
   end
+  object btnSendSms: TButton
+    Left = 576
+    Top = 133
+    Width = 75
+    Height = 25
+    Caption = 'send SMS'
+    TabOrder = 10
+    OnClick = btnSendSmsClick
+  end
   object IdSMTP1: TIdSMTP
     SASLMechanisms = <>
     Left = 768

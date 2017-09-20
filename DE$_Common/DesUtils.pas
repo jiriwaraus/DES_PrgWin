@@ -4,6 +4,7 @@ interface
 
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
+  System.RegularExpressions,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs,
   //Windows, Messages, SysUtils, Variants, Classes, Dialogs, Forms,
   StrUtils,  IOUtils, IniFiles, ComObj, //, Grids, AdvObj, StdCtrls,
@@ -40,6 +41,7 @@ type
       abraWebApiUrl : string;
       appMode: integer;
       AbraOLE: variant;
+      adpIniFile: TIniFile;
 
 
       function getAbraOLE() : variant;
@@ -80,6 +82,8 @@ type
       function isVoipContract(cnumber : string) : boolean;
       function isCreditContract(cnumber : string) : boolean;
 
+      function sendGodsSms(telCislo, smsText : string) : string;
+
     private
       function newAbraIdHttp(timeout : single; isJsonPost : boolean) : TIdHTTP;
 
@@ -96,6 +100,7 @@ function Str6digitsToDate(datum : string) : double;
 function IndexByName(DataObject: variant; Name: ShortString): integer;
 function pocetRadkuTxtSouboru(SName: string): integer;
 function RemoveSpaces(const s: string): string;
+function destilujTelCislo(telCislo: string): string;
 function FindInFolder(sFolder, sFile: string; bUseSubfolders: Boolean): string;
 procedure writeToFile(pFileName, pContent : string);
 function LoadFileToStr(const FileName: TFileName): ansistring;
@@ -131,8 +136,7 @@ begin
 end;
 
 procedure TDesU.desUtilsInit(createOptions : string);
-var
-  adpIniFile: TIniFile;
+
 begin
 
   PROGRAM_PATH := ExtractFilePath(ParamStr(0));
@@ -164,13 +168,12 @@ begin
     dbAbra.User := ReadString('Preferences', 'AbraUN', '');
     dbAbra.Password := ReadString('Preferences', 'AbraPW', '');
 
-
     dbZakos.HostName := ReadString('Preferences', 'ZakHN', '');
     dbZakos.Database := ReadString('Preferences', 'ZakDB', '');
     dbZakos.User := ReadString('Preferences', 'ZakUN', '');
     dbZakos.Password := ReadString('Preferences', 'ZakPW', '');
   finally
-    adpIniFile.Free;
+    //adpIniFile.Free; //
   end;
 
 
@@ -1083,6 +1086,61 @@ begin
 end;
 
 
+{********************   GODS ************}
+function TDesU.sendGodsSms(telCislo, smsText : string) : string;
+var
+  idHTTP: TIdHTTP;
+  sstreamJson: TStringStream;
+  callJson, postCallResult, godsSmsUrl: string;
+begin
+  idHTTP := TidHTTP.Create;
+
+  with adpIniFile do try
+    godsSmsUrl := ReadString('Preferences', 'GodsSmsUrl', '');
+    idHTTP.Request.Username := ReadString('Preferences', 'GodsSmsUN', '');
+    idHTTP.Request.Password := ReadString('Preferences', 'GodsSmsPW', '');
+  except
+  end;
+
+  idHTTP.Request.BasicAuthentication := True;
+  idHTTP.ReadTimeout := Round (10 * 1000); // ReadTimeout je v milisekundách
+  idHTTP.Request.ContentType := 'application/json';
+  idHTTP.Request.CharSet := 'utf-8';
+
+
+  //self.logJson(boAA.AsJSon(), 'abraBoCreateWebApi_AA - ' + abraWebApiUrl + abraBoName);
+
+   callJson := '{"from": "Eurosignal","msisdn": "420' + telCislo + '",'
+        + '"message": "' + smsText + '"}';
+
+  sstreamJson := TStringStream.Create(callJson, TEncoding.UTF8);
+
+  try
+    try begin
+      postCallResult := idHTTP.Post(godsSmsUrl, sstreamJson);
+
+//  {
+//    "status": "success",
+//    "data": {
+//        "message-id": "c3d8ebd4-879e-412e-8e16-3d4a2335d967"
+//    }
+//  }
+
+      Result := postCallResult;
+    end;
+    except
+      on E: Exception do begin
+        ShowMessage('Error on request: '#13#10 + e.Message);
+      end;
+    end;
+  finally
+    sstreamJson.Free;
+    idHTTP.Free;
+  end;
+
+end;
+
+
 {***************************************************************************}
 {********************     General helper functions     *********************}
 {***************************************************************************}
@@ -1168,6 +1226,42 @@ begin
 
   SetLength(Result, p);
 end;
+
+function destilujTelCislo(telCislo: string): string;
+var
+  regexpr : TRegEx;
+  match   : TMatch;
+  group   : TGroup;
+  i       : integer;
+begin
+  Result := stringreplace(telCislo, '+420', '', [rfReplaceAll, rfIgnoreCase]);
+  //Result := RemoveSpaces(Result);
+
+  regexpr := TRegEx.Create('(\d{9})',[roIgnoreCase,roMultiline]);
+  match := regexpr.Match(Result);
+  if not match.Success then
+  begin
+    Result := 'zadne cislo';
+    exit;
+  end;
+
+  while match.Success do
+  begin
+    if match.Value[1] = '6' then
+      Result := Result + 'Match6 : [' + match.Value + ']';
+
+    if match.Value[1] = '7' then
+      Result := Result + 'Match7 : [' + match.Value + ']';
+
+
+    match := match.NextMatch;
+  end;
+
+
+ //Result := RemoveSpaces(Result);
+
+end;
+
 
 
 function FindInFolder(sFolder, sFile: string; bUseSubfolders: Boolean): string;
