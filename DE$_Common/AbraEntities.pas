@@ -25,7 +25,7 @@ type
     castkaDobropisovano  : Currency;
     castkaNezaplaceno  : Currency;
     cisloDokladu : string[20];
-    constructor create();
+    constructor create(qrAbra : TZQuery);
   end;
 
   TAbraBankAccount = class
@@ -67,9 +67,9 @@ uses
 
 {** class TDoklad **}
 
-constructor TDoklad.create();
+constructor TDoklad.create(qrAbra : TZQuery);
 begin
- with DesU.qrAbra do begin
+ with qrAbra do begin
   self.ID := FieldByName('ID').AsString;
   self.Firm_ID := FieldByName('Firm_ID').AsString;
   self.FirmName := FieldByName('FirmName').AsString;

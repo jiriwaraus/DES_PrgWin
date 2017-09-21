@@ -64,25 +64,25 @@ procedure TParovatko.sparujPlatbu(Platba : TPlatbaZVypisu);
 
   procedure zpracujPreplatek(Platba : TPlatbaZVypisu; Doklad : TDoklad; Castka: currency);
   var
-    vsPatriVoipSmlouve, vsPatriKreditniSmlouve : boolean;
+    vsPatriKreditniVoipSmlouve, vsPatriKreditniSmlouve : boolean;
   begin
-    vsPatriVoipSmlouve := false;
+    vsPatriKreditniVoipSmlouve := false;
     vsPatriKreditniSmlouve := false;
     Platba.potrebaPotvrzeniUzivatelem := false;
 
     if ((copy(Platba.VS, 5, 1) = '9') AND (copy(Platba.VS, 1, 2) = '20')) OR (Platba.SS = '8888') then
       //self.isVoipKredit := true; //bylo, ale navíc kontrola na typ
-      vsPatriVoipSmlouve := DesU.isVoipContract(Platba.VS);
+      vsPatriKreditniVoipSmlouve := DesU.isVoipKreditContract(Platba.VS);
 
-    if not vsPatriVoipSmlouve then
+    if not vsPatriKreditniVoipSmlouve then
       vsPatriKreditniSmlouve := DesU.isCreditContract(Platba.VS);
 
-    if vsPatriVoipSmlouve OR vsPatriKreditniSmlouve then
+    if vsPatriKreditniVoipSmlouve OR vsPatriKreditniSmlouve then
       Platba.potrebaPotvrzeniUzivatelem := true;
 
     if Platba.potrebaPotvrzeniUzivatelem AND Platba.jePotvrzenoUzivatelem then
     begin
-      if vsPatriVoipSmlouve then
+      if vsPatriKreditniVoipSmlouve then
       begin
         vytvorPDPar(Platba, nil, Castka, 'kredit VoIP |', false, 'VoipKredit');
         Platba.zprava := 'VoIP kredit ' + FloatToStr(Castka) + ' Kè';
@@ -128,14 +128,14 @@ begin
     iDoklad := TDoklad(Platba.DokladyList[0]); //pokud je alespon 1 doklad, priradime si ho pro debety a kredity bez nezaplacenych dokladu
 
   if Platba.debet then
-  begin //platba je debet
+  begin //platba je debet (mínusová)
       Platba.zprava := 'debet';
       Platba.problemLevel := 0;
       vytvorPDPar(Platba, iDoklad, Platba.Castka, '', false);
   end   // end platba je debet
   else
 
-  begin //platba je kredit
+  begin //platba je kredit (plusová)
 
     // vyrobím si list jen nezaplacených dokladù
     nezaplaceneDoklady := TList.Create;

@@ -6,8 +6,7 @@ uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, IniFiles, Forms,
   Dialogs, StdCtrls, Grids, AdvObj, BaseGrid, AdvGrid, StrUtils,
   DB, ComObj, AdvEdit, DateUtils, Math, ExtCtrls,
-  ZAbstractRODataset, ZAbstractDataset, ZDataset, ZAbstractConnection, ZConnection,
-  AbraEntities, DesUtils;
+  ZAbstractRODataset, ZAbstractDataset, ZDataset, ZAbstractConnection, ZConnection;
 
 {
   SysUtils, Classes, DB, StrUtils, ZAbstractRODataset, ZAbstractDataset, ZDataset,
@@ -91,6 +90,9 @@ type
 
   
 implementation
+
+uses
+  AbraEntities, DesUtils;
 
 
 constructor TPlatbaZVypisu.create(castka : currency);
@@ -268,7 +270,7 @@ begin
       SQL.Text := SQLiiSelect + SQLiiJoin + SQLiiJenNezaplacene + SQLiiWhere + SQLiiOrder;
     Open;
     while not Eof do begin
-      self.DokladyList.Add(TDoklad.Create);
+      self.DokladyList.Add(TDoklad.create(qrAbra));
       Next;
     end;
     Close;
@@ -295,7 +297,7 @@ begin
       SQL.Text := SQLiiSelect + SQLiiJoin + SQLiiJenNezaplacene + SQLiiWhere + SQLiiOrder;
     Open;
     while not Eof do begin
-      self.DokladyList.Add(TDoklad.Create);
+      self.DokladyList.Add(TDoklad.create(qrAbra));
       Next;
     end;
     Close;
@@ -320,7 +322,7 @@ begin
       SQL.Text := SQLStr;
       Open;
       while not Eof do begin
-        self.DokladyList.Add(TDoklad.Create);
+        self.DokladyList.Add(TDoklad.create(qrAbra));
         Next;
       end;
       Close;

@@ -370,6 +370,7 @@ begin
         Floats[3, Radek] := FieldByName('Castka').AsFloat;
 
 // kontrola dluhu proti 311-325
+
         with DesU.qrAbra2 do begin
 // 24.11.13 všechny Firm_Id pro Abrakód firmy
           SQLStr := 'SELECT * FROM DE$_CODE_TO_FIRM_ID (' + Ap + Cells[1, Radek] + ApZ;
@@ -388,6 +389,7 @@ begin
           end; // while not EOF do with qrAbra3
 
         end;  // with qrAbra2
+
 // všechny smlouvy pro jeden abrakód
 
         with DesU.qrZakos do begin
@@ -709,7 +711,7 @@ begin
           + IntToStr(CommId) + ', '
           + Cells[10, Radek] + ', '
           + '1, '                                        // admin
-          + '2, '                                        // mail
+          + '23, '                                        // SMS
           + Ap + mmMail.Text + ApC
           + Ap + FormatDateTime('yyyy-mm-dd hh:nn:ss', Now) + ApC
           + Ap + FormatDateTime('yyyy-mm-dd hh:nn:ss', Now) + ApZ;

@@ -81,7 +81,7 @@ type
       function getAbracodeByContractNumber(cnumber : string) : string;
       function getFirmIdByCode(code : string) : string;
       function getZustatekByAccountId (accountId : string; datum : double) : double;
-      function isVoipContract(cnumber : string) : boolean;
+      function isVoipKreditContract(cnumber : string) : boolean;
       function isCreditContract(cnumber : string) : boolean;
 
       function sendGodsSms(telCislo, smsText : string) : string;
@@ -1059,13 +1059,13 @@ begin
   end;
 end;
 
-function TDesU.isVoipContract(cnumber : string) : boolean;
+function TDesU.isVoipKreditContract(cnumber : string) : boolean;
 begin
 
   with DesU.qrZakos do begin
     SQL.Text := 'SELECT co.id FROM contracts co  '
               + ' WHERE co.number = ''' + cnumber + ''''
-              + ' AND co.type = ''VoipContract''';
+              + ' AND co.tariff_id = 2'; //je to kreditni Voip
     Open;
     if not Eof then
       Result := true
@@ -1216,7 +1216,7 @@ var
   len, p: integer;
   pc: PChar;
 const
-  WhiteSpace = [#0, #9, #10, #13, #32];
+  WhiteSpace = [#0, #9, #10, #13, #32, #160];
 
 begin
   len := Length(s);
@@ -1280,26 +1280,17 @@ var
   group   : TGroup;
   i       : integer;
 begin
+  Result := 'žádný mobil';
+
   telCislo := stringreplace(telCislo, '+420', '', [rfReplaceAll, rfIgnoreCase]);
   telCislo := RemoveSpaces(telCislo); // nekdy jsou cisla psana jako 3 skupiny po 3 znacich
 
-  regexpr := TRegEx.Create('\d{9}',[roIgnoreCase,roMultiline]); //hledam devitimistne cislo
+  regexpr := TRegEx.Create('[6-7]{1}\d{8}',[roIgnoreCase,roMultiline]); //hledam devitimistne cislo
   match := regexpr.Match(telCislo);
-  if not match.Success then
-  begin
-    Result := 'žádný mobil';
-    exit;
-  end;
 
-  while match.Success do
-  begin
-
-    if (match.Value[1] = '6') or (match.Value[1] = '7') then begin
+  if match.Success then
       Result := match.Value;
-      Exit;
-    end;
-    match := match.NextMatch;
-  end;
+
 end;
 
 
