@@ -3,7 +3,7 @@ unit NF2D;
 interface
 
 uses
-  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms, Dialogs, Grids, BaseGrid, AdvGrid, NF, AdvObj;
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms, Dialogs, Grids, BaseGrid, AdvGrid, AdvObj;
 
 type
   TfmDetail = class(TForm)
@@ -17,6 +17,8 @@ var
 
 implementation
 
+uses DesUtils, NF;
+
 {$R *.dfm}
 
 procedure TfmDetail.FormShow(Sender: TObject);
@@ -24,7 +26,7 @@ var
   SQLStr: string;
   R: integer;
 begin
-  with fmMain.qrAbra, asgDetail do begin
+  with DesU.qrAbra, asgDetail do begin
     ClearNormalCells;
     SQLStr := 'SELECT II.DocDate$DATE AS Datum, DQ.Code AS Rada, II.OrdNumber AS Cislo, P.Code AS Rok, II.Description AS Text,'
 // 12.5.12    + ' II.Amount AS Vystaveno, II.PaidAmount + II.CreditAmount AS Zaplaceno, ICN.Amount AS Dobropis'

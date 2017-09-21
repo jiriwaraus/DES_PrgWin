@@ -1,9 +1,9 @@
 object fmDetail: TfmDetail
   Left = 403
   Top = 206
-  Width = 451
-  Height = 294
   Caption = 'Detail'
+  ClientHeight = 256
+  ClientWidth = 435
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -17,14 +17,15 @@ object fmDetail: TfmDetail
   object asgDetail: TAdvStringGrid
     Left = 0
     Top = 0
-    Width = 443
-    Height = 267
+    Width = 435
+    Height = 256
     Cursor = crDefault
     Align = alClient
     BorderStyle = bsNone
     ColCount = 6
     Ctl3D = True
     DefaultRowHeight = 18
+    DrawingStyle = gdsClassic
     FixedCols = 0
     RowCount = 5
     Font.Charset = EASTEUROPE_CHARSET
@@ -130,7 +131,7 @@ object fmDetail: TfmDetail
     RowHeaders.Strings = (
       ' ')
     ScrollWidth = 16
-    SearchFooter.ColorTo = 13160660
+    SearchFooter.ColorTo = 15790320
     SearchFooter.Font.Charset = DEFAULT_CHARSET
     SearchFooter.Font.Color = clWindowText
     SearchFooter.Font.Height = -11

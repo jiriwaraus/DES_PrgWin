@@ -18,6 +18,8 @@ type
     qrAbra: TZQuery;
     dbZakos: TZConnection;
     qrZakos: TZQuery;
+    qrAbra2: TZQuery;
+    qrAbra3: TZQuery;
 
 
     procedure FormCreate(Sender: TObject);
@@ -84,6 +86,9 @@ type
 
       function sendGodsSms(telCislo, smsText : string) : string;
 
+      function getIniValue(iniGroup, iniItem : string) : string;
+
+
     private
       function newAbraIdHttp(timeout : single; isJsonPost : boolean) : TIdHTTP;
 
@@ -101,6 +106,7 @@ function IndexByName(DataObject: variant; Name: ShortString): integer;
 function pocetRadkuTxtSouboru(SName: string): integer;
 function RemoveSpaces(const s: string): string;
 function destilujTelCislo(telCislo: string): string;
+function destilujMobilCislo(telCislo: string): string;
 function FindInFolder(sFolder, sFile: string; bUseSubfolders: Boolean): string;
 procedure writeToFile(pFileName, pContent : string);
 function LoadFileToStr(const FileName: TFileName): ansistring;
@@ -1085,6 +1091,14 @@ begin
   end;
 end;
 
+function TDesU.getIniValue(iniGroup, iniItem : string) : string;
+begin
+  try
+    Result :=  adpIniFile.ReadString(iniGroup, iniItem, '');
+  except
+  end;
+end;
+
 
 {********************   GODS ************}
 function TDesU.sendGodsSms(telCislo, smsText : string) : string;
@@ -1095,18 +1109,13 @@ var
 begin
   idHTTP := TidHTTP.Create;
 
-  with adpIniFile do try
-    godsSmsUrl := ReadString('Preferences', 'GodsSmsUrl', '');
-    idHTTP.Request.Username := ReadString('Preferences', 'GodsSmsUN', '');
-    idHTTP.Request.Password := ReadString('Preferences', 'GodsSmsPW', '');
-  except
-  end;
-
+  godsSmsUrl := getIniValue('Preferences', 'GodsSmsUrl');
   idHTTP.Request.BasicAuthentication := True;
+  idHTTP.Request.Username := getIniValue('Preferences', 'GodsSmsUN');
+  idHTTP.Request.Password := getIniValue('Preferences', 'GodsSmsPW');
   idHTTP.ReadTimeout := Round (10 * 1000); // ReadTimeout je v milisekundách
   idHTTP.Request.ContentType := 'application/json';
   idHTTP.Request.CharSet := 'utf-8';
-
 
   //self.logJson(boAA.AsJSon(), 'abraBoCreateWebApi_AA - ' + abraWebApiUrl + abraBoName);
 
@@ -1235,9 +1244,9 @@ var
   i       : integer;
 begin
   Result := stringreplace(telCislo, '+420', '', [rfReplaceAll, rfIgnoreCase]);
-  //Result := RemoveSpaces(Result);
+  Result := RemoveSpaces(Result); // nekdy jsou cisla psana jako 3 skupiny po 3 znacich
 
-  regexpr := TRegEx.Create('(\d{9})',[roIgnoreCase,roMultiline]);
+  regexpr := TRegEx.Create('\d{9}',[roIgnoreCase,roMultiline]); //hledam devitimistne cislo
   match := regexpr.Match(Result);
   if not match.Success then
   begin
@@ -1247,12 +1256,14 @@ begin
 
   while match.Success do
   begin
+  Result := Result + 'Match : [' + match.Value + ']';
+{
     if match.Value[1] = '6' then
       Result := Result + 'Match6 : [' + match.Value + ']';
 
     if match.Value[1] = '7' then
       Result := Result + 'Match7 : [' + match.Value + ']';
-
+ }
 
     match := match.NextMatch;
   end;
@@ -1260,6 +1271,35 @@ begin
 
  //Result := RemoveSpaces(Result);
 
+end;
+
+function destilujMobilCislo(telCislo: string): string;
+var
+  regexpr : TRegEx;
+  match   : TMatch;
+  group   : TGroup;
+  i       : integer;
+begin
+  telCislo := stringreplace(telCislo, '+420', '', [rfReplaceAll, rfIgnoreCase]);
+  telCislo := RemoveSpaces(telCislo); // nekdy jsou cisla psana jako 3 skupiny po 3 znacich
+
+  regexpr := TRegEx.Create('\d{9}',[roIgnoreCase,roMultiline]); //hledam devitimistne cislo
+  match := regexpr.Match(telCislo);
+  if not match.Success then
+  begin
+    Result := 'žádný mobil';
+    exit;
+  end;
+
+  while match.Success do
+  begin
+
+    if (match.Value[1] = '6') or (match.Value[1] = '7') then begin
+      Result := match.Value;
+      Exit;
+    end;
+    match := match.NextMatch;
+  end;
 end;
 
 

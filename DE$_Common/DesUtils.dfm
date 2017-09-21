@@ -56,4 +56,16 @@ object DesU: TDesU
     Left = 56
     Top = 80
   end
+  object qrAbra2: TZQuery
+    Connection = dbAbra
+    Params = <>
+    Left = 96
+    Top = 8
+  end
+  object qrAbra3: TZQuery
+    Connection = dbAbra
+    Params = <>
+    Left = 144
+    Top = 8
+  end
 end

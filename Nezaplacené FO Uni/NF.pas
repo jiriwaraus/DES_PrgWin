@@ -36,38 +36,31 @@ uses
 
 type
   TfmMain = class(TForm)
-    dbMain: TZConnection;
-    qrMain: TZQuery;
-    qrRows: TZQuery;
-    dbAbra: TZConnection;
-    qrAbra: TZQuery;
-    qrAbra2: TZQuery;
-    qrAbra3: TZQuery;
     idMessage: TIdMessage;
     idSMTP: TIdSMTP;
     dlgExport: TSaveDialog;
-    pnMain: TPanel;
-    lbDo: TLabel;
-    lbOd: TLabel;
-    acbRada: TAdvComboBox;
-    aedPocetOd: TAdvEdit;
-    aedPocetDo: TAdvEdit;
-    acbDruhSmlouvy: TAdvComboBox;
-    cbCast: TCheckBox;
-    btVyber: TButton;
-    btExport: TButton;
-    btMail: TButton;
-    btOdpojit: TButton;
-    btKonec: TButton;
-    asgPohledavky: TAdvStringGrid;
     pnBottom: TPanel;
     mmMail: TMemo;
     IdAntiFreeze1: TIdAntiFreeze;
     idHTTP: TIdHTTP;
+    pnMain: TPanel;
+    lbDo: TLabel;
+    lbOd: TLabel;
+    btKonec: TButton;
+    acbRada: TAdvComboBox;
+    btVyber: TButton;
+    btExport: TButton;
+    aedPocetOd: TAdvEdit;
+    btMail: TButton;
+    acbDruhSmlouvy: TAdvComboBox;
+    cbCast: TCheckBox;
+    aedPocetDo: TAdvEdit;
+    btOdpojit: TButton;
     rgText: TRadioGroup;
     btSMS: TButton;
     deDatumOd: TDateTimePicker;
     deDatumDo: TDateTimePicker;
+    asgPohledavky: TAdvStringGrid;
     procedure FormShow(Sender: TObject);
     procedure asgPohledavkyGetAlignment(Sender: TObject; ARow, ACol: Integer; var HAlign: TAlignment; var VAlign: TVAlignment);
     procedure asgPohledavkyGetFormat(Sender: TObject; ACol: Integer; var AStyle: TSortStyle; var aPrefix, aSuffix: string);
@@ -83,6 +76,8 @@ type
     procedure btKonecClick(Sender: TObject);
     procedure rgTextClick(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure vyberNestandardCisla();
+    procedure btSMSClick(Sender: TObject);
   public
     F: TextFile;
     Radek: integer;
@@ -184,6 +179,7 @@ begin
     ColWidths[7] := 18;                // checkmark
     Cells[8, 0] := ' mail';
     Cells[9, 0] := 'telefon';
+    Cells[12, 0] := 'mobil SMS';
     ColWidths[10] := 0;                 // Cu.Id
     ColWidths[11] := 0;                 // C.Id
     CheckFalse := '0';
@@ -256,7 +252,7 @@ begin
   mmMail.Text := MailText;
 end;
 
-procedure TfmMain.btVyberClick(Sender: TObject);
+procedure TfmMain.vyberNestandardCisla();
 var
   SQLStr: string;
   fmWidth,
@@ -275,7 +271,8 @@ begin
     + ' LEFT JOIN contracts_tags CT ON CT.Contract_Id = C.Id'      // 17.12.15
 
 
-    + ' WHERE  phone <> '''' and phone not like ''7%'' and phone not like ''6%'' ';
+    //+ ' WHERE  phone <> '''' and phone not like ''7%'' and phone not like ''6%'' ';
+    + ' WHERE  email like ''sef%'' ';
     //+ ' WHERE  phone like ''%+420%''';
 
     if acbDruhSmlouvy.Text <> '%' then SQLStr := SQLStr + ' AND State = ' + Ap + acbDruhSmlouvy.Text + Ap;
@@ -327,7 +324,7 @@ begin
   end;
 end;
 
-{ //puvodni verze tata
+
 procedure TfmMain.btVyberClick(Sender: TObject);
 var
   SQLStr: AnsiString;
@@ -354,11 +351,14 @@ begin
     SQLStr := SQLStr
     + ' GROUP BY F.Name, F.Code';
     Close;
+
+    mmMail.Text := SQLStr;
+
     SQL.Text := SQLStr;
     Open;
     Radek := 0;
     while not EOF do begin
-      if (FieldByName('Zakaznik').AsString <> '') and (FieldByName('Count').AsInteger >= StrToInt(aedPocetDo.Text))
+      if (FieldByName('Zakaznik').AsString <> '') and (FieldByName('Count').AsInteger >= StrToInt(aedPocetOd.Text))
        and (FieldByName('Count').AsInteger <= StrToInt(aedPocetDo.Text)) then begin
         Inc(Radek);
         RowCount := Radek + 1;
@@ -368,25 +368,29 @@ begin
         Cells[1, Radek] := FieldByName('Kod').AsString;
         Ints[2, Radek] := FieldByName('Count').AsInteger;
         Floats[3, Radek] := FieldByName('Castka').AsFloat;
+
 // kontrola dluhu proti 311-325
-        with qrAbra2 do begin
+        with DesU.qrAbra2 do begin
 // 24.11.13 všechny Firm_Id pro Abrakód firmy
           SQLStr := 'SELECT * FROM DE$_CODE_TO_FIRM_ID (' + Ap + Cells[1, Radek] + ApZ;
           SQL.Text := SQLStr;
           Open;
           Floats[4, Radek] := 0;
 // a saldo pro všechny Firm_Id
-          while not EOF do with qrAbra3 do begin
-            Close;
-            SQLStr := 'SELECT Ucet311 + Ucet325 FROM DE$_Firm_Totals (' + Ap + qrAbra2.Fields[0].AsString + ApC + FloatToStr(Date) + ')';
-            SQL.Text := SQLStr;
-            Open;
+
+          while not EOF do with DesU.qrAbra3 do begin
+            DesU.qrAbra3.Close;
+            SQLStr := 'SELECT Ucet311 + Ucet325 FROM DE$_Firm_Totals (' + Ap + DesU.qrAbra2.Fields[0].AsString + ApC + FloatToStr(Date) + ')';
+            DesU.qrAbra3.SQL.Text := SQLStr;
+            DesU.qrAbra3.Open;
             Floats[4, Radek] := Floats[4, Radek] - Fields[0].AsFloat;
-            qrAbra2.Next;
+            DesU.qrAbra2.Next;
           end; // while not EOF do with qrAbra3
+
         end;  // with qrAbra2
 // všechny smlouvy pro jeden abrakód
-        if dbMain.Connected then with qrMain do begin
+
+        with DesU.qrZakos do begin
           Close;
           SQLStr := 'SELECT DISTINCT Cu.Id AS CuId, C.Id AS CId, Postal_mail, Phone, vip, Number, State, Tag_Id'
           + ' FROM contracts C'
@@ -406,6 +410,7 @@ begin
           if FieldByName('Tag_Id').AsInteger in [20, 21, 25, 26, 27, 30] then Colors[6, Radek] := clRed;
           Cells[8, Radek] := FieldByName('Postal_mail').AsString;
           Cells[9, Radek] := FieldByName('Phone').AsString;
+          Cells[12, Radek] := destilujMobilCislo(FieldByName('Phone').AsString);
           Cells[10, Radek] := FieldByName('CuId').AsString;
           Cells[11, Radek] := FieldByName('CId').AsString;
           if Pos('@', FieldByName('Postal_mail').AsString) > 0 then Ints[7, Radek] := 1;
@@ -432,6 +437,7 @@ begin
           end;
           Application.ProcessMessages;
         end;
+
       end;
       Next;
     end;
@@ -456,7 +462,7 @@ begin
     Screen.Cursor := crDefault;
   end;
 end;
-}
+
 
 procedure TfmMain.btExportClick(Sender: TObject);
 begin
@@ -466,7 +472,7 @@ begin
     Filter := 'csv|*.csv';
     asgPohledavky.QuoteEmptyCells := True;
     if Execute then asgPohledavky.SaveToCSV(dlgExport.FileName);
-  end;  
+  end;
 {$ELSE}
   if dlgExport.Execute then asgPohledavky.SaveToXLS(dlgExport.FileName);
 {$ENDIF}
@@ -481,6 +487,10 @@ var
   SQLStr: AnsiString;
 begin
   Screen.Cursor := crHourGlass;
+  idSMTP.Host :=  DesU.getIniValue('Mail', 'SMTPServer');
+  idSMTP.Username := DesU.getIniValue('Mail', 'SMTPLogin');
+  idSMTP.Password := DesU.getIniValue('Mail', 'SMTPPW');
+
   with asgPohledavky, idMessage do begin
     if RowCount > 2 then RadekDo := RowCount - 2 else RadekDo := 1;
     Append(F);
@@ -527,7 +537,7 @@ begin
         end;
         if (Colors[7, Radek] <> clSilver) then Colors[7, Radek] := clSilver
         else Colors[7, Radek] := clWhite;
-        with qrMain do try                               // 15.3.2011
+        with DesU.qrZakos do try                               // 15.3.2011
           Close;
           SQL.Text := 'SELECT MAX(Id) FROM communications';
           Open;
@@ -575,7 +585,7 @@ var
   SQLStr: AnsiString;
 begin
   Screen.Cursor := crHourGlass;
-  with asgPohledavky, qrMain do try
+  with asgPohledavky, DesU.qrZakos do try
     if RowCount > 2 then RadekDo := RowCount - 2 else RadekDo := 1;
     Radek := Trunc(ColumnSum (7, 1, RadekDo));             // poèet vybraných øádkù
 // 24.11.13 potvrzení
@@ -658,6 +668,65 @@ begin
 end;
 
 
+procedure TfmMain.btSMSClick(Sender: TObject);
+var
+  RadekDo,
+  Radek,
+  CommId: integer;
+  smsText, callResult,
+  SQLStr: string;
+begin
+  Screen.Cursor := crHourGlass;
+
+
+  with asgPohledavky do begin
+    if RowCount > 2 then RadekDo := RowCount - 2 else RadekDo := 1;
+    Append(F);
+    Writeln (F, FormatDateTime(#13#10 + 'dd.mm.yy hh:nn  ', Now) + 'Odeslání SMS zprávy: ' + #13#10 + mmMail.Text + #13#10);
+    CloseFile(F);
+    for Radek := 1 to RadekDo do
+      if Ints[7, Radek] = 1 then begin
+
+        smsText := StringReplace(mmMail.Text, '%%%', IntToStr(Round(Floats[4, Radek])), [rfIgnoreCase]);
+        callResult := DesU.sendGodsSms(Cells[12, Radek], smsText);
+
+        if (Colors[7, Radek] <> clSilver) then Colors[7, Radek] := clSilver
+        else Colors[7, Radek] := clWhite;
+        with DesU.qrZakos do try                               // 15.3.2011
+          Close;
+          SQL.Text := 'SELECT MAX(Id) FROM communications';
+          Open;
+          CommId := Fields[0].AsInteger + 1;
+          Close;
+          SQLStr := 'INSERT INTO communications ('
+          + ' Id,'
+          + ' Customer_id,'
+          + ' User_id,'
+          + ' Communication_type_id,'
+          + ' Content,'
+          + ' Created_at,'
+          + ' Updated_at) VALUES ('
+          + IntToStr(CommId) + ', '
+          + Cells[10, Radek] + ', '
+          + '1, '                                        // admin
+          + '2, '                                        // mail
+          + Ap + mmMail.Text + ApC
+          + Ap + FormatDateTime('yyyy-mm-dd hh:nn:ss', Now) + ApC
+          + Ap + FormatDateTime('yyyy-mm-dd hh:nn:ss', Now) + ApZ;
+          SQL.Text := SQLStr;
+          ExecSQL;
+          System.Append(F);
+          Writeln (F, Format('%s (%s)  -  %s  -  %s', [Cells[0, Radek], Cells[6, Radek], Cells[12, Radek], callResult]));
+          CloseFile(F);
+        except on E: exception do
+          ShowMessage('SMS se nepodaøilo uložit do tabulky communications: ' + E.Message);
+        end;
+      end;
+  end;
+
+  Screen.Cursor := crDefault;
+end;
+
 {*********************** akce Input elementù **********************************}
 
 procedure TfmMain.asgPohledavkyDblClickCell(Sender: TObject; ARow, ACol: Integer);
@@ -717,7 +786,7 @@ end;
 
 procedure TfmMain.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
-  qrAbra.Close;
+  DesU.qrAbra.Close;
 end;
 
 end.

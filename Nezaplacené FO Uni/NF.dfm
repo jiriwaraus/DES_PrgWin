@@ -74,8 +74,242 @@ object fmMain: TfmMain
       Width = 71
       Height = 21
       Caption = '&Konec'
-      TabOrder = 1
+      TabOrder = 0
       OnClick = btKonecClick
+    end
+    object acbRada: TAdvComboBox
+      Left = 10
+      Top = 96
+      Width = 63
+      Height = 21
+      Color = clWindow
+      Version = '1.5.1.0'
+      Visible = True
+      ButtonWidth = 18
+      Style = csDropDownList
+      Flat = True
+      FlatLineColor = clSilver
+      EmptyTextStyle = []
+      Ctl3D = False
+      DropWidth = 0
+      Enabled = True
+      ItemIndex = -1
+      Items.Strings = (
+        'Mn'#237#353'ek'
+        'O'#345'ech'
+        'Stod'#367'lky'
+        #381'i'#382'kov')
+      LabelCaption = #344'ada faktur'
+      LabelPosition = lpTopLeft
+      LabelMargin = 1
+      LabelAlwaysEnabled = True
+      LabelFont.Charset = DEFAULT_CHARSET
+      LabelFont.Color = clWindowText
+      LabelFont.Height = -11
+      LabelFont.Name = 'MS Sans Serif'
+      LabelFont.Style = []
+      ParentCtl3D = False
+      TabOrder = 1
+    end
+    object btVyber: TButton
+      Left = 20
+      Top = 264
+      Width = 71
+      Height = 21
+      Caption = '&Vyber'
+      TabOrder = 2
+      OnClick = btVyberClick
+    end
+    object btExport: TButton
+      Left = 20
+      Top = 294
+      Width = 71
+      Height = 21
+      Caption = '&Export'
+      TabOrder = 3
+      OnClick = btExportClick
+    end
+    object aedPocetOd: TAdvEdit
+      Left = 10
+      Top = 136
+      Width = 61
+      Height = 17
+      TabStop = False
+      EditAlign = eaRight
+      EditType = etNumeric
+      EmptyTextStyle = []
+      FlatParentColor = False
+      FocusColor = 15387318
+      LabelCaption = 'Od po'#269'tu NF'
+      LabelPosition = lpTopLeft
+      LabelMargin = 3
+      LabelFont.Charset = DEFAULT_CHARSET
+      LabelFont.Color = clWindowText
+      LabelFont.Height = -11
+      LabelFont.Name = 'MS Sans Serif'
+      LabelFont.Style = []
+      Lookup.Font.Charset = DEFAULT_CHARSET
+      Lookup.Font.Color = clWindowText
+      Lookup.Font.Height = -11
+      Lookup.Font.Name = 'Arial'
+      Lookup.Font.Style = []
+      Lookup.Separator = ';'
+      BorderStyle = bsNone
+      Color = clWindow
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clNavy
+      Font.Height = -11
+      Font.Name = 'MS Sans Serif'
+      Font.Style = []
+      ParentFont = False
+      TabOrder = 4
+      Text = '1'
+      Visible = True
+      Version = '3.3.2.3'
+    end
+    object btMail: TButton
+      Left = 20
+      Top = 324
+      Width = 71
+      Height = 21
+      Caption = '&Mail'
+      TabOrder = 5
+      OnClick = btMailClick
+    end
+    object acbDruhSmlouvy: TAdvComboBox
+      Left = 10
+      Top = 210
+      Width = 89
+      Height = 21
+      Color = clWindow
+      Version = '1.5.1.0'
+      Visible = True
+      ButtonWidth = 18
+      Style = csDropDownList
+      Flat = True
+      FlatLineColor = clSilver
+      EmptyTextStyle = []
+      Ctl3D = False
+      DropWidth = 0
+      Enabled = True
+      ItemIndex = -1
+      Items.Strings = (
+        '%'
+        '0'
+        '1'
+        '2'
+        '3'
+        '4'
+        '5'
+        '7')
+      LabelCaption = 'Druh smlouvy'
+      LabelPosition = lpTopLeft
+      LabelMargin = 1
+      LabelAlwaysEnabled = True
+      LabelFont.Charset = DEFAULT_CHARSET
+      LabelFont.Color = clWindowText
+      LabelFont.Height = -11
+      LabelFont.Name = 'MS Sans Serif'
+      LabelFont.Style = []
+      ParentCtl3D = False
+      TabOrder = 6
+    end
+    object cbCast: TCheckBox
+      Left = 12
+      Top = 238
+      Width = 87
+      Height = 17
+      Caption = 'I '#269#225'ste'#269'n'#283
+      Checked = True
+      State = cbChecked
+      TabOrder = 7
+    end
+    object aedPocetDo: TAdvEdit
+      Left = 10
+      Top = 174
+      Width = 61
+      Height = 17
+      TabStop = False
+      EditAlign = eaRight
+      EditType = etNumeric
+      EmptyTextStyle = []
+      FlatParentColor = False
+      FocusColor = 15387318
+      LabelCaption = 'Do po'#269'tu NF'
+      LabelPosition = lpTopLeft
+      LabelMargin = 3
+      LabelFont.Charset = DEFAULT_CHARSET
+      LabelFont.Color = clWindowText
+      LabelFont.Height = -11
+      LabelFont.Name = 'MS Sans Serif'
+      LabelFont.Style = []
+      Lookup.Font.Charset = DEFAULT_CHARSET
+      Lookup.Font.Color = clWindowText
+      Lookup.Font.Height = -11
+      Lookup.Font.Name = 'Arial'
+      Lookup.Font.Style = []
+      Lookup.Separator = ';'
+      BorderStyle = bsNone
+      Color = clWindow
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clNavy
+      Font.Height = -11
+      Font.Name = 'MS Sans Serif'
+      Font.Style = []
+      ParentFont = False
+      TabOrder = 8
+      Text = '1'
+      Visible = True
+      Version = '3.3.2.3'
+    end
+    object btOdpojit: TButton
+      Left = 20
+      Top = 464
+      Width = 71
+      Height = 21
+      Caption = 'O&dpojit'
+      TabOrder = 10
+      OnClick = btOdpojitClick
+    end
+    object rgText: TRadioGroup
+      Left = 20
+      Top = 390
+      Width = 69
+      Height = 59
+      Caption = 'Mail'
+      ItemIndex = 0
+      Items.Strings = (
+        'Text 1'
+        'Text 2')
+      TabOrder = 9
+      OnClick = rgTextClick
+    end
+    object btSMS: TButton
+      Left = 21
+      Top = 351
+      Width = 70
+      Height = 22
+      Caption = 'SMS'
+      TabOrder = 11
+      OnClick = btSMSClick
+    end
+    object deDatumOd: TDateTimePicker
+      Left = 10
+      Top = 19
+      Width = 81
+      Height = 21
+      Date = 42997.895638668980000000
+      Time = 42997.895638668980000000
+      TabOrder = 12
+    end
+    object deDatumDo: TDateTimePicker
+      Left = 10
+      Top = 58
+      Width = 79
+      Height = 21
+      Date = 42998.983010243060000000
+      Time = 42998.983010243060000000
+      TabOrder = 13
     end
     object asgPohledavky: TAdvStringGrid
       Left = 102
@@ -86,7 +320,7 @@ object fmMain: TfmMain
       Align = alRight
       Anchors = [akLeft, akTop, akRight, akBottom]
       BorderStyle = bsNone
-      ColCount = 12
+      ColCount = 13
       Ctl3D = True
       DefaultRowHeight = 18
       DrawingStyle = gdsClassic
@@ -101,7 +335,7 @@ object fmMain: TfmMain
       ParentCtl3D = False
       ParentFont = False
       ScrollBars = ssBoth
-      TabOrder = 0
+      TabOrder = 14
       HoverRowCells = [hcNormal, hcSelected]
       OnGetAlignment = asgPohledavkyGetAlignment
       OnGetFormat = asgPohledavkyGetFormat
@@ -128,7 +362,8 @@ object fmMain: TfmMain
         ' mail'
         'telefon'
         'CuId'
-        'CId')
+        'CId'
+        'mobil SMS')
       ColumnSize.StretchColumn = 0
       ControlLook.FixedGradientFrom = clWhite
       ControlLook.FixedGradientTo = clSilver
@@ -162,6 +397,8 @@ object fmMain: TfmMain
       FilterDropDown.Font.Height = -11
       FilterDropDown.Font.Name = 'MS Sans Serif'
       FilterDropDown.Font.Style = []
+      FilterDropDown.TextChecked = 'Checked'
+      FilterDropDown.TextUnChecked = 'Unchecked'
       FilterDropDownClear = '(All)'
       FilterEdit.TypeNames.Strings = (
         'Starts with'
@@ -209,11 +446,19 @@ object fmMain: TfmMain
         ' ')
       ScrollWidth = 16
       SearchFooter.ColorTo = 15790320
+      SearchFooter.FindNextCaption = 'Find &next'
+      SearchFooter.FindPrevCaption = 'Find &previous'
       SearchFooter.Font.Charset = DEFAULT_CHARSET
       SearchFooter.Font.Color = clWindowText
       SearchFooter.Font.Height = -11
       SearchFooter.Font.Name = 'MS Sans Serif'
       SearchFooter.Font.Style = []
+      SearchFooter.HighLightCaption = 'Highlight'
+      SearchFooter.HintClose = 'Close'
+      SearchFooter.HintFindNext = 'Find next occurrence'
+      SearchFooter.HintFindPrev = 'Find previous occurrence'
+      SearchFooter.HintHighlight = 'Highlight occurrences'
+      SearchFooter.MatchCaseCaption = 'Match case'
       SortSettings.DefaultFormat = ssAutomatic
       SortSettings.Column = 0
       SortSettings.Show = True
@@ -231,248 +476,16 @@ object fmMain: TfmMain
         38
         49
         37
-        33)
-    end
-    object acbRada: TAdvComboBox
-      Left = 10
-      Top = 96
-      Width = 63
-      Height = 21
-      Color = clWindow
-      Version = '1.5.1.0'
-      Visible = True
-      ButtonWidth = 18
-      Style = csDropDownList
-      Flat = True
-      FlatLineColor = clSilver
-      EmptyTextStyle = []
-      Ctl3D = False
-      DropWidth = 0
-      Enabled = True
-      ItemIndex = -1
-      Items.Strings = (
-        'Mn'#237#353'ek'
-        'O'#345'ech'
-        'Stod'#367'lky'
-        #381'i'#382'kov')
-      LabelCaption = #344'ada faktur'
-      LabelPosition = lpTopLeft
-      LabelMargin = 1
-      LabelAlwaysEnabled = True
-      LabelFont.Charset = DEFAULT_CHARSET
-      LabelFont.Color = clWindowText
-      LabelFont.Height = -11
-      LabelFont.Name = 'MS Sans Serif'
-      LabelFont.Style = []
-      ParentCtl3D = False
-      TabOrder = 2
-    end
-    object btVyber: TButton
-      Left = 20
-      Top = 264
-      Width = 71
-      Height = 21
-      Caption = '&Vyber'
-      TabOrder = 3
-      OnClick = btVyberClick
-    end
-    object btExport: TButton
-      Left = 20
-      Top = 294
-      Width = 71
-      Height = 21
-      Caption = '&Export'
-      TabOrder = 4
-      OnClick = btExportClick
-    end
-    object aedPocetOd: TAdvEdit
-      Left = 10
-      Top = 136
-      Width = 61
-      Height = 17
-      TabStop = False
-      EditAlign = eaRight
-      EditType = etNumeric
-      EmptyTextStyle = []
-      FlatParentColor = False
-      FocusColor = 15387318
-      LabelCaption = 'Od po'#269'tu NF'
-      LabelPosition = lpTopLeft
-      LabelMargin = 3
-      LabelFont.Charset = DEFAULT_CHARSET
-      LabelFont.Color = clWindowText
-      LabelFont.Height = -11
-      LabelFont.Name = 'MS Sans Serif'
-      LabelFont.Style = []
-      Lookup.Font.Charset = DEFAULT_CHARSET
-      Lookup.Font.Color = clWindowText
-      Lookup.Font.Height = -11
-      Lookup.Font.Name = 'Arial'
-      Lookup.Font.Style = []
-      Lookup.Separator = ';'
-      BorderStyle = bsNone
-      Color = clWindow
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = clNavy
-      Font.Height = -11
-      Font.Name = 'MS Sans Serif'
-      Font.Style = []
-      ParentFont = False
-      TabOrder = 5
-      Text = '1'
-      Visible = True
-      Version = '3.3.2.3'
-    end
-    object btMail: TButton
-      Left = 20
-      Top = 324
-      Width = 71
-      Height = 21
-      Caption = '&Mail'
-      TabOrder = 6
-      OnClick = btMailClick
-    end
-    object acbDruhSmlouvy: TAdvComboBox
-      Left = 10
-      Top = 210
-      Width = 89
-      Height = 21
-      Color = clWindow
-      Version = '1.5.1.0'
-      Visible = True
-      ButtonWidth = 18
-      Style = csDropDownList
-      Flat = True
-      FlatLineColor = clSilver
-      EmptyTextStyle = []
-      Ctl3D = False
-      DropWidth = 0
-      Enabled = True
-      ItemIndex = -1
-      Items.Strings = (
-        '%'
-        '0'
-        '1'
-        '2'
-        '3'
-        '4'
-        '5'
-        '7')
-      LabelCaption = 'Druh smlouvy'
-      LabelPosition = lpTopLeft
-      LabelMargin = 1
-      LabelAlwaysEnabled = True
-      LabelFont.Charset = DEFAULT_CHARSET
-      LabelFont.Color = clWindowText
-      LabelFont.Height = -11
-      LabelFont.Name = 'MS Sans Serif'
-      LabelFont.Style = []
-      ParentCtl3D = False
-      TabOrder = 7
-    end
-    object cbCast: TCheckBox
-      Left = 12
-      Top = 238
-      Width = 87
-      Height = 17
-      Caption = 'I '#269#225'ste'#269'n'#283
-      Checked = True
-      State = cbChecked
-      TabOrder = 8
-    end
-    object aedPocetDo: TAdvEdit
-      Left = 10
-      Top = 174
-      Width = 61
-      Height = 17
-      TabStop = False
-      EditAlign = eaRight
-      EditType = etNumeric
-      EmptyTextStyle = []
-      FlatParentColor = False
-      FocusColor = 15387318
-      LabelCaption = 'Do po'#269'tu NF'
-      LabelPosition = lpTopLeft
-      LabelMargin = 3
-      LabelFont.Charset = DEFAULT_CHARSET
-      LabelFont.Color = clWindowText
-      LabelFont.Height = -11
-      LabelFont.Name = 'MS Sans Serif'
-      LabelFont.Style = []
-      Lookup.Font.Charset = DEFAULT_CHARSET
-      Lookup.Font.Color = clWindowText
-      Lookup.Font.Height = -11
-      Lookup.Font.Name = 'Arial'
-      Lookup.Font.Style = []
-      Lookup.Separator = ';'
-      BorderStyle = bsNone
-      Color = clWindow
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = clNavy
-      Font.Height = -11
-      Font.Name = 'MS Sans Serif'
-      Font.Style = []
-      ParentFont = False
-      TabOrder = 9
-      Text = '1'
-      Visible = True
-      Version = '3.3.2.3'
-    end
-    object btOdpojit: TButton
-      Left = 20
-      Top = 464
-      Width = 71
-      Height = 21
-      Caption = 'O&dpojit'
-      TabOrder = 11
-      OnClick = btOdpojitClick
-    end
-    object rgText: TRadioGroup
-      Left = 20
-      Top = 390
-      Width = 69
-      Height = 59
-      Caption = 'Mail'
-      ItemIndex = 0
-      Items.Strings = (
-        'Text 1'
-        'Text 2')
-      TabOrder = 10
-      OnClick = rgTextClick
-    end
-    object btSMS: TButton
-      Left = 21
-      Top = 351
-      Width = 70
-      Height = 22
-      Caption = 'SMS'
-      TabOrder = 12
-    end
-    object deDatumOd: TDateTimePicker
-      Left = 10
-      Top = 19
-      Width = 81
-      Height = 21
-      Date = 42997.895638668980000000
-      Time = 42997.895638668980000000
-      TabOrder = 13
-    end
-    object deDatumDo: TDateTimePicker
-      Left = 10
-      Top = 58
-      Width = 79
-      Height = 21
-      Date = 42998.983010243060000000
-      Time = 42998.983010243060000000
-      TabOrder = 14
+        33
+        64)
     end
   end
   object dlgExport: TSaveDialog
     DefaultExt = '.xls'
     Filter = 'xls|*.xls'
     Options = [ofHideReadOnly, ofNoReadOnlyReturn, ofEnableSizing]
-    Left = 118
-    Top = 138
+    Left = 126
+    Top = 114
   end
   object idMessage: TIdMessage
     AttachmentEncoding = 'MIME'
@@ -485,103 +498,18 @@ object fmMain: TfmMain
     Recipients = <>
     ReplyTo = <>
     ConvertPreamble = True
-    Left = 218
-    Top = 39
+    Left = 250
+    Top = 47
   end
   object idSMTP: TIdSMTP
     SASLMechanisms = <>
-    Left = 278
+    Left = 310
     Top = 47
-  end
-  object dbMain: TZConnection
-    ControlsCodePage = cGET_ACP
-    Catalog = ''
-    Properties.Strings = (
-      'controls_cp=GET_ACP')
-    HostName = 'test.iquest.cz'
-    Port = 0
-    Database = 'eurosignal'
-    User = 'eurosignal'
-    Password = 'ayQKeWSf9F'
-    Protocol = 'mysql-5'
-    Left = 170
-    Top = 138
-  end
-  object qrMain: TZQuery
-    Connection = dbMain
-    SortType = stIgnored
-    CachedUpdates = True
-    ReadOnly = True
-    SQL.Strings = (
-      '')
-    Params = <>
-    ShowRecordTypes = [usUnmodified, usModified, usInserted, usDeleted]
-    WhereMode = wmWhereAll
-    Left = 214
-    Top = 138
-  end
-  object qrRows: TZQuery
-    Connection = dbMain
-    SortType = stIgnored
-    CachedUpdates = True
-    ReadOnly = True
-    SQL.Strings = (
-      '')
-    Params = <>
-    ShowRecordTypes = [usUnmodified, usModified, usInserted, usDeleted]
-    WhereMode = wmWhereAll
-    Left = 274
-    Top = 138
-  end
-  object dbAbra: TZConnection
-    ControlsCodePage = cGET_ACP
-    Catalog = ''
-    Properties.Strings = (
-      'controls_cp=GET_ACP')
-    ReadOnly = True
-    HostName = ''
-    Port = 0
-    Database = ''
-    User = ''
-    Password = ''
-    Protocol = 'firebird-2.1'
-    Left = 170
-    Top = 262
-  end
-  object qrAbra: TZQuery
-    Connection = dbAbra
-    CachedUpdates = True
-    ReadOnly = True
-    SQL.Strings = (
-      '')
-    Params = <>
-    Left = 214
-    Top = 262
-  end
-  object qrAbra3: TZQuery
-    Connection = dbAbra
-    CachedUpdates = True
-    ReadOnly = True
-    SQL.Strings = (
-      '')
-    Params = <>
-    Left = 302
-    Top = 262
-  end
-  object qrAbra2: TZQuery
-    Connection = dbAbra
-    CachedUpdates = True
-    ReadOnly = True
-    SQL.Strings = (
-      '')
-    Params = <>
-    Left = 258
-    Top = 262
   end
   object IdAntiFreeze1: TIdAntiFreeze
     OnlyWhenIdle = False
-    Left = 166
-    Top = 39
+    Left = 182
+    Top = 47
   end
   object idHTTP: TIdHTTP
     AllowCookies = True
@@ -599,7 +527,7 @@ object fmMain: TfmMain
     Request.Ranges.Units = 'bytes'
     Request.Ranges = <>
     HTTPOptions = [hoForceEncodeParams]
-    Left = 130
-    Top = 39
+    Left = 122
+    Top = 47
   end
 end
