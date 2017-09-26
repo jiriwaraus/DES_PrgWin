@@ -340,7 +340,6 @@ begin
     end;
 
 
-
     if iPDPar.Platba.Debet then
       boRowAA['VarSymbol'] := iPDPar.Platba.VS; //pro debety aby vždy zùstal VS
 

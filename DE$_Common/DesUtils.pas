@@ -50,9 +50,13 @@ type
       procedure abraOLELogout();
       function abraBoGet(abraBoName : string) : string;
       function abraBoGetById(abraBoName, sId : string) : string;
+
       function abraBoCreate(boAA: TAArray; abraBoName : string) : string;
       function abraBoCreateOLE(boAA: TAArray; abraBoName : string) : string;
       function abraBoCreateWebApi(boAA: TAArray; abraBoName : string) : string;
+      function abraBoCreateRow(boAA: TAArray; abraBoName, parent_id : string) : string;
+      function abraBoCreateRowOLE(boAA: TAArray; abraBoName, parent_id : string) : string;
+      function abraBoCreateRowWebApi(boAA: TAArray; abraBoName, parent_id : string) : string;
       function abraBoUpdate(boAA: TAArray; abraBoName, abraBoId : string; abraBoChildName: string = ''; abraBoChildId: string = '') : string;
       function abraBoUpdateOLE(boAA: TAArray; abraBoName, abraBoId : string; abraBoChildName: string = ''; abraBoChildId: string = '') : string;
       function abraBoUpdateWebApi(boAA: TAArray; abraBoName, abraBoId : string; abraBoChildName: string = ''; abraBoChildId: string = '') : string;
@@ -109,6 +113,7 @@ function destilujTelCislo(telCislo: string): string;
 function destilujMobilCislo(telCislo: string): string;
 function FindInFolder(sFolder, sFile: string; bUseSubfolders: Boolean): string;
 procedure writeToFile(pFileName, pContent : string);
+procedure appendToFile(pFileName, pContent : string);
 function LoadFileToStr(const FileName: TFileName): ansistring;
 function FloatToStrFD (pFloat : extended) : string;
 function RandString(const stringsize: integer): string;
@@ -580,6 +585,8 @@ begin
   end;
 end;
 
+
+// ABRA BO create
 function TDesU.abraBoCreate(boAA: TAArray; abraBoName : string) : string;
 begin
   if AnsiLowerCase(abraDefaultCommMethod) = 'webapi' then
@@ -671,6 +678,83 @@ begin
 end;
 
 
+//ABRA BO create row
+function TDesU.abraBoCreateRow(boAA: TAArray; abraBoName, parent_id : string) : string;
+begin
+  if AnsiLowerCase(abraDefaultCommMethod) = 'webapi' then
+    Result := self.abraBoCreateRowWebApi(boAA, abraBoName, parent_id)
+  else
+    Result := self.abraBoCreateRowOLE(boAA, abraBoName, parent_id);
+end;
+
+function TDesU.abraBoCreateRowWebApi(boAA: TAArray; abraBoName, parent_id : string) : string;
+var
+  idHTTP: TIdHTTP;
+  sstreamJson: TStringStream;
+  jsonRequest, newAbraBo : string;
+begin
+
+  jsonRequest := '{"rows":[' + boAA.AsJSon() + ']}';
+
+  self.logJson(jsonRequest, 'abraBoCreateRowWebApi_AA - ' + abraWebApiUrl + abraBoName + 's/' + parent_id);
+
+  sstreamJson := TStringStream.Create(jsonRequest, TEncoding.UTF8);
+  idHTTP := newAbraIdHttp(900, true);
+  try
+    try begin
+      newAbraBo := idHTTP.Put(abraWebApiUrl + abraBoName + 's/' + parent_id, sstreamJson);
+      Result := SO(newAbraBo).S['id'];
+    end;
+    except
+      on E: Exception do begin
+        ShowMessage('Error on request: '#13#10 + e.Message);
+      end;
+    end;
+  finally
+    sstreamJson.Free;
+    idHTTP.Free;
+  end;
+end;
+
+function TDesU.abraBoCreateRowOLE(boAA: TAArray; abraBoName, parent_id : string) : string;
+var
+  i, j : integer;
+  BO_Object,
+  BO_Data,
+  BORow_Object,
+  BORow_Data,
+  BO_Data_Coll,
+  NewID : variant;
+
+  iBoRowAA : TAArray;
+
+begin
+
+  { nefunguje to, neumim pridat radek pomoci OLE
+
+  self.logJson(boAA.AsJSon(), 'abraBoCreateRowOLE_AA - abraBoName=' + abraBoName);
+  AbraOLE := getAbraOLE();
+  BO_Object:= AbraOLE.CreateObject('@'+abraBoName+'Row');
+  BO_Data:= AbraOLE.CreateValues('@'+abraBoName+'Row');
+  BO_Object.PrefillValues(BO_Data);
+
+
+  try begin
+    NewID := BO_Object.CreateNewFromValues(BO_Data); //NewID je ID Abry
+    //Result := Result + 'Èíslo nového BO je ' + NewID;
+    Result := NewID;
+  end;
+  except on E: exception do
+    begin
+      Application.MessageBox(PChar('Problem ' + ^M + E.Message), 'AbraOLE');
+      Result := 'Chyba pøi zakládání BO';
+    end;
+  end;
+  }
+end;
+
+
+//ABRA BO update
 function TDesU.abraBoUpdate(boAA: TAArray; abraBoName, abraBoId, abraBoChildName, abraBoChildId: string) : string;
 begin
   if AnsiLowerCase(self.abraDefaultCommMethod) = 'webapi' then
@@ -751,16 +835,6 @@ begin
   if cisloU = '160987123/0300' then Result := 'Èeská Pošta';
 end;
 
-procedure TDesU.opravRadekVypisuPomociPDocument_ID(Vypis_ID, RadekVypisu_ID, PDocument_ID, PDocumentType : string);
-var
-  boAA: TAArray;
-  sResponse: string;
-begin
-  boAA := TAArray.Create;
-  boAA['PDocumentType'] := PDocumentType;
-  boAA['PDocument_ID'] := PDocument_ID;
-  sResponse := self.abraBoUpdate(boAA, 'bankstatement', Vypis_ID, 'row', RadekVypisu_ID);
-end;
 
 
 procedure TDesU.opravRadekVypisuPomociVS(Vypis_ID, RadekVypisu_ID, VS : string);
@@ -775,6 +849,84 @@ begin
   boAA := TAArray.Create;
   boAA['VarSymbol'] := VS;
   sResponse := self.abraBoUpdate(boAA, 'bankstatement', Vypis_ID, 'row', RadekVypisu_ID);
+end;
+
+{ takhle to bylo jednoduchý bez zkoumání, jestli
+procedure TDesU.opravRadekVypisuPomociPDocument_ID(Vypis_ID, RadekVypisu_ID, PDocument_ID, PDocumentType : string);
+var
+  boAA: TAArray;
+  sResponse: string;
+begin
+  boAA := TAArray.Create;
+  boAA['PDocumentType'] := PDocumentType;
+  boAA['PDocument_ID'] := PDocument_ID;
+  sResponse := self.abraBoUpdate(boAA, 'bankstatement', Vypis_ID, 'row', RadekVypisu_ID);
+end;
+}
+
+procedure TDesU.opravRadekVypisuPomociPDocument_ID(Vypis_ID, RadekVypisu_ID, PDocument_ID, PDocumentType : string);
+var
+  boAA: TAArray;
+  faktura : TDoklad;
+  sResponse, text: string;
+  preplatek : currency;
+begin
+
+  //spárovat fakturu Vypis_ID s øádkem výpisu RadekVypisu_ID
+  boAA := TAArray.Create;
+  boAA['PDocumentType'] := PDocumentType;
+  boAA['PDocument_ID'] := PDocument_ID;
+  sResponse := self.abraBoUpdateWebApi(boAA, 'bankstatement', Vypis_ID, 'row', RadekVypisu_ID);
+
+  //podívat se, jestli není po spárování pøeplacená (ii.LOCALAMOUNT - ii.LOCALPAIDAMOUNT - ii.LOCALCREDITAMOUNT + ii.LOCALPAIDCREDITAMOUNT) bude záporné
+  //pokud je pøeplacená, 1) vložíme nový øádek s pøeplatkem - vyplníme Firm_ID, ale nevyplòujeme VS
+  // 2) amount spárovaného øádku RadekVypisu_ID ponížíme o velikost pøeplatku
+
+  DesU.dbAbra.Reconnect;
+  faktura := TDoklad.create(PDocument_ID, PDocumentType);
+
+  if faktura.castkaNezaplaceno < 0 then //faktura je pøeplacená
+  begin
+    preplatek := -faktura.castkaNezaplaceno;
+
+    with qrAbra do begin
+
+      // naètu èástku z øádky výpisu
+      SQL.Text := 'SELECT amount, text,'
+        + ' bankaccount, specsymbol, docdate$date, accdate$date, firm_id'
+        + ' FROM BANKSTATEMENTS2 WHERE id = ''' + RadekVypisu_ID + '''';
+      Open;
+      if Eof then begin
+        Exit;
+      end;
+
+      //øádku z výpisu upravím -> snížím èástku o pøeplatek
+      boAA := TAArray.Create;
+      boAA['Amount'] := FieldByName('amount').AsCurrency - preplatek;
+      text := FieldByName('text').AsString;
+      boAA['Text'] := trim (copy(text, LastDelimiter('|', text) + 1, length(text)) ); //zkopíruju obsah za posledním svislítkem
+      sResponse := self.abraBoUpdateWebApi(boAA, 'bankstatement', Vypis_ID, 'row', RadekVypisu_ID);
+
+      //vyrobím nový øádek výpisu s èástkou pøeplatku
+      boAA := TAArray.Create;
+      boAA['amount'] := preplatek;
+      boAA['text'] := FieldByName('text').AsString;
+      boAA['bankaccount'] := FieldByName('bankaccount').AsString;
+      boAA['specsymbol'] := FieldByName('specsymbol').AsString;
+      boAA['docdate$date'] := FieldByName('docdate$date').AsFloat;
+      boAA['accdate$date'] := FieldByName('accdate$date').AsFloat;
+      boAA['firm_id'] := FieldByName('firm_id').AsString;
+      boAA['credit'] := true;
+      boAA['division_id'] := DesU.getAbraDivisionId;
+      boAA['currency_id'] := DesU.getAbraCurrencyId;
+      sResponse := self.abraBoCreateRowWebApi(boAA, 'bankstatement', Vypis_ID);
+
+      Close;
+    end;
+  end;
+
+
+
 end;
 
 function TDesU.getOleObjDataDisplay(abraOleObj_Data : variant) : ansistring;
@@ -1107,6 +1259,11 @@ var
   sstreamJson: TStringStream;
   callJson, postCallResult, godsSmsUrl: string;
 begin
+  Result := '';
+  if (godsSmsUrl = '') then Result := 'chybi SMS url';
+  if (telCislo = '') then Result := 'chybi tel. cislo';
+  if (smsText = '') then Result := 'chybi SMS text';
+
   idHTTP := TidHTTP.Create;
 
   godsSmsUrl := getIniValue('Preferences', 'GodsSmsUrl');
@@ -1117,26 +1274,27 @@ begin
   idHTTP.Request.ContentType := 'application/json';
   idHTTP.Request.CharSet := 'utf-8';
 
-  //self.logJson(boAA.AsJSon(), 'abraBoCreateWebApi_AA - ' + abraWebApiUrl + abraBoName);
-
-   callJson := '{"from": "Eurosignal","msisdn": "420' + telCislo + '",'
-        + '"message": "' + smsText + '"}';
+   callJson := '{"from":"Eurosignal", "msisdn":"420' + telCislo + '",'
+        + '"message":"' + smsText + '"}';
 
   sstreamJson := TStringStream.Create(callJson, TEncoding.UTF8);
 
   try
-    try begin
-      postCallResult := idHTTP.Post(godsSmsUrl, sstreamJson);
+    try
+      if (godsSmsUrl <> '') AND (telCislo <> '') AND (smsText <> '') then
 
-//  {
-//    "status": "success",
-//    "data": {
-//        "message-id": "c3d8ebd4-879e-412e-8e16-3d4a2335d967"
-//    }
-//  }
+      begin
+        Result := idHTTP.Post(godsSmsUrl, sstreamJson);
 
-      Result := postCallResult;
-    end;
+
+    //  takhle vypadá vzorový response z GODS SMS brány
+    //  {
+    //    "status": "success",
+    //    "data": {"message-id": "c3d8ebd4-879e-412e-8e16-3d4a2335d967"  }
+    //  }
+    //  }
+
+      end;
     except
       on E: Exception do begin
         ShowMessage('Error on request: '#13#10 + e.Message);
@@ -1146,6 +1304,8 @@ begin
     sstreamJson.Free;
     idHTTP.Free;
   end;
+
+  appendToFile(PROGRAM_PATH + '\!logSMS.txt', formatdatetime('yy-mm-dd hh:nn:ss', Now) + ' - ' + telCislo + ' - '  + smsText + ' - '  + Result);
 
 end;
 
@@ -1240,36 +1400,17 @@ function destilujTelCislo(telCislo: string): string;
 var
   regexpr : TRegEx;
   match   : TMatch;
-  group   : TGroup;
-  i       : integer;
 begin
-  Result := stringreplace(telCislo, '+420', '', [rfReplaceAll, rfIgnoreCase]);
-  Result := RemoveSpaces(Result); // nekdy jsou cisla psana jako 3 skupiny po 3 znacich
+  Result := '';
+
+  telCislo := stringreplace(telCislo, '+420', '', [rfReplaceAll, rfIgnoreCase]);
+  telCislo := RemoveSpaces(telCislo); // nekdy jsou cisla psana jako 3 skupiny po 3 znacich
 
   regexpr := TRegEx.Create('\d{9}',[roIgnoreCase,roMultiline]); //hledam devitimistne cislo
-  match := regexpr.Match(Result);
-  if not match.Success then
-  begin
-    Result := 'zadne cislo';
-    exit;
-  end;
+  match := regexpr.Match(telCislo);
 
-  while match.Success do
-  begin
-  Result := Result + 'Match : [' + match.Value + ']';
-{
-    if match.Value[1] = '6' then
-      Result := Result + 'Match6 : [' + match.Value + ']';
-
-    if match.Value[1] = '7' then
-      Result := Result + 'Match7 : [' + match.Value + ']';
- }
-
-    match := match.NextMatch;
-  end;
-
-
- //Result := RemoveSpaces(Result);
+  if match.Success then
+      Result := match.Value;
 
 end;
 
@@ -1277,10 +1418,8 @@ function destilujMobilCislo(telCislo: string): string;
 var
   regexpr : TRegEx;
   match   : TMatch;
-  group   : TGroup;
-  i       : integer;
 begin
-  Result := 'žádný mobil';
+  Result := '';
 
   telCislo := stringreplace(telCislo, '+420', '', [rfReplaceAll, rfIgnoreCase]);
   telCislo := RemoveSpaces(telCislo); // nekdy jsou cisla psana jako 3 skupiny po 3 znacich
@@ -1342,6 +1481,24 @@ begin
   ReWrite(OutputFile);
   WriteLn(OutputFile, pContent);
   CloseFile(OutputFile);
+end;
+
+procedure appendToFile(pFileName, pContent : string);
+var
+    F : TextFile;
+begin
+  AssignFile(F, pFileName);
+  try
+    if FileExists(pFileName) = false then
+      Rewrite(F)
+    else
+    begin
+      Append(F);
+    end;
+    Writeln(F, pContent);
+  finally
+    CloseFile(F);
+  end;
 end;
 
 function LoadFileToStr(const FileName: TFileName): ansistring;

@@ -9,6 +9,8 @@ uses
 type
 
   TDoklad = class
+  private
+    qrAbra: TZQuery;
   public
     ID : string[10];
     docQueue_ID : string[10];
@@ -25,7 +27,9 @@ type
     castkaDobropisovano  : Currency;
     castkaNezaplaceno  : Currency;
     cisloDokladu : string[20];
-    constructor create(qrAbra : TZQuery);
+  //published
+    constructor create(qrAbra : TZQuery); overload;
+    constructor create(Document_ID : string; Document_Type : string = '03'); overload;
   end;
 
   TAbraBankAccount = class
@@ -69,7 +73,7 @@ uses
 
 constructor TDoklad.create(qrAbra : TZQuery);
 begin
- with qrAbra do begin
+ with qrAbra do begin //do qrAbra je naètený øádek z DB
   self.ID := FieldByName('ID').AsString;
   self.Firm_ID := FieldByName('Firm_ID').AsString;
   self.FirmName := FieldByName('FirmName').AsString;
@@ -82,6 +86,32 @@ begin
   self.CisloDokladu := FieldByName('CisloDokladu').AsString;
   self.DocumentType := FieldByName('DocumentType').AsString;
  end; 
+end;
+
+constructor TDoklad.create(Document_ID : string; Document_Type : string = '03');
+begin
+  self.qrAbra := DesU.qrAbra;
+  with qrAbra do begin
+
+    // cteni z IssuedInvoices
+    SQL.Text :=
+        'SELECT ii.ID, ii.DOCQUEUE_ID, ii.DOCDATE$DATE, ii.FIRM_ID, ii.DESCRIPTION, D.DOCUMENTTYPE,'
+      + ' D.Code || ''-'' || II.OrdNumber || ''/'' || substring(P.Code from 3 for 2) as CisloDokladu,'
+      + ' ii.LOCALAMOUNT, ii.LOCALPAIDAMOUNT, ii.LOCALCREDITAMOUNT, ii.LOCALPAIDCREDITAMOUNT,'
+      + ' firms.Name as FirmName'
+      + ' FROM ISSUEDINVOICES ii'
+
+      + ' JOIN Firms ON ii.Firm_ID = Firms.ID'
+      + ' JOIN DocQueues D ON ii.DocQueue_ID = D.ID'
+      + ' JOIN Periods P ON ii.Period_ID = P.ID'
+      + ' WHERE ii.ID = ''' + Document_ID + '''';
+
+    Open;
+    if not Eof then begin
+      self.create(qrAbra);
+    end;
+    Close;
+  end;
 end;
 
 {** class TAbraBankAccount **}

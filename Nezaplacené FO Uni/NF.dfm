@@ -258,13 +258,13 @@ object fmMain: TfmMain
       Font.Style = []
       ParentFont = False
       TabOrder = 8
-      Text = '1'
+      Text = '12'
       Visible = True
       Version = '3.3.2.3'
     end
     object btOdpojit: TButton
-      Left = 20
-      Top = 464
+      Left = 18
+      Top = 467
       Width = 71
       Height = 21
       Caption = 'O&dpojit'
@@ -273,14 +273,15 @@ object fmMain: TfmMain
     end
     object rgText: TRadioGroup
       Left = 20
-      Top = 390
+      Top = 379
       Width = 69
-      Height = 59
+      Height = 68
       Caption = 'Mail'
       ItemIndex = 0
       Items.Strings = (
         'Text 1'
-        'Text 2')
+        'Text 2'
+        'Text 3')
       TabOrder = 9
       OnClick = rgTextClick
     end
@@ -464,6 +465,8 @@ object fmMain: TfmMain
       SortSettings.Show = True
       VAlignment = vtaCenter
       Version = '7.4.2.0'
+      ExplicitLeft = 105
+      ExplicitTop = -3
       ColWidths = (
         70
         38
@@ -472,7 +475,7 @@ object fmMain: TfmMain
         54
         36
         49
-        17
+        18
         38
         49
         37

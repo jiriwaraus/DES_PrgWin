@@ -247,7 +247,7 @@ var
   newAA : TAArray;
 begin
   newAA := TAArray.Create;
-  self.RowList.Add(newAA); //pøidáme nové AArray di listu
+  self.RowList.Add(newAA); //pøidáme nové AArray do listu
   Result := newAA; //vrátíme ukazatel, aby se s novým AArray dalo hned pracovat
 end;
 
