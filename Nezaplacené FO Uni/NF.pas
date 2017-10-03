@@ -24,15 +24,13 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Forms, Controls, StdCtrls, ExtCtrls, ComCtrls, ComObj, Math,
-  Mask, AdvCombo, AdvEdit, Dialogs, Grids, BaseGrid, AdvGrid, DB,
-  //IBDatabase, IBCustomDataSet, IBQuery,
-  DateUtils, IniFiles,
+  Mask, AdvCombo, AdvEdit, Dialogs, Grids, BaseGrid, AdvGrid, DB, DateUtils,
+  //IBDatabase, IBCustomDataSet, IBQuery, IniFiles,
   //rxToolEdit,
   ZAbstractRODataset, ZAbstractDataset, ZDataset, ZConnection, IdBaseComponent, IdComponent, IdTCPConnection,
   IdTCPClient, IdSMTP, IdHTTP, IdMessage, IdMessageClient, IdText, IdMessageParts,
   IdAntiFreezeBase, IdAntiFreeze, ZAbstractConnection, AdvObj, IdIOHandler,
-  IdIOHandlerSocket, IdSSLOpenSSL, IdExplicitTLSClientServerBase, IdSMTPBase,
-  AdvDateTimePicker;
+  IdIOHandlerSocket, IdSSLOpenSSL, IdExplicitTLSClientServerBase, IdSMTPBase;
 
 type
   TfmMain = class(TForm)
@@ -110,8 +108,8 @@ begin
   deDatumOd.Date := StartOfTheMonth(IncYear(Now, -1));
 
 // 30.12.14 adresáø pro logy
-  LogDir := DesU.PROGRAM_PATH + '\Nezaplacené FO - logy';
-  if not DirectoryExists(LogDir) then CreateDir(LogDir);
+  LogDir := DesU.PROGRAM_PATH + '\logy\Nezaplacené FO\';
+  if not DirectoryExists(LogDir) then Forcedirectories(LogDir);
 // vytvoøení logfile, pokud neexistuje - 20.11.14 do jména pøidáno datum - 8.4.15 jen rok a mìsíc
   LogFileName := LogDir + FormatDateTime('\yyyy.mm".log"', Date);
   if not FileExists(LogFileName) then begin
@@ -148,7 +146,6 @@ begin
   + 'a stále od Vás postrádáme její úhradu.' + sLineBreak
   + 'I když penále za %d dní zpoždìní platby ve výši %.1f%% je v tuto chvíli zanedbatelné a jistì ho na Vás nebudeme vymáhat, '
   + 'potìšilo by nás, kdybyste dlužnou èástku co nejdøíve uhradili.', [DayOf(Date) - 10, DayOf(Date) - 10, (DayOf(Date) - 10) * 0.3]);
-
   mmMail.Text := MailText;
 
   acbRada.Clear;
@@ -173,8 +170,6 @@ begin
     //ExecSQL;
     SQL.Text := 'SELECT DISTINCT State FROM contracts'       // stav smlouvy
     + ' ORDER BY State';
-
-
     Open;
     while not EOF do begin
       acbDruhSmlouvy.Items.Add(FieldByName('State').AsString);
@@ -455,6 +450,7 @@ begin
     Append(F);
     Writeln (F, FormatDateTime(sLineBreak + 'dd.mm.yy hh:nn  ', Now) + 'Odeslání zprávy: ' + sLineBreak + mmMail.Text + sLineBreak);
     CloseFile(F);
+    
     for Radek := 1 to RadekDo do
       if Ints[7, Radek] = 1 then begin
         Clear;
@@ -635,8 +631,6 @@ begin
 // 26.6.14
     idHTTP.Request.Clear;
     idHTTP.Request.BasicAuthentication := True;
-//    idHTTP.Request.UserAgent := 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.0; SLCC1)';
-
     idHTTP.Request.Username := 'NFO';
     idHTTP.Request.Password := 'NFO2014';
     URL := 'http://aplikace.eurosignal.cz';

@@ -80,6 +80,7 @@ begin
 
 
   with DesU.qrAbra, asgPnp do begin
+    Screen.Cursor := crHourGlass;
     ClearNormalCells;
     RowCount := 2;
     //CheckFalse := '0';
@@ -147,6 +148,7 @@ begin
       end;
     end;
     Close;
+    Screen.Cursor := crDefault;
 
   end;
 end;
