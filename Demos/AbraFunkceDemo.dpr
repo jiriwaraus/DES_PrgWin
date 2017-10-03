@@ -1,0 +1,22 @@
+program AbraFunkceDemo;
+
+uses
+  Vcl.Forms,
+  AbraFunkce_demo in 'AbraFunkce_demo.pas' {Form1},
+  DesUtils in '..\DE$_Common\DesUtils.pas' {DesU},
+  Superobject in '..\DE$_Common\Superobject.pas',
+  Superdate in '..\DE$_Common\Superdate.pas',
+  Supertimezone in '..\DE$_Common\Supertimezone.pas',
+  Supertypes in '..\DE$_Common\Supertypes.pas',
+  AbraEntities in '..\DE$_Common\AbraEntities.pas',
+  AArray in '..\DE$_Common\AArray.pas';
+
+{$R *.res}
+
+begin
+  Application.Initialize;
+  Application.MainFormOnTaskbar := True;
+  Application.CreateForm(TForm1, Form1);
+  Application.CreateForm(TDesU, DesU);
+  Application.Run;
+end.
