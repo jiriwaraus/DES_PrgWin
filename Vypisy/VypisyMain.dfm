@@ -26,7 +26,7 @@ object fmMain: TfmMain
     Width = 15
     Height = 16
     Caption = '...'
-    Color = clMoneyGreen
+    Color = clSkyBlue
     Font.Charset = EASTEUROPE_CHARSET
     Font.Color = clWindowText
     Font.Height = -13

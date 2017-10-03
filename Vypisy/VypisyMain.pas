@@ -225,6 +225,7 @@ var
   GpcFileLine : string;
   iPlatbaZVypisu : TPlatbaZVypisu;
   i, pocetPlatebGpc, kontrolaDvojitaPlatba: integer;
+  ucetniZustatek : currency;
 begin
   try
     DesU.dbAbra.Reconnect;
@@ -300,11 +301,15 @@ begin
         sparujVsechnyPrichoziPlatby;
         vyplnPrichoziPlatby;
         filtrujZobrazeniPlateb;
+        ucetniZustatek := Vypis.abraBankaccount.getZustatek(date);
         lblHlavicka.Caption := Vypis.abraBankaccount.name // + ', ' + Vypis.abraBankaccount.number
                         + ', è.' + IntToStr(Vypis.poradoveCislo) + ' (max è. ' + IntToStr(Vypis.maxExistujiciPoradoveCislo) + '). Plateb: '
                         + IntToStr(Vypis.Platby.Count)
                         + ' Bank. zùst: ' + FloatToStr(Vypis.zustatekStary)
-                        + ' Úè. zùst: ' + FloatToStr(Vypis.abraBankaccount.getZustatek(date));
+                        + ' Úè. zùst: ' + FloatToStr(ucetniZustatek);
+        if Vypis.zustatekStary <> ucetniZustatek then
+          lblHlavicka.Font.Color := $0000FF;
+
         if not Vypis.isNavazujeNaradu() then
           Dialogs.MessageDlg('Doklad è. '+ IntToStr(Vypis.poradoveCislo) + ' nenavazuje na øadu!', mtInformation, [mbOK], 0);
         //currPlatbaZVypisu := TPlatbaZVypisu(Vypis.Platby[0]); //mùže být ale nemìlo by být potøeba

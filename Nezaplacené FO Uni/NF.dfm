@@ -297,7 +297,7 @@ object fmMain: TfmMain
     object deDatumOd: TDateTimePicker
       Left = 10
       Top = 19
-      Width = 81
+      Width = 79
       Height = 21
       Date = 42997.895638668980000000
       Time = 42997.895638668980000000
@@ -465,8 +465,6 @@ object fmMain: TfmMain
       SortSettings.Show = True
       VAlignment = vtaCenter
       Version = '7.4.2.0'
-      ExplicitLeft = 105
-      ExplicitTop = -3
       ColWidths = (
         70
         38

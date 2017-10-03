@@ -352,6 +352,11 @@ begin
     btnNactiPnpAlt.Visible := true;
 
   nactiPNP;
+
+  if AnsiLowerCase(DesU.abraDefaultCommMethod) <> 'webapi' then
+    MessageDlg('Konfiguce v ini je na použití OLE, Pøiøazení PNP ale používá pouze WebApi.' + sLineBreak
+                + 'Komunikace se serverem bude tedy pøes WebApi.', mtInformation, [mbOk], 0);
+
 end;
 
 
