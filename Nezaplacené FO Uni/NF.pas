@@ -466,7 +466,7 @@ begin
         end;
         Recipients.Add.Address := Trim(MailStr);
 
-        Subject := 'Kontrola luouèkıch plateb smlouvy ' + Cells[6, Radek];
+        Subject := 'Kontrola plateb smlouvy ' + Cells[6, Radek];
 
         with TIdText.Create(idMessage.MessageParts, nil) do begin
           Body.Text := StringReplace(mmMail.Text, '%%%', IntToStr(Round(Floats[4, Radek])), [rfIgnoreCase])

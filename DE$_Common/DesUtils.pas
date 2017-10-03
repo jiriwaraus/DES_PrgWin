@@ -1205,7 +1205,7 @@ begin
       + ' null,null,null,0)';
     Open;
     if not Eof then begin
-      Result := FieldByName('zustatek').AsFloat;
+      Result := FieldByName('zustatek').AsCurrency;
     end;
     Close;
   end;
@@ -1305,7 +1305,11 @@ begin
     idHTTP.Free;
   end;
 
-  appendToFile(PROGRAM_PATH + '\!logSMS.txt', formatdatetime('yy-mm-dd hh:nn:ss', Now) + ' - ' + telCislo + ' - '  + smsText + ' - '  + Result);
+  if appMode >= 1 then begin
+    if not DirectoryExists(PROGRAM_PATH + '\logy\') then
+      Forcedirectories(PROGRAM_PATH + '\logy\');
+    appendToFile(PROGRAM_PATH + '\logy\SMS_odeslane.txt', formatdatetime('yy-mm-dd hh:nn:ss', Now) + ' - ' + telCislo + ' - '  + smsText + ' - '  + Result);
+  end;
 
 end;
 
