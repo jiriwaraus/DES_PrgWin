@@ -67,16 +67,30 @@ object fmMain: TfmMain
   object lblVypisCsobInfo: TLabel
     Left = 240
     Top = 496
-    Width = 67
+    Width = 77
     Height = 13
-    Caption = 'lblVypisFioInfo'
+    Caption = 'lblVypisCsobInfo'
   end
   object lblVypisCsobGpc: TLabel
     Left = 240
     Top = 456
-    Width = 69
+    Width = 79
     Height = 13
-    Caption = 'lblVypisFioGpc'
+    Caption = 'lblVypisCsobGpc'
+  end
+  object lblVypisPayuGpc: TLabel
+    Left = 240
+    Top = 563
+    Width = 79
+    Height = 13
+    Caption = 'lblVypisPayuGpc'
+  end
+  object lblVypisPayuInfo: TLabel
+    Left = 240
+    Top = 600
+    Width = 77
+    Height = 13
+    Caption = 'lblVypisPayuInfo'
   end
   object pnBottom: TPanel
     Left = 0
@@ -739,12 +753,13 @@ object fmMain: TfmMain
     Caption = 'PayU v'#253'pis'
     Enabled = False
     TabOrder = 7
+    OnClick = btnVypisPayUClick
   end
   object asgMain: TAdvStringGrid
     Left = 112
     Top = 29
     Width = 824
-    Height = 626
+    Height = 279
     Cursor = crDefault
     Anchors = [akLeft, akTop, akBottom]
     ColCount = 9

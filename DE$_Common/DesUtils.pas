@@ -31,7 +31,7 @@ type
     function getOleObjDataDisplay(abraOleObj_Data : variant) : ansistring;
     function vytvorFaZaInternetKredit(VS : string; castka : currency; datum : double) : string;
     function vytvorFaZaVoipKredit(VS : string; castka : currency; datum : double) : string;
-
+    function zrusPenizeNaCeste(VS : string) : string;
 
     public
       PROGRAM_PATH,
@@ -1050,6 +1050,22 @@ begin
   end;
 
 end;
+
+
+function TDesU.zrusPenizeNaCeste(VS : string) : string;
+var
+  i: integer;
+  boAA, boRowAA: TAArray;
+  newId, firmAbraCode: String;
+begin
+  with DesU.qrZakos do begin
+    SQL.Text := 'UPDATE customers SET pay_u_payment = 0 where variable_symbol = ''' + VS + '''';
+    ExecSQL;
+    Close;
+  end;
+
+end;
+
 
 
 function TDesU.getAbraPeriodId(pYear : string) : string;

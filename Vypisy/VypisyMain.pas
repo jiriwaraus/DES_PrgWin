@@ -47,6 +47,8 @@ type
     btnCustomers: TButton;
     btnHledej: TButton;
     editHledej: TEdit;
+    lblVypisPayuGpc: TLabel;
+    lblVypisPayuInfo: TLabel;
 
     procedure btnNactiClick(Sender: TObject);
     procedure btnZapisDoAbryClick(Sender: TObject);
@@ -88,6 +90,7 @@ type
     procedure btnCustomersClick(Sender: TObject);
     procedure asgMainCheckBoxClick(Sender: TObject; ACol, ARow: Integer;
       State: Boolean);
+    procedure btnVypisPayUClick(Sender: TObject);
 
 
   public
@@ -145,7 +148,9 @@ end;
 procedure TfmMain.vyplnNacitaciButtony;
 var
   maxCisloVypisu : integer;
-  fRok, nalezenyGpcSoubor, hledanyGpcSoubor : string;
+  posledniDatum : double;
+  fRok, nalezenyGpcSoubor, hledanyGpcSoubor,
+  hledanePayuDatumVypisu : string;
   abraBankaccount : TAbraBankaccount;
 begin
   fRok := IntToStr(SysUtils.CurrentYear);
@@ -153,7 +158,7 @@ begin
 
   //Fio
   abraBankaccount.loadByNumber('2100098382/2010');
-  maxCisloVypisu := abraBankaccount.getMaxPoradoveCisloVypisu(fRok);
+  maxCisloVypisu := abraBankaccount.getPoradoveCisloMaxVypisu(fRok);
   hledanyGpcSoubor := 'Vypis_z_uctu-2100098382_' + fRok + '*-' + IntToStr(maxCisloVypisu + 1) + '.gpc';
   nalezenyGpcSoubor := FindInFolder(DesU.GPC_PATH, hledanyGpcSoubor, true);
 
@@ -167,15 +172,15 @@ begin
 
   lblVypisFioInfo.Caption := format('Poèet výpisù: %d, max. èíslo výpisu: %d, externí èíslo: %d, datum %s', [
     abraBankaccount.getPocetVypisu(fRok),
-    abraBankaccount.getMaxPoradoveCisloVypisu(fRok),
-    abraBankaccount.getMaxExtPoradoveCisloVypisu(fRok),
-    DateToStr(abraBankaccount.getMaxDatumVypisu(fRok))
+    abraBankaccount.getPoradoveCisloMaxVypisu(fRok),
+    abraBankaccount.getExtPoradoveCisloMaxVypisu(fRok),
+    DateToStr(abraBankaccount.getDatumMaxVypisu(fRok))
     ]);
 
 
   /// Fio Spoøicí
   abraBankaccount.loadByNumber('2800098383/2010');
-  maxCisloVypisu := abraBankaccount.getMaxPoradoveCisloVypisu(fRok);
+  maxCisloVypisu := abraBankaccount.getPoradoveCisloMaxVypisu(fRok);
   hledanyGpcSoubor := 'Vypis_z_uctu-2800098383_' + fRok + '*-' + IntToStr(maxCisloVypisu + 1) + '.gpc';
   nalezenyGpcSoubor := FindInFolder(DesU.GPC_PATH, hledanyGpcSoubor, true);
 
@@ -189,15 +194,15 @@ begin
 
   lblVypisFioSporiciInfo.Caption := format('Poèet výpisù: %d, max. èíslo výpisu: %d, externí èíslo: %d, datum %s', [
     abraBankaccount.getPocetVypisu(fRok),
-    abraBankaccount.getMaxPoradoveCisloVypisu(fRok),
-    abraBankaccount.getMaxExtPoradoveCisloVypisu(fRok),
-    DateToStr(abraBankaccount.getMaxDatumVypisu(fRok))
+    abraBankaccount.getPoradoveCisloMaxVypisu(fRok),
+    abraBankaccount.getExtPoradoveCisloMaxVypisu(fRok),
+    DateToStr(abraBankaccount.getDatumMaxVypisu(fRok))
     ]);
 
 
   /// ÈSOB Spoøicí
   abraBankaccount.loadByNumber('171336270/0300');
-  maxCisloVypisu := abraBankaccount.getMaxPoradoveCisloVypisu(fRok);
+  maxCisloVypisu := abraBankaccount.getPoradoveCisloMaxVypisu(fRok);
   hledanyGpcSoubor := 'BB117641_171336270_' + fRok + '*_' + IntToStr(maxCisloVypisu + 1) + '.gpc';
   nalezenyGpcSoubor := FindInFolder(DesU.GPC_PATH, hledanyGpcSoubor, true);
 
@@ -211,12 +216,28 @@ begin
 
   lblVypisCsobInfo.Caption := format('Poèet výpisù: %d, max. èíslo výpisu: %d, externí èíslo: %d, datum %s', [
     abraBankaccount.getPocetVypisu(fRok),
-    abraBankaccount.getMaxPoradoveCisloVypisu(fRok),
-    abraBankaccount.getMaxExtPoradoveCisloVypisu(fRok),
-    DateToStr(abraBankaccount.getMaxDatumVypisu(fRok))
+    abraBankaccount.getPoradoveCisloMaxVypisu(fRok),
+    abraBankaccount.getExtPoradoveCisloMaxVypisu(fRok),
+    DateToStr(abraBankaccount.getDatumMaxVypisu(fRok))
     ]);
 
-  //Pay U   2389210008000000/0300
+  //Pay U
+  abraBankaccount.loadByNumber('2389210008000000/0300');
+  posledniDatum := abraBankaccount.getPosledniDatumVypisu(fRok);
+  hledanePayuDatumVypisu := FormatDateTime('yyyy-mm-dd', posledniDatum + 1);
+  hledanyGpcSoubor := 'vypis_Eurosignal_' + hledanePayuDatumVypisu + '_*.gpc';
+  nalezenyGpcSoubor := FindInFolder(DesU.GPC_PATH, hledanyGpcSoubor, true);
+  if nalezenyGpcSoubor = '' then begin //nenašel se
+    lblVypisPayuGpc.caption := hledanyGpcSoubor + ' nenalezen';
+    btnVypisPayu.Enabled := false;
+  end else begin
+    lblVypisPayuGpc.caption := nalezenyGpcSoubor;
+    btnVypisPayu.Enabled := true;
+  end;
+
+  lblVypisPayuInfo.Caption := format('Datum posledního výpisu %s', [
+    FormatDateTime('dd.mm.yyyy', posledniDatum)
+    ]);
 end;
 
 procedure TfmMain.nactiGpc(GpcFilename : string);
@@ -843,6 +864,11 @@ end;
 procedure TfmMain.btnVypisFioSporiciClick(Sender: TObject);
 begin
   nactiGpc(lblVypisFioSporiciGpc.caption);
+end;
+
+procedure TfmMain.btnVypisPayUClick(Sender: TObject);
+begin
+  nactiGpc(lblVypisPayuGpc.caption);
 end;
 
 procedure TfmMain.btnVypisCsobClick(Sender: TObject);

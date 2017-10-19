@@ -44,9 +44,10 @@ type
     constructor create();
   published
     procedure loadByNumber(baNumber : string);
-    function getMaxPoradoveCisloVypisu(pYear : string) : integer;
-    function getMaxExtPoradoveCisloVypisu(pYear : string) : integer;
-    function getMaxDatumVypisu(pYear : string) : double;    
+    function getPoradoveCisloMaxVypisu(pYear : string) : integer;
+    function getExtPoradoveCisloMaxVypisu(pYear : string) : integer;
+    function getDatumMaxVypisu(pYear : string) : double;
+    function getPosledniDatumVypisu(pYear : string) : double;
     function getPocetVypisu(pYear : string) : integer;
     function getZustatek(pDatum : double) : double;
   end;
@@ -142,7 +143,7 @@ begin
   end;
 end;
 
-function TAbraBankAccount.getMaxPoradoveCisloVypisu(pYear : string) : integer;
+function TAbraBankAccount.getPoradoveCisloMaxVypisu(pYear : string) : integer;
 begin
   with qrAbra do begin
     SQL.Text := 'SELECT MAX(bs.OrdNumber) as MaxOrdNumber '  //nemìlo by být max externalnumber?
@@ -159,7 +160,7 @@ begin
   end;
 end;
 
-function TAbraBankAccount.getMaxExtPoradoveCisloVypisu(pYear : string) : integer;
+function TAbraBankAccount.getExtPoradoveCisloMaxVypisu(pYear : string) : integer;
 begin
   with qrAbra do begin
     SQL.Text := 'SELECT bs1.OrdNumber as MaxOrdNumber, bs1.EXTERNALNUMBER as MaxExtOrdNumber'
@@ -177,7 +178,25 @@ begin
   end;
 end;
 
-function TAbraBankAccount.getMaxDatumVypisu(pYear : string) : double;
+function TAbraBankAccount.getDatumMaxVypisu(pYear : string) : double;
+begin
+  with qrAbra do begin
+    SQL.Text := 'SELECT MAX(bs.DOCDATE$DATE) as PosledniDatum'
+              + ' FROM BANKSTATEMENTS bs, PERIODS p '
+              + 'WHERE bs.DOCQUEUE_ID = ''' + self.bankStatementDocqueueId  + ''''
+              + ' AND bs.PERIOD_ID = p.ID'
+              + ' AND p.CODE = ''' + pYear  + '''';
+
+    Open;
+    if not Eof then
+      Result := FieldByName('PosledniDatum').AsFloat
+    else
+      Result := 0;
+    Close;
+  end;
+end;
+
+function TAbraBankAccount.getPosledniDatumVypisu(pYear : string) : double;
 begin
   with qrAbra do begin
     SQL.Text := 'SELECT bs1.DOCDATE$DATE'
