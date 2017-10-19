@@ -99,7 +99,6 @@ uses DesUtils, NF2D;
 procedure TfmMain.FormShow(Sender: TObject);
 var
   FileHandle: integer;
-  FIIni: TIniFile;
   LogDir,
   LogFileName,
   FIFileName: AnsiString;
@@ -433,6 +432,7 @@ var
   Radek,
   CommId: integer;
   MailStr,
+  Zprava,
   SQLStr: AnsiString;
 begin
   Screen.Cursor := crHourGlass;
@@ -450,7 +450,7 @@ begin
     Append(F);
     Writeln (F, FormatDateTime(sLineBreak + 'dd.mm.yy hh:nn  ', Now) + 'Odeslání zprávy: ' + sLineBreak + mmMail.Text + sLineBreak);
     CloseFile(F);
-    
+
     for Radek := 1 to RadekDo do
       if Ints[7, Radek] = 1 then begin
         Clear;
@@ -469,6 +469,10 @@ begin
         Subject := 'Kontrola plateb smlouvy ' + Cells[6, Radek];
 
         with TIdText.Create(idMessage.MessageParts, nil) do begin
+          Zprava := StringReplace(mmMail.Text, '%%%', IntToStr(Round(Floats[4, Radek])), [rfIgnoreCase]);
+          Body.Text := Zprava;
+
+
           Body.Text := StringReplace(mmMail.Text, '%%%', IntToStr(Round(Floats[4, Radek])), [rfIgnoreCase])
            + sLineBreak + sLineBreak
            +'S pozdravem'
@@ -505,8 +509,8 @@ begin
           idSMTP.Send(idMessage);
         except on E: exception do
           ShowMessage('Mail se nepodaøilo odeslat: ' + E.Message);
-        end;  
-                
+        end;
+
         if (Colors[7, Radek] <> clSilver) then Colors[7, Radek] := clSilver
         else Colors[7, Radek] := clWhite;
         with DesU.qrZakos do try                               // 15.3.2011
@@ -527,7 +531,7 @@ begin
           + Cells[10, Radek] + ', '
           + '1, '                                        // admin
           + '2, '                                        // mail
-          + Ap + mmMail.Text + ApC
+          + Ap + Zprava + ApC
           + Ap + FormatDateTime('yyyy-mm-dd hh:nn:ss', Now) + ApC
           + Ap + FormatDateTime('yyyy-mm-dd hh:nn:ss', Now) + ApZ;
           SQL.Text := SQLStr;

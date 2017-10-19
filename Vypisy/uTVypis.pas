@@ -61,7 +61,8 @@ end;
 
 function TVypis.isNavazujeNaRadu() : boolean;
 begin
-  if self.poradoveCislo - self.maxExistujiciPoradoveCislo = 1 then
+  if (self.poradoveCislo - self.maxExistujiciPoradoveCislo = 1)
+    OR (self.poradoveCislo = 0) then //PayU nikdy nenavazuje, výpis má vždy èíslo 0
     Result := true
   else
     Result := false;

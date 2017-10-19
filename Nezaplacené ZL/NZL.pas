@@ -319,6 +319,10 @@ begin
   idSMTP.Username := DesU.getIniValue('Mail', 'SMTPLogin');
   idSMTP.Password := DesU.getIniValue('Mail', 'SMTPPW');
 
+  Append(F);
+  Writeln (F, FormatDateTime(sLineBreak + 'dd.mm.yy hh:nn  ', Now) + 'Odeslání zprávy: ' + sLineBreak + mmMail.Text + sLineBreak);
+  CloseFile(F);
+
   with asgPohledavky, idMessage do begin
     if RowCount > 2 then RadekDo := RowCount - 2 else RadekDo := 1;
 
@@ -393,14 +397,13 @@ begin
           + Cells[9, Radek] + ', '
           + '1, '                                        // admin
           + '2, '                                        // mail
-          + Ap + mmMail.Text + ApC
+          + Ap + Zprava + ApC
           + Ap + FormatDateTime('yyyy-mm-dd hh:nn:ss', Now) + ApC
           + Ap + FormatDateTime('yyyy-mm-dd hh:nn:ss', Now) + ApZ;
           SQL.Text := SQLStr;
           ExecSQL;
           System.Append(F);
           Writeln (F, Format('%s (%s) email %s', [Cells[0, Radek], Cells[5, Radek], Cells[8, Radek]]));
-          Writeln (F, FormatDateTime(sLineBreak + 'dd.mm.yy hh:nn  ', Now) + 'Odeslání zprávy: ' + sLineBreak + Zprava + sLineBreak);
           CloseFile(F);
         except on E: exception do
           ShowMessage('Mail se nepodaøilo uložit do tabulky communications: ' + E.Message);
