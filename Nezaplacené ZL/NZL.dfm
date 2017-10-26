@@ -25,7 +25,6 @@ object fmZL: TfmZL
     Height = 472
     Align = alClient
     TabOrder = 0
-    ExplicitWidth = 625
     object lbDo: TLabel
       Left = 10
       Top = 42
@@ -193,9 +192,6 @@ object fmZL: TfmZL
       SortSettings.Show = True
       VAlignment = vtaCenter
       Version = '7.4.2.0'
-      ExplicitLeft = 94
-      ExplicitTop = -3
-      ExplicitWidth = 522
       ColWidths = (
         66
         64
@@ -349,15 +345,17 @@ object fmZL: TfmZL
       Width = 80
       Height = 21
       Date = 43010.950627025460000000
+      Format = 'dd.MM.yyyy'
       Time = 43010.950627025460000000
       TabOrder = 10
     end
     object deDatumDo: TDateTimePicker
       Left = 8
-      Top = 58
+      Top = 61
       Width = 79
       Height = 21
       Date = 43010.950936585650000000
+      Format = 'dd.MM.yyyy'
       Time = 43010.950936585650000000
       TabOrder = 11
     end
@@ -378,7 +376,6 @@ object fmZL: TfmZL
     Height = 120
     Align = alBottom
     TabOrder = 1
-    ExplicitWidth = 625
     object mmMail: TMemo
       Left = 1
       Top = 1
@@ -395,7 +392,6 @@ object fmZL: TfmZL
           'Pot'#283#353'ilo by n'#225's, kdybyste '#269#225'stku z'#225'lohy co nejd'#345#237've uhradili a m' +
           'y V'#225'm nemuseli omezovat poskytovan'#233' slu'#382'by.')
       TabOrder = 0
-      ExplicitWidth = 623
     end
   end
   object dlgExport: TSaveDialog

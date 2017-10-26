@@ -99,7 +99,6 @@ uses DesUtils, NF2D;
 procedure TfmMain.FormShow(Sender: TObject);
 var
   FileHandle: integer;
-  FIIni: TIniFile;
   LogDir,
   LogFileName,
   FIFileName: AnsiString;
@@ -433,6 +432,7 @@ var
   Radek,
   CommId: integer;
   MailStr,
+  Zprava,
   SQLStr: AnsiString;
 begin
   Screen.Cursor := crHourGlass;
@@ -451,6 +451,7 @@ begin
     Writeln (F, FormatDateTime(sLineBreak + 'dd.mm.yy hh:nn  ', Now) + 'Odeslání zprávy: ' + sLineBreak + mmMail.Text + sLineBreak);
     CloseFile(F);
     
+
     for Radek := 1 to RadekDo do
       if Ints[7, Radek] = 1 then begin
         Clear;
@@ -506,8 +507,8 @@ begin
           idSMTP.Send(idMessage);
         except on E: exception do
           ShowMessage('Mail se nepodaøilo odeslat: ' + E.Message);
-        end;  
-                
+        end;
+
         if (Colors[7, Radek] <> clSilver) then Colors[7, Radek] := clSilver
         else Colors[7, Radek] := clWhite;
         with DesU.qrZakos do try                               // 15.3.2011

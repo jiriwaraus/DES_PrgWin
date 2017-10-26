@@ -299,8 +299,9 @@ object fmMain: TfmMain
       Top = 19
       Width = 79
       Height = 21
-      Date = 42997.895638668990000000
-      Time = 42997.895638668990000000
+      Date = 42997.895638668980000000
+      Format = 'dd.MM.yyyy'
+      Time = 42997.895638668980000000
       TabOrder = 12
     end
     object deDatumDo: TDateTimePicker
@@ -308,7 +309,11 @@ object fmMain: TfmMain
       Top = 58
       Width = 79
       Height = 21
+      BevelEdges = []
+      BevelInner = bvNone
+      BevelOuter = bvNone
       Date = 42998.983010243060000000
+      Format = 'dd.MM.yyyy'
       Time = 42998.983010243060000000
       TabOrder = 13
     end

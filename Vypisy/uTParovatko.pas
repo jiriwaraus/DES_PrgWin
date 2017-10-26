@@ -97,13 +97,14 @@ procedure TParovatko.sparujPlatbu(Platba : TPlatbaZVypisu);
     end
     else
     begin
-      if Platba.getProcentoPredchozichPlatebZeStejnehoUctu() > 0.5 then begin
+      //if Platba.getProcentoPredchozichPlatebZeStejnehoUctu() > 0.5 then begin //zmìna z nadpolovièní vìtšiny na více jak 3 platby
+      if Platba.getPocetPredchozichPlatebZeStejnehoUctu() >= 3 then begin
         vytvorPDPar(Platba, Doklad, Castka, 'pøepl. | ' + Platba.VS + ' |' , false);
         Platba.zprava := 'pøepl. ' + FloatToStr(Castka) + ' Kè';
         Platba.problemLevel := 1;
       end else begin
         vytvorPDPar(Platba, Doklad, Castka, 'pøepl. | ' + Platba.VS + ' |', false);
-        Platba.zprava := 'neznámý pøep. ' + FloatToStr(Platba.Castka) + ' Kè';
+        Platba.zprava := 'neznámý pøep. ' + FloatToStr(Castka) + ' Kè';
         Platba.problemLevel := 5;
       end;
     end;
@@ -342,6 +343,10 @@ begin
 
     if iPDPar.Platba.Debet then
       boRowAA['VarSymbol'] := iPDPar.Platba.VS; //pro debety aby vždy zùstal VS
+
+    if (iPDPar.Platba.cisloUctuVlastni = '2389210008000000') AND iPDPar.Platba.kredit then begin //PayU platba, rušíme peníze na cestì
+      DesU.zrusPenizeNaCeste(iPDPar.Platba.VS);
+    end;
 
   end;
 
