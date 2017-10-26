@@ -2,7 +2,7 @@ object fmMain: TfmMain
   Left = 308
   Top = 102
   Caption = 'Nezaplacen'#233' faktury'
-  ClientHeight = 646
+  ClientHeight = 647
   ClientWidth = 846
   Color = clBtnFace
   Constraints.MinHeight = 674
@@ -20,7 +20,7 @@ object fmMain: TfmMain
   TextHeight = 13
   object pnBottom: TPanel
     Left = 0
-    Top = 526
+    Top = 527
     Width = 846
     Height = 120
     Align = alBottom
@@ -51,7 +51,7 @@ object fmMain: TfmMain
     Left = 0
     Top = 0
     Width = 846
-    Height = 526
+    Height = 527
     Align = alClient
     TabOrder = 1
     object lbDo: TLabel
@@ -299,8 +299,8 @@ object fmMain: TfmMain
       Top = 19
       Width = 79
       Height = 21
-      Date = 42997.895638668980000000
-      Time = 42997.895638668980000000
+      Date = 42997.895638668990000000
+      Time = 42997.895638668990000000
       TabOrder = 12
     end
     object deDatumDo: TDateTimePicker
@@ -316,7 +316,7 @@ object fmMain: TfmMain
       Left = 102
       Top = 1
       Width = 743
-      Height = 524
+      Height = 525
       Cursor = crDefault
       Align = alRight
       Anchors = [akLeft, akTop, akRight, akBottom]
@@ -446,7 +446,7 @@ object fmMain: TfmMain
       RowHeaders.Strings = (
         ' ')
       ScrollWidth = 16
-      SearchFooter.ColorTo = 15790320
+      SearchFooter.ColorTo = 13160660
       SearchFooter.FindNextCaption = 'Find &next'
       SearchFooter.FindPrevCaption = 'Find &previous'
       SearchFooter.Font.Charset = DEFAULT_CHARSET

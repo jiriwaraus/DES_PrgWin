@@ -24,12 +24,12 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Forms, Controls, StdCtrls, ExtCtrls, ComCtrls, ComObj, Math,
-  Mask, AdvCombo, AdvEdit, Dialogs, Grids, BaseGrid, AdvGrid, DB, DateUtils,
+  Mask, AdvObj, AdvCombo, AdvEdit, Dialogs, Grids, BaseGrid, AdvGrid, DB, DateUtils, IniFiles,
   //IBDatabase, IBCustomDataSet, IBQuery, IniFiles,
   //rxToolEdit,
   ZAbstractRODataset, ZAbstractDataset, ZDataset, ZConnection, IdBaseComponent, IdComponent, IdTCPConnection,
   IdTCPClient, IdSMTP, IdHTTP, IdMessage, IdMessageClient, IdText, IdMessageParts,
-  IdAntiFreezeBase, IdAntiFreeze, ZAbstractConnection, AdvObj, IdIOHandler,
+  IdAntiFreezeBase, IdAntiFreeze, ZAbstractConnection, IdIOHandler,
   IdIOHandlerSocket, IdSSLOpenSSL, IdExplicitTLSClientServerBase, IdSMTPBase;
 
 type
@@ -468,8 +468,9 @@ begin
 
         Subject := 'Kontrola plateb smlouvy ' + Cells[6, Radek];
 
+        MailStr := StringReplace(mmMail.Text, '%%%', IntToStr(Round(Floats[4, Radek])), [rfIgnoreCase]);
         with TIdText.Create(idMessage.MessageParts, nil) do begin
-          Body.Text := StringReplace(mmMail.Text, '%%%', IntToStr(Round(Floats[4, Radek])), [rfIgnoreCase])
+          Body.Text := MailStr
            + sLineBreak + sLineBreak
            +'S pozdravem'
            + sLineBreak + sLineBreak
@@ -527,7 +528,7 @@ begin
           + Cells[10, Radek] + ', '
           + '1, '                                        // admin
           + '2, '                                        // mail
-          + Ap + mmMail.Text + ApC
+          + Ap + MailStr + ApC
           + Ap + FormatDateTime('yyyy-mm-dd hh:nn:ss', Now) + ApC
           + Ap + FormatDateTime('yyyy-mm-dd hh:nn:ss', Now) + ApZ;
           SQL.Text := SQLStr;
@@ -756,6 +757,7 @@ end;
 
 procedure TfmMain.btKonecClick(Sender: TObject);
 begin
+  idSMTP.Disconnect();
   Close;
 end;
 
