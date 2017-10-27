@@ -759,7 +759,7 @@ object fmMain: TfmMain
     Left = 112
     Top = 29
     Width = 824
-    Height = 279
+    Height = 624
     Cursor = crDefault
     Anchors = [akLeft, akTop, akBottom]
     ColCount = 9
