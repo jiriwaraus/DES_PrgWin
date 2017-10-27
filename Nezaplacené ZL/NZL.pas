@@ -443,8 +443,12 @@ begin
         smsText := StringReplace(smsText, 'YYY', Cells[1, Radek], []);
 
         callResult := DesU.sendGodsSms(Cells[13, Radek], smsText);
+        System.Append(F);
+        Writeln (F, Format('%s (%s)  -  %s  -  %s', [Cells[0, Radek], Cells[5, Radek], Cells[13, Radek], callResult]));
+        CloseFile(F);
 
         if (Colors[7, Radek] <> clSilver) then Colors[7, Radek] := clSilver
+
         else Colors[7, Radek] := clWhite;
         with DesU.qrZakos do try                               // 15.3.2011
           Close;
@@ -461,7 +465,7 @@ begin
           + ' Created_at,'
           + ' Updated_at) VALUES ('
           + IntToStr(CommId) + ', '
-          + Cells[10, Radek] + ', '
+          + Cells[9, Radek] + ', '
           + '1, '                                        // admin
           + '23, '                                        // SMS
           + Ap + mmMail.Text + ApC
@@ -469,9 +473,6 @@ begin
           + Ap + FormatDateTime('yyyy-mm-dd hh:nn:ss', Now) + ApZ;
           SQL.Text := SQLStr;
           ExecSQL;
-          System.Append(F);
-          Writeln (F, Format('%s (%s)  -  %s  -  %s', [Cells[0, Radek], Cells[5, Radek], Cells[13, Radek], callResult]));
-          CloseFile(F);
         except on E: exception do
           ShowMessage('SMS se nepodaøilo uložit do tabulky communications: ' + E.Message);
         end;
