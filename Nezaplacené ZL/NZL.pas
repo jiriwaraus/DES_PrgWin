@@ -468,7 +468,7 @@ begin
           + Cells[9, Radek] + ', '
           + '1, '                                        // admin
           + '23, '                                        // SMS
-          + Ap + mmMail.Text + ApC
+          + Ap + smsText + ApC
           + Ap + FormatDateTime('yyyy-mm-dd hh:nn:ss', Now) + ApC
           + Ap + FormatDateTime('yyyy-mm-dd hh:nn:ss', Now) + ApZ;
           SQL.Text := SQLStr;
