@@ -61,7 +61,7 @@ begin
   + ' FROM GENERALLEDGER G1, BANKSTATEMENTS bs, BANKSTATEMENTS2 bs2,'
   + '   AccDocQueues ADQ, Periods P, Firms F'
   + ' WHERE G1.CreditAccount_ID = ''A300000101'''
-  + ' AND NOT EXISTS (SELECT * FROM GENERALLEDGER G2 WHERE G2.AccGroup_ID = G1.AccGroup_ID AND G2.ID <> G1.ID)'
+  + ' AND NOT EXISTS (SELECT * FROM GENERALLEDGER G2 WHERE G2.AccGroup_ID = G1.AccGroup_ID AND G2.ID <> G1.ID)' //vybereme nespárované - tedy takové, že žádný jiný záznam nemá stejné AccGroup_ID
   + ' AND ADQ.Id = G1.AccDocQueue_ID'
   + ' AND P.Id = G1.Period_ID'
   + ' AND F.Id = G1.Firm_ID'
@@ -75,7 +75,7 @@ begin
   + ' AND bs2.AMOUNT = G1.AMOUNT'
   + ' AND bs2.PDOCUMENT_ID IS NULL'
   + ' AND bs2.ISMULTIPAYMENTROW = ''N'''
-  + ' AND bs2.Amount > 5'
+  + ' AND bs2.Amount > 5' //pøeplatek více než 5 Kè
   ;
 
 
