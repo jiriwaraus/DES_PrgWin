@@ -1,87 +1,67 @@
-object fmPrirazeniPnp: TfmPrirazeniPnp
-  Left = 133
+object fmSparovaniVDeniku: TfmSparovaniVDeniku
+  Left = 0
   Top = 0
-  Caption = 'P'#345'i'#345'azen'#237' PNP'
-  ClientHeight = 676
-  ClientWidth = 1294
+  Caption = 'Sp'#225'rov'#225'n'#237' v den'#237'ku'
+  ClientHeight = 429
+  ClientWidth = 1059
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -11
-  Font.Name = 'MS Sans Serif'
+  Font.Name = 'Tahoma'
   Font.Style = []
   OldCreateOrder = False
   Position = poDesigned
   OnShow = FormShow
   DesignSize = (
-    1294
-    676)
+    1059
+    429)
   PixelsPerInch = 96
   TextHeight = 13
-  object asgPNP: TAdvStringGrid
-    Left = -3
-    Top = 47
-    Width = 1292
-    Height = 622
+  object asgSparovaniVDeniku: TAdvStringGrid
+    Left = 0
+    Top = 48
+    Width = 1051
+    Height = 365
     Cursor = crDefault
     Anchors = [akLeft, akTop, akBottom]
     BorderStyle = bsNone
-    ColCount = 17
-    Ctl3D = True
+    ColCount = 9
     DefaultRowHeight = 18
     DrawingStyle = gdsClassic
     FixedCols = 0
-    RowCount = 2
-    Font.Charset = EASTEUROPE_CHARSET
+    Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
-    Font.Name = 'MS Sans Serif'
+    Font.Name = 'Tahoma'
     Font.Style = []
-    Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goDrawFocusSelected, goColSizing, goEditing]
-    ParentCtl3D = False
     ParentFont = False
     ScrollBars = ssBoth
     TabOrder = 0
     HoverRowCells = [hcNormal, hcSelected]
-    OnGetCellColor = asgPNPGetCellColor
-    OnGetAlignment = asgPNPGetAlignment
-    OnCanSort = asgPNPCanSort
-    OnClickCell = asgPnpClickCell
+    OnGetAlignment = asgSparovaniVDenikuGetAlignment
+    OnCanSort = asgSparovaniVDenikuCanSort
+    OnClickCell = asgSparovaniVDenikuClickCell
+    OnCanEditCell = asgSparovaniVDenikuCanEditCell
     ActiveCellFont.Charset = DEFAULT_CHARSET
     ActiveCellFont.Color = clWindowText
     ActiveCellFont.Height = -11
-    ActiveCellFont.Name = 'MS Sans Serif'
+    ActiveCellFont.Name = 'Tahoma'
     ActiveCellFont.Style = [fsBold]
-    ActiveCellColor = 15387318
     ColumnHeaders.Strings = (
-      #268#237'slo v'#253'pisu'
-      'P'#345'epl. (pnp)'
-      'Z'#225'kazn'#237'k'
-      'Text'
-      #344#225'dek v'#253'pisu ID'
-      'V'#253'pis ID'
-      #268#237'slo dokladu'
-      'ID dokladu'
-      'VS dokladu'
-      'Datum'
-      'P'#345'edpis'
-      'Zaplaceno'
-      'Nezaplac.'
-      'akce'
-      'zaplaceno'
-      'nezaplac.')
-    ColumnSize.StretchColumn = 0
-    ControlLook.FixedGradientFrom = clWhite
-    ControlLook.FixedGradientTo = clSilver
-    ControlLook.FixedGradientHoverFrom = 13619409
-    ControlLook.FixedGradientHoverTo = 12502728
-    ControlLook.FixedGradientHoverMirrorFrom = 12502728
-    ControlLook.FixedGradientHoverMirrorTo = 11254975
-    ControlLook.FixedGradientDownFrom = 8816520
-    ControlLook.FixedGradientDownTo = 7568510
-    ControlLook.FixedGradientDownMirrorFrom = 7568510
-    ControlLook.FixedGradientDownMirrorTo = 6452086
-    ControlLook.ControlStyle = csWinXP
+      ''
+      'Jm'#233'no'
+      'MD text'
+      'MD '#269#225'stka'
+      'D text'
+      'D '#269#225'stka'
+      'rozd'#237'l'
+      'AccGroupId'
+      'ID z'#225'znamu')
+    ControlLook.FixedGradientHoverFrom = clGray
+    ControlLook.FixedGradientHoverTo = clWhite
+    ControlLook.FixedGradientDownFrom = clGray
+    ControlLook.FixedGradientDownTo = clSilver
     ControlLook.DropDownHeader.Font.Charset = DEFAULT_CHARSET
     ControlLook.DropDownHeader.Font.Color = clWindowText
     ControlLook.DropDownHeader.Font.Height = -11
@@ -92,16 +72,15 @@ object fmPrirazeniPnp: TfmPrirazeniPnp
     ControlLook.DropDownFooter.Font.Charset = DEFAULT_CHARSET
     ControlLook.DropDownFooter.Font.Color = clWindowText
     ControlLook.DropDownFooter.Font.Height = -11
-    ControlLook.DropDownFooter.Font.Name = 'MS Sans Serif'
+    ControlLook.DropDownFooter.Font.Name = 'Tahoma'
     ControlLook.DropDownFooter.Font.Style = []
     ControlLook.DropDownFooter.Visible = True
     ControlLook.DropDownFooter.Buttons = <>
-    EnableHTML = False
     Filter = <>
     FilterDropDown.Font.Charset = DEFAULT_CHARSET
     FilterDropDown.Font.Color = clWindowText
     FilterDropDown.Font.Height = -11
-    FilterDropDown.Font.Name = 'MS Sans Serif'
+    FilterDropDown.Font.Name = 'Tahoma'
     FilterDropDown.Font.Style = []
     FilterDropDown.TextChecked = 'Checked'
     FilterDropDown.TextUnChecked = 'Unchecked'
@@ -114,50 +93,44 @@ object fmPrirazeniPnp: TfmPrirazeniPnp
       'Equal'
       'Not equal'
       'Clear')
-    FixedColWidth = 81
+    FixedColWidth = 27
     FixedRowHeight = 18
-    FixedRowAlways = True
-    FixedFont.Charset = EASTEUROPE_CHARSET
+    FixedFont.Charset = DEFAULT_CHARSET
     FixedFont.Color = clWindowText
     FixedFont.Height = -11
-    FixedFont.Name = 'MS Sans Serif'
+    FixedFont.Name = 'Tahoma'
     FixedFont.Style = [fsBold]
     FloatFormat = '%.2f'
     HoverButtons.Buttons = <>
     HoverButtons.Position = hbLeftFromColumnLeft
-    Look = glTMS
     PrintSettings.DateFormat = 'dd/mm/yyyy'
     PrintSettings.Font.Charset = DEFAULT_CHARSET
     PrintSettings.Font.Color = clWindowText
     PrintSettings.Font.Height = -11
-    PrintSettings.Font.Name = 'MS Sans Serif'
+    PrintSettings.Font.Name = 'Tahoma'
     PrintSettings.Font.Style = []
     PrintSettings.FixedFont.Charset = DEFAULT_CHARSET
     PrintSettings.FixedFont.Color = clWindowText
     PrintSettings.FixedFont.Height = -11
-    PrintSettings.FixedFont.Name = 'MS Sans Serif'
+    PrintSettings.FixedFont.Name = 'Tahoma'
     PrintSettings.FixedFont.Style = []
     PrintSettings.HeaderFont.Charset = DEFAULT_CHARSET
     PrintSettings.HeaderFont.Color = clWindowText
     PrintSettings.HeaderFont.Height = -11
-    PrintSettings.HeaderFont.Name = 'MS Sans Serif'
+    PrintSettings.HeaderFont.Name = 'Tahoma'
     PrintSettings.HeaderFont.Style = []
     PrintSettings.FooterFont.Charset = DEFAULT_CHARSET
     PrintSettings.FooterFont.Color = clWindowText
     PrintSettings.FooterFont.Height = -11
-    PrintSettings.FooterFont.Name = 'MS Sans Serif'
+    PrintSettings.FooterFont.Name = 'Tahoma'
     PrintSettings.FooterFont.Style = []
     PrintSettings.PageNumSep = '/'
-    RowHeaders.Strings = (
-      ' ')
-    ScrollWidth = 16
-    SearchFooter.ColorTo = 15790320
     SearchFooter.FindNextCaption = 'Find &next'
     SearchFooter.FindPrevCaption = 'Find &previous'
     SearchFooter.Font.Charset = DEFAULT_CHARSET
     SearchFooter.Font.Color = clWindowText
     SearchFooter.Font.Height = -11
-    SearchFooter.Font.Name = 'MS Sans Serif'
+    SearchFooter.Font.Name = 'Tahoma'
     SearchFooter.Font.Style = []
     SearchFooter.HighLightCaption = 'Highlight'
     SearchFooter.HintClose = 'Close'
@@ -166,84 +139,83 @@ object fmPrirazeniPnp: TfmPrirazeniPnp
     SearchFooter.HintHighlight = 'Highlight occurrences'
     SearchFooter.MatchCaseCaption = 'Match case'
     SortSettings.DefaultFormat = ssAutomatic
-    SortSettings.Column = 0
     SortSettings.Show = True
-    VAlignment = vtaCenter
     Version = '7.4.2.0'
     ColWidths = (
-      81
-      75
-      121
-      119
-      80
-      80
-      91
-      77
-      77
-      65
+      27
+      200
+      200
+      73
+      200
+      73
       64
-      72
-      72
-      39
-      72
-      72
-      5)
+      89
+      108)
   end
-  object btnNactiPnp: TButton
-    Left = 8
-    Top = 16
-    Width = 75
+  object btnProvedSparovani: TButton
+    Left = 688
+    Top = 8
+    Width = 121
     Height = 25
-    Caption = 'Na'#269'ti data'
+    Caption = 'Prove'#271' sp'#225'rov'#225'n'#237
     TabOrder = 1
-    OnClick = btnNactiPnpClick
+    OnClick = btnProvedSparovaniClick
   end
-  object btnPriradPnp: TButton
-    Left = 392
-    Top = 16
-    Width = 161
+  object btnNactiData: TButton
+    Left = 8
+    Top = 8
+    Width = 109
     Height = 25
-    Caption = 'P'#345'i'#345'a'#271' doklady k PNP platb'#225'm'
-    TabOrder = 2
-    OnClick = btnPriradPnpClick
-  end
-  object btnNactiPnpAlt: TButton
-    Left = 1168
-    Top = 16
-    Width = 89
-    Height = 25
-    Caption = 'alternativn'#237' data'
+    Caption = 'Na'#269'ti data pro '#250#269'et:'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
-    Font.Name = 'MS Sans Serif'
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    ParentFont = False
+    TabOrder = 2
+    OnClick = btnNactiDataClick
+  end
+  object editKodUctu: TEdit
+    Left = 121
+    Top = 11
+    Width = 44
+    Height = 22
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -12
+    Font.Name = 'Tahoma'
     Font.Style = []
     ParentFont = False
     TabOrder = 3
-    Visible = False
-    OnClick = btnNactiPnpAltClick
+    Text = '32500'
   end
-  object chbNacistPnp: TCheckBox
-    Left = 96
-    Top = 24
-    Width = 289
+  object chbPouzeNulovyRozdil: TCheckBox
+    Left = 194
+    Top = 14
+    Width = 119
     Height = 17
-    Caption = 'vyhledat i doklady s '#269#225'stkou men'#353#237' ne'#382' p'#345'eplatek'
-    TabOrder = 4
-  end
-  object btnShowParovaniDeniku: TButton
-    Left = 648
-    Top = 16
-    Width = 145
-    Height = 25
-    Caption = 'Zobrazit P'#225'rov'#225'n'#237' den'#237'ku'
+    Caption = 'pouze nulov'#253' rozd'#237'l'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
-    Font.Name = 'MS Sans Serif'
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    ParentFont = False
+    TabOrder = 4
+  end
+  object chbShodneProtiucty: TCheckBox
+    Left = 335
+    Top = 14
+    Width = 149
+    Height = 17
+    Caption = 'proti'#250#269'ty mus'#237' b'#253't shodn'#233
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
     Font.Style = []
     ParentFont = False
     TabOrder = 5
-    OnClick = btnShowParovaniDenikuClick
   end
 end

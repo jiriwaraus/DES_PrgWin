@@ -1,7 +1,7 @@
 ﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
         <ProjectGuid>{1DF3C247-55C6-4145-B169-4C1E77D6FB21}</ProjectGuid>
-        <MainSource>Vypisy.dpr</MainSource>
+        <MainSource>ReseniPNP.dpr</MainSource>
         <Base>True</Base>
         <Config Condition="'$(Config)'==''">Debug</Config>
         <TargetedPlatforms>1</TargetedPlatforms>
@@ -86,14 +86,8 @@
         <DelphiCompile Include="$(MainSource)">
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
-        <DCCReference Include="VypisyMain.pas">
-            <Form>fmMain</Form>
-        </DCCReference>
-        <DCCReference Include="uTVypis.pas"/>
-        <DCCReference Include="uTPlatbaZVypisu.pas"/>
-        <DCCReference Include="uTParovatko.pas"/>
-        <DCCReference Include="Customers.pas">
-            <Form>fmCustomers</Form>
+        <DCCReference Include="..\Vypisy\PrirazeniPNP.pas">
+            <Form>fmPrirazeniPnp</Form>
         </DCCReference>
         <DCCReference Include="..\DE$_Common\AbraEntities.pas"/>
         <DCCReference Include="..\DE$_Common\DesUtils.pas">
@@ -105,12 +99,8 @@
         <DCCReference Include="..\DE$_Common\Supertimezone.pas"/>
         <DCCReference Include="..\DE$_Common\Supertypes.pas"/>
         <DCCReference Include="..\DE$_Common\AArray.pas"/>
-        <DCCReference Include="..\Reseni PNP\ParovaniGenLedger.pas">
+        <DCCReference Include="ParovaniGenLedger.pas">
             <Form>fmSparovaniVDeniku</Form>
-            <FormType>dfm</FormType>
-        </DCCReference>
-        <DCCReference Include="..\Reseni PNP\PrirazeniPNP.pas">
-            <Form>fmPrirazeniPnp</Form>
             <FormType>dfm</FormType>
         </DCCReference>
         <BuildConfiguration Include="Debug">
@@ -131,7 +121,7 @@
         <BorlandProject>
             <Delphi.Personality>
                 <Source>
-                    <Source Name="MainSource">Vypisy.dpr</Source>
+                    <Source Name="MainSource">ReseniPNP.dpr</Source>
                 </Source>
                 <VersionInfo>
                     <VersionInfo Name="IncludeVerInfo">False</VersionInfo>
