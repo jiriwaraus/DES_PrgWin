@@ -260,6 +260,7 @@ begin
     asgPredchoziPlatbyVs.ClearNormalCells;
     asgNalezeneDoklady.ClearNormalCells;
     btnNacti.Enabled := false;
+    lblHlavicka.Font.Color := $000000;
     Application.ProcessMessages;
 
     pocetPlatebGpc := 0;

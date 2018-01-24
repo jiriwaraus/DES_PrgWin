@@ -1208,22 +1208,74 @@ begin
   end;
 end;
 
+{*
 function TDesU.getZustatekByAccountId (accountId : string; datum : double) : double;
+var
+sqlstring : string;
+
 begin
 
   with DesU.qrAbra do begin
-    SQL.Text := 'SELECT (DEBITBEGINNING - CREDITBEGINNING + DEBITBEGINNIGTURNOVER'
+
+    sqlstring := 'SELECT (DEBITBEGINNING - CREDITBEGINNING + DEBITBEGINNIGTURNOVER'
       + ' - CREDITBEGINNIGTURNOVER + DEBITTURNOVER - CREDITTURNOVER) as zustatek'
       + ' FROM ACCOUNTCALCULUS'
       + ' (''%'',''' + accountId + ''',null,null,'
       + FloatToStrFD(datum) + ',' + FloatToStrFD(datum) + ','
       + ' '''',''0'','''',''0'','''',''0'','''',''0'','
       + ' null,null,null,0)';
+    SQL.Text := sqlstring;
     Open;
     if not Eof then begin
       Result := FieldByName('zustatek').AsCurrency;
     end;
     Close;
+  end;
+end;
+   *}
+
+function TDesU.getZustatekByAccountId (accountId : string; datum : double) : double;
+var
+sqlstring : string;
+//currentAbraPeriod,
+previousAbraPeriod : TAbraPeriod;
+pocatecniZustatek, aktualniZustatek: double;
+
+begin
+
+  with DesU.qrAbra do begin
+
+    SQL.Text := 'SELECT DEBITBEGINNING as pocatecniZustatek,'
+      + '(DEBITBEGINNING - CREDITBEGINNING + DEBITBEGINNIGTURNOVER - CREDITBEGINNIGTURNOVER + DEBITTURNOVER - CREDITTURNOVER) as aktualniZustatek'
+      + ' FROM ACCOUNTCALCULUS'
+      + ' (''%'',''' + accountId + ''',null,null,'
+      + FloatToStrFD(datum) + ',' + FloatToStrFD(datum) + ','
+      + ' '''',''0'','''',''0'','''',''0'','''',''0'',null,null,null,0)';
+    Open;
+    if not Eof then begin
+      pocatecniZustatek := FieldByName('pocatecniZustatek').AsCurrency;
+      aktualniZustatek := FieldByName('aktualniZustatek').AsCurrency;
+    end;
+    Close;
+
+    if pocatecniZustatek = 0 then begin
+      // Pokud je pocatecniZustatek nulový, znamená to nesprávnou hodnotu kvùli neuzavøenému pøedchozímu roku. Proto vypoèítáme koneèný zùstatek pøedchozího roku a ten pøièteme k aktuálnímu zùstatku.
+
+      previousAbraPeriod := TAbraPeriod.create(datum - 365);
+
+      SQL.Text := 'SELECT '
+        + '(DEBITBEGINNING - CREDITBEGINNING + DEBITBEGINNIGTURNOVER - CREDITBEGINNIGTURNOVER + DEBITTURNOVER - CREDITTURNOVER) as konecnyZustatekPredchozihoRoku'
+        + ' FROM ACCOUNTCALCULUS'
+        + ' (''%'',''' + accountId + ''',null,null,'
+        + FloatToStrFD(previousAbraPeriod.dateFrom) + ',' + FloatToStrFD(previousAbraPeriod.dateTo) + ','
+        + ' '''',''0'','''',''0'','''',''0'','''',''0'',null,null,null,0)';
+      Open;
+      Result := aktualniZustatek + FieldByName('konecnyZustatekPredchozihoRoku').AsCurrency;
+      Close;
+
+    end else begin
+      Result := aktualniZustatek;
+    end;
   end;
 end;
 
