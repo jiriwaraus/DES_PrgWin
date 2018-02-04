@@ -1238,18 +1238,20 @@ function TDesU.getZustatekByAccountId (accountId : string; datum : double) : dou
 var
 sqlstring : string;
 //currentAbraPeriod,
-previousAbraPeriod : TAbraPeriod;
+previousAbraPeriod, currentAbraPeriod : TAbraPeriod;
 pocatecniZustatek, aktualniZustatek: double;
 
 begin
 
   with DesU.qrAbra do begin
 
+    currentAbraPeriod := TAbraPeriod.create(datum);
+
     SQL.Text := 'SELECT DEBITBEGINNING as pocatecniZustatek,'
       + '(DEBITBEGINNING - CREDITBEGINNING + DEBITBEGINNIGTURNOVER - CREDITBEGINNIGTURNOVER + DEBITTURNOVER - CREDITTURNOVER) as aktualniZustatek'
       + ' FROM ACCOUNTCALCULUS'
       + ' (''%'',''' + accountId + ''',null,null,'
-      + FloatToStrFD(datum) + ',' + FloatToStrFD(datum) + ','
+      + FloatToStrFD(currentAbraPeriod.dateFrom) + ',' + FloatToStrFD(datum) + ','
       + ' '''',''0'','''',''0'','''',''0'','''',''0'',null,null,null,0)';
     Open;
     if not Eof then begin

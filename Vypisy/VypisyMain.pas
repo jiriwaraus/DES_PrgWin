@@ -323,7 +323,7 @@ begin
         sparujVsechnyPrichoziPlatby;
         vyplnPrichoziPlatby;
         filtrujZobrazeniPlateb;
-        ucetniZustatek := Vypis.abraBankaccount.getZustatek(date);
+        ucetniZustatek := Vypis.abraBankaccount.getZustatek(Vypis.datum);  //zadáváme poèáteèní datum výpisu, dostaneme poèáteèní stav bank. úètu k tomuto datu
         lblHlavicka.Caption := Vypis.abraBankaccount.name // + ', ' + Vypis.abraBankaccount.number
                         + ', è.' + IntToStr(Vypis.poradoveCislo) + ' (max è. ' + IntToStr(Vypis.maxExistujiciPoradoveCislo) + '). Plateb: '
                         + IntToStr(Vypis.Platby.Count)

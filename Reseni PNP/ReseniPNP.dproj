@@ -86,9 +86,6 @@
         <DelphiCompile Include="$(MainSource)">
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
-        <DCCReference Include="..\Vypisy\PrirazeniPNP.pas">
-            <Form>fmPrirazeniPnp</Form>
-        </DCCReference>
         <DCCReference Include="..\DE$_Common\AbraEntities.pas"/>
         <DCCReference Include="..\DE$_Common\DesUtils.pas">
             <Form>DesU</Form>
@@ -101,6 +98,10 @@
         <DCCReference Include="..\DE$_Common\AArray.pas"/>
         <DCCReference Include="ParovaniGenLedger.pas">
             <Form>fmSparovaniVDeniku</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
+        <DCCReference Include="PrirazeniPNP.pas">
+            <Form>fmPrirazeniPnp</Form>
             <FormType>dfm</FormType>
         </DCCReference>
         <BuildConfiguration Include="Debug">
