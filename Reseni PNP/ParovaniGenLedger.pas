@@ -15,6 +15,8 @@ type
     editKodUctu: TEdit;
     chbPouzeNulovyRozdil: TCheckBox;
     chbShodneProtiucty: TCheckBox;
+    editLimit: TEdit;
+    lblLimit: TLabel;
     procedure asgSparovaniVDenikuClickCell(Sender: TObject; ARow,
       ACol: Integer);
     procedure asgSparovaniVDenikuCanSort(Sender: TObject; ACol: Integer;
@@ -74,7 +76,7 @@ begin
   + ' FROM GENERALLEDGER G1,  Firms F'
   + ' WHERE G1.DebitAccount_ID = ''' + accountId + ''''
   + '   AND F.Id = G1.Firm_ID'
-  + '   AND NOT EXISTS (SELECT * FROM GENERALLEDGER G2 WHERE G2.AccGroup_ID = G1.AccGroup_ID AND G2.ID <> G1.ID)'
+  + '   AND NOT EXISTS (SELECT G2.ID FROM GENERALLEDGER G2 WHERE G2.AccGroup_ID = G1.AccGroup_ID AND G2.ID <> G1.ID)'
   + ' ) as Samostatny_MD'
 
   + ' JOIN'
@@ -82,11 +84,13 @@ begin
   + ' ('
   + ' SELECT G1.Firm_ID as D_Firm_ID, G1.Amount as D_castka, G1.Text as D_text, G1.ACCGROUP_ID as D_AccGroupID, G1.DEBITACCOUNT_ID as D_DebitAccount_ID, G1.ID as D_ID'
   + ' FROM GENERALLEDGER G1'
-  + ' WHERE G1.CreditAccount_ID = ''' + accountId + ''''
-  + '   AND NOT EXISTS (SELECT * FROM GENERALLEDGER G2 WHERE G2.AccGroup_ID = G1.AccGroup_ID AND G2.ID <> G1.ID)'
+
+//  + ' WHERE G1.CreditAccount_ID = ''' + accountId + ''''
+//  + '   AND NOT EXISTS (SELECT * FROM GENERALLEDGER G2 WHERE G2.AccGroup_ID = G1.AccGroup_ID AND G2.ID <> G1.ID)'
+  + ' WHERE NOT EXISTS (SELECT G2.ID FROM GENERALLEDGER G2 WHERE G2.AccGroup_ID = G1.AccGroup_ID AND G2.ID <> G1.ID)'
   + ' ) as Samostatny_D'
 
-  + ' ON MD_Firm_ID = D_Firm_ID WHERE 1=1';
+  + ' ON MD_Firm_ID = D_Firm_ID WHERE MD_ID <> D_ID';
 
   if chbShodneProtiucty.Checked then
     SQLStr := SQLStr +' AND MD_CreditAccount_ID = D_DebitAccount_ID';
@@ -110,6 +114,8 @@ begin
     Open;
     while not EOF do begin
       Inc(radek);
+      if radek > StrToInt(editLimit.Text) then Break;
+
       RowCount := radek + 1;
       AddCheckBox(0, radek, True, True);
       Cells[1, radek] := FieldByName('Name').AsString;
@@ -128,7 +134,6 @@ begin
     end;
     Close;
 
-    Close;
     Screen.Cursor := crDefault;
 
   end;

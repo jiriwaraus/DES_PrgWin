@@ -2,8 +2,8 @@ object fmSparovaniVDeniku: TfmSparovaniVDeniku
   Left = 0
   Top = 0
   Caption = 'Sp'#225'rov'#225'n'#237' v den'#237'ku'
-  ClientHeight = 429
-  ClientWidth = 1059
+  ClientHeight = 453
+  ClientWidth = 1068
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -14,20 +14,33 @@ object fmSparovaniVDeniku: TfmSparovaniVDeniku
   Position = poDesigned
   OnShow = FormShow
   DesignSize = (
-    1059
-    429)
+    1068
+    453)
   PixelsPerInch = 96
   TextHeight = 13
+  object lblLimit: TLabel
+    Left = 521
+    Top = 17
+    Width = 55
+    Height = 13
+    Caption = 'Limit '#345#225'dk'#367':'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    ParentFont = False
+  end
   object asgSparovaniVDeniku: TAdvStringGrid
     Left = 0
     Top = 48
     Width = 1051
-    Height = 365
+    Height = 389
     Cursor = crDefault
     Anchors = [akLeft, akTop, akBottom]
     BorderStyle = bsNone
     ColCount = 9
-    DefaultRowHeight = 18
+    DefaultRowHeight = 19
     DrawingStyle = gdsClassic
     FixedCols = 0
     Font.Charset = DEFAULT_CHARSET
@@ -94,7 +107,7 @@ object fmSparovaniVDeniku: TfmSparovaniVDeniku
       'Not equal'
       'Clear')
     FixedColWidth = 27
-    FixedRowHeight = 18
+    FixedRowHeight = 19
     FixedFont.Charset = DEFAULT_CHARSET
     FixedFont.Color = clWindowText
     FixedFont.Height = -11
@@ -139,8 +152,10 @@ object fmSparovaniVDeniku: TfmSparovaniVDeniku
     SearchFooter.HintHighlight = 'Highlight occurrences'
     SearchFooter.MatchCaseCaption = 'Match case'
     SortSettings.DefaultFormat = ssAutomatic
+    SortSettings.Column = 3
     SortSettings.Show = True
     Version = '7.4.2.0'
+    ExplicitHeight = 367
     ColWidths = (
       27
       200
@@ -153,7 +168,7 @@ object fmSparovaniVDeniku: TfmSparovaniVDeniku
       108)
   end
   object btnProvedSparovani: TButton
-    Left = 688
+    Left = 768
     Top = 8
     Width = 121
     Height = 25
@@ -217,5 +232,19 @@ object fmSparovaniVDeniku: TfmSparovaniVDeniku
     Font.Style = []
     ParentFont = False
     TabOrder = 5
+  end
+  object editLimit: TEdit
+    Left = 580
+    Top = 14
+    Width = 53
+    Height = 21
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    ParentFont = False
+    TabOrder = 6
+    Text = '100'
   end
 end

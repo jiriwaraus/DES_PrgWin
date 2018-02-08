@@ -232,11 +232,11 @@ object fmPrirazeniPnp: TfmPrirazeniPnp
     TabOrder = 4
   end
   object btnShowParovaniDeniku: TButton
-    Left = 648
+    Left = 729
     Top = 16
-    Width = 145
+    Width = 120
     Height = 25
-    Caption = 'Zobrazit P'#225'rov'#225'n'#237' den'#237'ku'
+    Caption = 'P'#225'rov'#225'n'#237' v den'#237'ku'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -245,5 +245,14 @@ object fmPrirazeniPnp: TfmPrirazeniPnp
     ParentFont = False
     TabOrder = 5
     OnClick = btnShowParovaniDenikuClick
+  end
+  object Button1: TButton
+    Left = 863
+    Top = 16
+    Width = 130
+    Height = 25
+    Caption = 'Seskupen'#237' v den'#237'ku'
+    TabOrder = 6
+    OnClick = Button1Click
   end
 end

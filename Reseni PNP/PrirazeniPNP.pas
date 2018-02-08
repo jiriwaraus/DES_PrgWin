@@ -16,6 +16,7 @@ type
     btnNactiPnpAlt: TButton;
     chbNacistPnp: TCheckBox;
     btnShowParovaniDeniku: TButton;
+    Button1: TButton;
     procedure btnNactiPnpClick(Sender: TObject);
     procedure btnNactiPnpAltClick(Sender: TObject);
 
@@ -29,6 +30,7 @@ type
     procedure asgPNPCanSort(Sender: TObject; ACol: Integer;
       var DoSort: Boolean);
     procedure btnShowParovaniDenikuClick(Sender: TObject);
+    procedure Button1Click(Sender: TObject);
   public
     procedure nactiPNPinfo;
     procedure nactiPNP;
@@ -44,7 +46,7 @@ implementation
 {$R *.dfm}
 
 uses
-  DesUtils, Superobject, ParovaniGenLedger;
+  DesUtils, Superobject, ParovaniGenLedger, SeskupeniGenLedger;
 
 
 
@@ -311,6 +313,11 @@ begin
   fmSparovaniVDeniku.Show;
 end;
 
+procedure TfmPrirazeniPnp.Button1Click(Sender: TObject);
+begin
+  fmSeskupeniVDeniku.Show;
+end;
+
 procedure TfmPrirazeniPnp.asgPnpGetCellColor(Sender: TObject; ARow,
   ACol: Integer; AState: TGridDrawState; ABrush: TBrush; AFont: TFont);
 begin
@@ -354,6 +361,7 @@ begin
   end;
 end;
 
+
 procedure TfmPrirazeniPnp.FormShow(Sender: TObject);
 begin
   if DesU.appMode >= 3 then
@@ -365,7 +373,7 @@ begin
     MessageDlg('Konfiguce v ini je na použití OLE, Pøiøazení PNP ale používá pouze WebApi.' + sLineBreak
                 + 'Komunikace se serverem bude tedy pøes WebApi.', mtInformation, [mbOk], 0);
 
-  //fmSparovaniVDeniku.Show; //pøi programování kvùli zrychlení práce
+  fmSeskupeniVDeniku.Show; //pøi programování kvùli zrychlení práce (DEVEL)
 
 end;
 

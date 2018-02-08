@@ -135,6 +135,8 @@ begin
     btnSparujPlatby.Visible := true;
   end;
 
+  fmPrirazeniPnp.Show;  //pøi programování kvùli zrychlení práce (DEVEL)
+
 end;
 
 

@@ -10,15 +10,17 @@ uses
   Supertypes in '..\DE$_Common\Supertypes.pas',
   AArray in '..\DE$_Common\AArray.pas',
   ParovaniGenLedger in 'ParovaniGenLedger.pas' {fmSparovaniVDeniku},
-  PrirazeniPNP in 'PrirazeniPNP.pas' {fmPrirazeniPnp};
+  PrirazeniPNP in 'PrirazeniPNP.pas' {fmPrirazeniPnp},
+  SeskupeniGenLedger in 'SeskupeniGenLedger.pas' {fmSeskupeniVDeniku};
 
 {$R *.res}
 
 begin
   Application.Initialize;
   Application.Title := 'Vypisy';
+  Application.CreateForm(TfmPrirazeniPnp, fmPrirazeniPnp);
   Application.CreateForm(TDesU, DesU);
   Application.CreateForm(TfmSparovaniVDeniku, fmSparovaniVDeniku);
-  Application.CreateForm(TfmPrirazeniPnp, fmPrirazeniPnp);
+  Application.CreateForm(TfmSeskupeniVDeniku, fmSeskupeniVDeniku);
   Application.Run;
 end.
