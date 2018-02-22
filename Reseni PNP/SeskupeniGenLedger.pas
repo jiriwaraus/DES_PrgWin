@@ -5,7 +5,7 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.Grids, AdvObj,
-  BaseGrid, AdvGrid;
+  BaseGrid, AdvGrid, Vcl.ComCtrls;
 
 type
   TfmSeskupeniVDeniku = class(TForm)
@@ -21,6 +21,11 @@ type
     lblFirma: TLabel;
     rb1: TRadioButton;
     rb2: TRadioButton;
+    dtpDatumOd: TDateTimePicker;
+    dtpDatumDo: TDateTimePicker;
+    lblPomlcka: TLabel;
+    Label1: TLabel;
+    chb3: TCheckBox;
     procedure asgSeskupeniVDenikuCanEditCell(Sender: TObject; ARow,
       ACol: Integer; var CanEdit: Boolean);
     procedure asgSeskupeniVDenikuCanSort(Sender: TObject; ACol: Integer;
@@ -163,11 +168,17 @@ begin
     //pro danou firmu najdu v GeneralLedger všechny samostatné (neseskupené) øádky
     SQLStr2 := 'SELECT p.DATUM, p.DOKLAD, p.TEXT, p.CASTKA, p.MD as DACode, p.D as CACode, p.FIRMNAME, p.FIRMCODE, p.ID, p.FIRM_ID, p.ACCGROUP_ID, p.AUDITED, p.SUMA'
       + ' FROM DE$_UCET_PO_SKUPINACH(''' + trim(editKodUctu.Text) + ''') p'
-      + ' WHERE p.SUMA <> 0'
-      + '   AND lower (p.FIRMNAME) like lower(''' + trim(editFirmName.Text) + ''') ';
+      + ' WHERE lower (p.FIRMNAME) like lower(''' + trim(editFirmName.Text) + ''') '
+      + ' AND p.DATUM >= ' + IntToStr(Trunc(dtpDatumOd.Date))
+      + ' AND p.DATUM <= ' + IntToStr(Trunc(dtpDatumDo.Date));
+
 
     if chb1.Checked then
       SQLStr2 := SQLStr2 +' AND p.Audited = ''N''';
+
+    if not chb3.Checked then
+      SQLStr2 := SQLStr2 +' AND p.SUMA <> 0';
+
 
     SQL.Text := SQLStr2;
     Open;

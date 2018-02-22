@@ -2,7 +2,7 @@ object fmSeskupeniVDeniku: TfmSeskupeniVDeniku
   Left = 0
   Top = 0
   Caption = 'SeskupeniGenLedger'
-  ClientHeight = 714
+  ClientHeight = 772
   ClientWidth = 1320
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -13,7 +13,7 @@ object fmSeskupeniVDeniku: TfmSeskupeniVDeniku
   OldCreateOrder = False
   DesignSize = (
     1320
-    714)
+    772)
   PixelsPerInch = 96
   TextHeight = 13
   object lblLimit: TLabel
@@ -41,6 +41,20 @@ object fmSeskupeniVDeniku: TfmSeskupeniVDeniku
     Font.Name = 'Tahoma'
     Font.Style = []
     ParentFont = False
+  end
+  object lblPomlcka: TLabel
+    Left = 352
+    Top = 51
+    Width = 11
+    Height = 13
+    Caption = 'a'#382
+  end
+  object Label1: TLabel
+    Left = 181
+    Top = 51
+    Width = 66
+    Height = 13
+    Caption = 'Datum od-do:'
   end
   object btnNactiData: TButton
     Left = 8
@@ -116,9 +130,9 @@ object fmSeskupeniVDeniku: TfmSeskupeniVDeniku
   end
   object asgSeskupeniVDeniku: TAdvStringGrid
     Left = 8
-    Top = 48
+    Top = 88
     Width = 1305
-    Height = 658
+    Height = 676
     Cursor = crDefault
     Anchors = [akLeft, akTop, akBottom]
     BorderStyle = bsNone
@@ -296,5 +310,37 @@ object fmSeskupeniVDeniku: TfmSeskupeniVDeniku
     Caption = 'Metoda2'
     Enabled = False
     TabOrder = 9
+  end
+  object dtpDatumOd: TDateTimePicker
+    Left = 253
+    Top = 48
+    Width = 93
+    Height = 21
+    Date = 42736.974757187500000000
+    Time = 42736.974757187500000000
+    TabOrder = 10
+  end
+  object dtpDatumDo: TDateTimePicker
+    Left = 376
+    Top = 48
+    Width = 97
+    Height = 21
+    Date = 43100.974876666670000000
+    Time = 43100.974876666670000000
+    TabOrder = 11
+  end
+  object chb3: TCheckBox
+    Left = 521
+    Top = 50
+    Width = 153
+    Height = 17
+    Caption = 'zobrazit i nulov'#233' sou'#269'ty'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    ParentFont = False
+    TabOrder = 12
   end
 end
