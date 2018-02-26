@@ -97,6 +97,9 @@ begin
   asgSeskupeniAllRowsChecked := true;
   DesU.qrAbra.SQL.Text := SQLStr1;
   DesU.qrAbra.Open;
+
+  asgSeskupeniVDeniku.CheckFalse := '10';
+  asgSeskupeniVDeniku.CheckTrue := '11';
   radek := 0;
 
   while not DesU.qrAbra.EOF do
@@ -158,7 +161,7 @@ begin
   asgSeskupeniVDeniku.ClearNormalCells;
   asgSeskupeniVDeniku.RowCount := 2;
   asgSeskupeniAllRowsChecked := true;
-  radek := 0;
+  radek := 1;
   pocetVeSkupine := 0;
   oldFirmCode := '';
 
@@ -314,11 +317,32 @@ procedure TfmSeskupeniVDeniku.asgSeskupeniVDenikuClickCell(Sender: TObject;
   ARow, ACol: Integer);
 var
   radek: integer;
+  chbstate: boolean;
 begin
-  asgSeskupeniAllRowsChecked := not asgSeskupeniAllRowsChecked;
-  if (ARow = 0) and (ACol = 0) then
-    for radek := 1 to asgSeskupeniVDeniku.RowCount-1 do
+
+  if (ARow = 0) and (ACol = 0) then begin
+    asgSeskupeniAllRowsChecked := not asgSeskupeniAllRowsChecked;
+    for radek := 1 to asgSeskupeniVDeniku.RowCount - 1 do
       asgSeskupeniVDeniku.SetCheckBoxState(ACol, radek, asgSeskupeniAllRowsChecked);
+    exit;
+  end;
+
+
+  if (ARow > 0) and (ACol = 0) then begin
+    radek := ARow + 1;
+    asgSeskupeniVDeniku.GetCheckBoxState(0, radek, chbstate);
+    while (asgSeskupeniVDeniku.Cells[1, radek] <> '') do begin
+
+      asgSeskupeniVDeniku.SetCheckBoxState(0, radek, not chbstate);
+      Inc(radek);
+    end;
+
+
+
+
+    //asgSeskupeniVDeniku.Cells[2, ARow] := asgSeskupeniVDeniku.Cells[0, ARow];
+  end;
+
 end;
 
 
