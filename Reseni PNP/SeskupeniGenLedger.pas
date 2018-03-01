@@ -12,7 +12,6 @@ type
     btnNactiData: TButton;
     btnProvedSeskupeni: TButton;
     editKodUctu: TEdit;
-    chb1: TCheckBox;
     chb2: TCheckBox;
     asgSeskupeniVDeniku: TAdvStringGrid;
     lblLimit: TLabel;
@@ -114,8 +113,10 @@ begin
       + ' WHERE G1.Firm_ID = ''' + DesU.qrAbra.FieldByName('Firm_ID').AsString + ''''
       + '   AND NOT EXISTS (SELECT G2.ID FROM GENERALLEDGER G2 WHERE G2.AccGroup_ID = G1.AccGroup_ID AND G2.ID <> G1.ID)';
 
-    if chb1.Checked then
+
+    {if chb1.Checked then
       SQLStr2 := SQLStr2 +' AND G1.Audited = ''N''';
+    }
 
     SQL.Text := SQLStr2;
     Open;
@@ -150,9 +151,10 @@ begin
   Screen.Cursor := crDefault;
 end;
 
+
 procedure TfmSeskupeniVDeniku.nactiDataPoSkupinach;
 var
-  SQLStr1, SQLStr2, accountId, oldFirmCode: string;
+  SQLStr1, SQLStr2, accountId, oldLastFirmId: string;
   radek, pocetVeSkupine: integer;
 begin
 
@@ -163,7 +165,86 @@ begin
   asgSeskupeniAllRowsChecked := true;
   radek := 1;
   pocetVeSkupine := 0;
-  oldFirmCode := '';
+  oldLastFirmId := '';
+
+
+  with DesU.qrAbra2, asgSeskupeniVDeniku do begin
+
+    //pro danou firmu najdu v GeneralLedger všechny samostatné (neseskupené) øádky
+    SQLStr2 := 'SELECT p.DATUM, p.DOKLAD, p.TEXT, p.CASTKA, p.MD as DACode, p.D as CACode, p.FIRMA, p.ID, p.FIRM_ID, p.LASTFIRM_ID, p.ACCGROUP_ID, p.SUMA'
+      + ' FROM DE$_UPS1(''' + trim(editKodUctu.Text) + ''',''' + trim(editFirmName.Text) + ''') p'
+      + ' WHERE 1=1 '
+      + ' AND p.DATUM >= ' + IntToStr(Trunc(dtpDatumOd.Date))
+      + ' AND p.DATUM <= ' + IntToStr(Trunc(dtpDatumDo.Date));
+
+    if not chb3.Checked then
+      SQLStr2 := SQLStr2 +' AND p.SUMA <> 0';
+
+
+    SQL.Text := SQLStr2;
+    Open;
+
+    while not EOF do begin
+      if radek > StrToInt(editLimit.Text) then Break;
+
+      if oldLastFirmId <> FieldByName('LASTFIRM_ID').AsString then begin //další firma
+
+        //nezobrazíme samostatné øádky
+        if (pocetVeSkupine = 1) and (not chb2.Checked) then begin
+           radek := radek - 2;
+        end;
+
+        oldLastFirmId := FieldByName('LASTFIRM_ID').AsString;
+        Inc(radek);
+        pocetVeSkupine := 0;
+      end;
+
+      RowCount := radek + 1;
+      AddCheckBox(0, radek, True, True);
+      Cells[1, radek] := FieldByName('Firma').AsString;
+      Cells[2, radek] := FieldByName('Text').AsString;
+      Cells[3, radek] := format('%m', [FieldByName('Castka').AsCurrency]);
+      Cells[4, radek] := DateToStr(FieldByName('Datum').AsFloat);
+      Cells[5, radek] := FieldByName('DACode').AsString;
+      Cells[6, radek] := FieldByName('CACode').AsString;
+      Cells[7, radek] := FieldByName('Doklad').AsString;
+      Cells[8, radek] := FieldByName('LASTFIRM_ID').AsString;
+      Cells[9, radek] := FieldByName('ACCGROUP_ID').AsString;
+      Cells[10, radek] := FieldByName('ID').AsString;
+      Cells[11, radek] := FieldByName('Suma').AsString;
+
+
+      //FontColors[7, radek] := $999999;
+      //FontColors[8, radek] := $999999;
+
+      Inc(radek);
+      Inc(pocetVeSkupine);
+      Application.ProcessMessages;
+      Next;
+    end;
+      if (pocetVeSkupine = 1) and (not chb2.Checked) then begin
+        radek := radek - 2;
+        RowCount := radek + 1;
+      end;
+    Close;
+  end;
+  Screen.Cursor := crDefault;
+end;
+
+{procedure TfmSeskupeniVDeniku.nactiDataPoSkupinach;
+var
+  SQLStr1, SQLStr2, accountId, oldLastFirmId: string;
+  radek, pocetVeSkupine: integer;
+begin
+
+  DesU.dbAbra.Reconnect;
+  Screen.Cursor := crHourGlass;
+  asgSeskupeniVDeniku.ClearNormalCells;
+  asgSeskupeniVDeniku.RowCount := 2;
+  asgSeskupeniAllRowsChecked := true;
+  radek := 1;
+  pocetVeSkupine := 0;
+  oldLastFirmId := '';
 
 
   with DesU.qrAbra2, asgSeskupeniVDeniku do begin
@@ -189,11 +270,11 @@ begin
     while not EOF do begin
       if radek > StrToInt(editLimit.Text) then Break;
 
-      if oldFirmCode <> FieldByName('FirmCode').AsString then begin //další firma
+      if oldLastFirmId <> FieldByName('FirmCode').AsString then begin //další firma
         if (pocetVeSkupine = 1) and (not chb2.Checked) then begin
            radek := radek - 2;
         end;
-        oldFirmCode := FieldByName('FirmCode').AsString;
+        oldLastFirmId := FieldByName('FirmCode').AsString;
         Inc(radek);
         pocetVeSkupine := 0;
       end;
@@ -227,6 +308,7 @@ begin
   end;
   Screen.Cursor := crDefault;
 end;
+*}
 
 
 procedure TfmSeskupeniVDeniku.provedSeskupeni;
@@ -254,7 +336,7 @@ begin
       while (currentAccGroupId = '') AND (radek < RowCount - 1) do begin
         GetCheckBoxState(0, radek, chbstate);
         if chbstate then
-          currentAccGroupId := Cells[7, radek];
+          currentAccGroupId := Cells[9, radek];
         radek := radek + 1;
       end;
       if (Cells[1, radek] = '') then Continue;
@@ -267,9 +349,9 @@ begin
         RemoveCheckBox(0, radek);
         try
           SQL.Text := 'UPDATE GeneralLedger SET ACCGROUP_ID = ''' + currentAccGroupId + ''''
-                    + ' WHERE Id = ''' + Cells[8, radek] + '''';
+                    + ' WHERE Id = ''' + Cells[10, radek] + '''';
           ExecSQL;
-          Cells[9, radek] := 'SET ACCGROUP_ID = ''' + currentAccGroupId + ''' WHERE Id = ''' + Cells[8, radek] + '''';
+          Cells[11, radek] := 'SET ACCGROUP_ID = ''' + currentAccGroupId + ''' WHERE Id = ''' + Cells[10, radek] + '''';
           Close;
 
           Cells[0, radek] := 'ok';

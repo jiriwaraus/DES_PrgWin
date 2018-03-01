@@ -2,8 +2,8 @@ object fmSeskupeniVDeniku: TfmSeskupeniVDeniku
   Left = 0
   Top = 0
   Caption = 'SeskupeniGenLedger'
-  ClientHeight = 772
-  ClientWidth = 1320
+  ClientHeight = 794
+  ClientWidth = 1338
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -12,8 +12,8 @@ object fmSeskupeniVDeniku: TfmSeskupeniVDeniku
   Font.Style = []
   OldCreateOrder = False
   DesignSize = (
-    1320
-    772)
+    1338
+    794)
   PixelsPerInch = 96
   TextHeight = 13
   object lblLimit: TLabel
@@ -100,20 +100,6 @@ object fmSeskupeniVDeniku: TfmSeskupeniVDeniku
     TabOrder = 2
     Text = '32500'
   end
-  object chb1: TCheckBox
-    Left = 405
-    Top = 12
-    Width = 105
-    Height = 17
-    Caption = 'vynechat audited'
-    Font.Charset = DEFAULT_CHARSET
-    Font.Color = clWindowText
-    Font.Height = -11
-    Font.Name = 'Tahoma'
-    Font.Style = []
-    ParentFont = False
-    TabOrder = 3
-  end
   object chb2: TCheckBox
     Left = 521
     Top = 12
@@ -126,17 +112,17 @@ object fmSeskupeniVDeniku: TfmSeskupeniVDeniku
     Font.Name = 'Tahoma'
     Font.Style = []
     ParentFont = False
-    TabOrder = 4
+    TabOrder = 3
   end
   object asgSeskupeniVDeniku: TAdvStringGrid
     Left = 8
     Top = 88
-    Width = 1305
-    Height = 676
+    Width = 1321
+    Height = 698
     Cursor = crDefault
     Anchors = [akLeft, akTop, akBottom]
     BorderStyle = bsNone
-    ColCount = 10
+    ColCount = 12
     DefaultRowHeight = 19
     DrawingStyle = gdsClassic
     FixedCols = 0
@@ -145,9 +131,10 @@ object fmSeskupeniVDeniku: TfmSeskupeniVDeniku
     Font.Height = -11
     Font.Name = 'Tahoma'
     Font.Style = []
+    Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goColSizing]
     ParentFont = False
     ScrollBars = ssBoth
-    TabOrder = 5
+    TabOrder = 4
     HoverRowCells = [hcNormal, hcSelected]
     OnGetAlignment = asgSeskupeniVDenikuGetAlignment
     OnCanSort = asgSeskupeniVDenikuCanSort
@@ -166,6 +153,8 @@ object fmSeskupeniVDeniku: TfmSeskupeniVDeniku
       #218#269'tov'#225'no'
       'Debit - MD'
       'Credit - D'
+      'Doklad'
+      'LastFirm ID'
       'AccGroupId'
       'GenLedger ID'
       'Sou'#269'et skupiny')
@@ -204,7 +193,7 @@ object fmSeskupeniVDeniku: TfmSeskupeniVDeniku
       'Equal'
       'Not equal'
       'Clear')
-    FixedColWidth = 27
+    FixedColWidth = 20
     FixedRowHeight = 19
     FixedFont.Charset = DEFAULT_CHARSET
     FixedFont.Color = clWindowText
@@ -252,16 +241,18 @@ object fmSeskupeniVDeniku: TfmSeskupeniVDeniku
     SortSettings.DefaultFormat = ssAutomatic
     Version = '7.4.2.0'
     ColWidths = (
-      27
-      220
-      220
-      74
-      79
-      66
-      65
-      90
-      92
-      369)
+      20
+      278
+      231
+      73
+      72
+      67
+      59
+      84
+      71
+      72
+      84
+      198)
   end
   object editLimit: TEdit
     Left = 776
@@ -274,7 +265,7 @@ object fmSeskupeniVDeniku: TfmSeskupeniVDeniku
     Font.Name = 'Tahoma'
     Font.Style = []
     ParentFont = False
-    TabOrder = 6
+    TabOrder = 5
     Text = '100'
   end
   object editFirmName: TEdit
@@ -288,7 +279,7 @@ object fmSeskupeniVDeniku: TfmSeskupeniVDeniku
     Font.Name = 'Tahoma'
     Font.Style = []
     ParentFont = False
-    TabOrder = 7
+    TabOrder = 6
     Text = '%'
   end
   object rb1: TRadioButton
@@ -299,7 +290,7 @@ object fmSeskupeniVDeniku: TfmSeskupeniVDeniku
     Caption = 'Metoda1'
     Checked = True
     Enabled = False
-    TabOrder = 8
+    TabOrder = 7
     TabStop = True
   end
   object rb2: TRadioButton
@@ -309,7 +300,7 @@ object fmSeskupeniVDeniku: TfmSeskupeniVDeniku
     Height = 17
     Caption = 'Metoda2'
     Enabled = False
-    TabOrder = 9
+    TabOrder = 8
   end
   object dtpDatumOd: TDateTimePicker
     Left = 253
@@ -318,7 +309,7 @@ object fmSeskupeniVDeniku: TfmSeskupeniVDeniku
     Height = 21
     Date = 42736.974757187500000000
     Time = 42736.974757187500000000
-    TabOrder = 10
+    TabOrder = 9
   end
   object dtpDatumDo: TDateTimePicker
     Left = 376
@@ -327,7 +318,7 @@ object fmSeskupeniVDeniku: TfmSeskupeniVDeniku
     Height = 21
     Date = 43100.974876666670000000
     Time = 43100.974876666670000000
-    TabOrder = 11
+    TabOrder = 10
   end
   object chb3: TCheckBox
     Left = 521
@@ -341,6 +332,6 @@ object fmSeskupeniVDeniku: TfmSeskupeniVDeniku
     Font.Name = 'Tahoma'
     Font.Style = []
     ParentFont = False
-    TabOrder = 12
+    TabOrder = 11
   end
 end

@@ -1315,6 +1315,7 @@ end;
 
 function TDesU.getIniValue(iniGroup, iniItem : string) : string;
 begin
+   Result :=  '';
   try
     Result :=  adpIniFile.ReadString(iniGroup, iniItem, '');
   except
