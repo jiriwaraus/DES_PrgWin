@@ -159,7 +159,7 @@ end;
 
 procedure TfmPrirazeniPnp.priradPNP;
 var
-  SQLStr: AnsiString;
+  SQLStr, prirazeniResult: string;
   radek: integer;
   chbstate: boolean;
 begin
@@ -173,8 +173,10 @@ begin
         Cells[13, radek] := '...';
         RemoveCheckBox(13, radek);
         try
-          DesU.opravRadekVypisuPomociPDocument_ID(Cells[16, radek], Cells[4, radek], Cells[7, radek], '03'); //DocumentType je vždy 03 pro faktury
-          Cells[13, radek] := 'ok';
+          prirazeniResult := DesU.opravRadekVypisuPomociPDocument_ID(Cells[16, radek], Cells[4, radek], Cells[7, radek], '03'); //DocumentType je vždy 03 pro faktury
+          if prirazeniResult = 'no_unpaid_amount' then Cells[13, radek] := 'není dluh'
+          else if prirazeniResult = 'new_bsline_added' then Cells[13, radek] := 'ok+'
+          else Cells[13, radek] := prirazeniResult;
         except
           on E: Exception do
           Cells[13, radek] := 'fail';
@@ -185,14 +187,12 @@ begin
 
     DesU.dbAbra.Reconnect;
     for radek := 1 to RowCount - 1 do begin
-      SQLStr :=   'SELECT'
+      SQL.Text :=   'SELECT'
       + ' (ii.LOCALPAIDAMOUNT - ii.LOCALPAIDCREDITAMOUNT) as Zaplaceno,'
       + ' (ii.LOCALAMOUNT - ii.LOCALPAIDAMOUNT - ii.LOCALCREDITAMOUNT + ii.LOCALPAIDCREDITAMOUNT) as Dluh'
       + ' from ISSUEDINVOICES ii'
       + ' WHERE ii.ID = ''' + Cells[7, radek]  + ''''
       ;
-
-      SQL.Text := SQLStr;
       Open;
       if not EOF then begin
 

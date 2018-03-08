@@ -15,7 +15,8 @@ uses
   Supertypes in '..\DE$_Common\Supertypes.pas',
   AArray in '..\DE$_Common\AArray.pas',
   ParovaniGenLedger in '..\Reseni PNP\ParovaniGenLedger.pas' {fmSparovaniVDeniku},
-  PrirazeniPNP in '..\Reseni PNP\PrirazeniPNP.pas' {fmPrirazeniPnp};
+  PrirazeniPNP in '..\Reseni PNP\PrirazeniPNP.pas' {fmPrirazeniPnp},
+  SeskupeniGenLedger in '..\Reseni PNP\SeskupeniGenLedger.pas' {fmSeskupeniVDeniku};
 
 {$R *.res}
 
@@ -27,5 +28,6 @@ begin
   Application.CreateForm(TDesU, DesU);
   Application.CreateForm(TfmSparovaniVDeniku, fmSparovaniVDeniku);
   Application.CreateForm(TfmPrirazeniPnp, fmPrirazeniPnp);
+  Application.CreateForm(TfmSeskupeniVDeniku, fmSeskupeniVDeniku);
   Application.Run;
 end.

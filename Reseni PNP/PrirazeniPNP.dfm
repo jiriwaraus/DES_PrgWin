@@ -59,7 +59,7 @@ object fmPrirazeniPnp: TfmPrirazeniPnp
       'Z'#225'kazn'#237'k'
       'Text'
       #344#225'dek v'#253'pisu ID'
-      'V'#253'pis ID'
+      'Firm ID'
       #268#237'slo dokladu'
       'ID dokladu'
       'VS dokladu'
@@ -229,6 +229,8 @@ object fmPrirazeniPnp: TfmPrirazeniPnp
     Width = 289
     Height = 17
     Caption = 'vyhledat i doklady s '#269#225'stkou men'#353#237' ne'#382' p'#345'eplatek'
+    Checked = True
+    State = cbChecked
     TabOrder = 4
   end
   object btnShowParovaniDeniku: TButton

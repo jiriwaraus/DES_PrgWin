@@ -26,7 +26,7 @@ type
     procedure desUtilsInit(createOptions : string);
 
     function prevedCisloUctuNaText(cisloU : string) : string;
-    procedure opravRadekVypisuPomociPDocument_ID(Vypis_ID, RadekVypisu_ID, PDocument_ID, PDocumentType : string);
+    function opravRadekVypisuPomociPDocument_ID(Vypis_ID, RadekVypisu_ID, PDocument_ID, PDocumentType : string) : string;
     procedure opravRadekVypisuPomociVS(Vypis_ID, RadekVypisu_ID, VS : string);
     function getOleObjDataDisplay(abraOleObj_Data : variant) : ansistring;
     function vytvorFaZaInternetKredit(VS : string; castka : currency; datum : double) : string;
@@ -864,24 +864,46 @@ begin
 end;
 }
 
-procedure TDesU.opravRadekVypisuPomociPDocument_ID(Vypis_ID, RadekVypisu_ID, PDocument_ID, PDocumentType : string);
+function TDesU.opravRadekVypisuPomociPDocument_ID(Vypis_ID, RadekVypisu_ID, PDocument_ID, PDocumentType : string) : string;
 var
   boAA: TAArray;
   faktura : TDoklad;
   sResponse, text: string;
   preplatek : currency;
 begin
+  //pozor, funguje jen pro faktury, tedy PDocumentType "03"
 
-  //spárovat fakturu Vypis_ID s øádkem výpisu RadekVypisu_ID
+  DesU.dbAbra.Reconnect;
+  with qrAbra do begin
+
+      // naètu èástku z øádky výpisu
+      SQL.Text := 'SELECT'
+      + ' (ii.LOCALAMOUNT - ii.LOCALPAIDAMOUNT - ii.LOCALCREDITAMOUNT + ii.LOCALPAIDCREDITAMOUNT) as Dluh'
+      + ' from ISSUEDINVOICES ii'
+      + ' WHERE ii.ID = ''' + PDocument_ID  + '''';
+      Open;
+      if not Eof then begin
+        if FieldByName('Dluh').AsCurrency <= 0 then begin
+          Result := 'no_unpaid_amount';
+          Exit;
+        end;
+
+      end;
+  end;
+
+  {* spárovat fakturu Vypis_ID s øádkem výpisu RadekVypisu_ID *}
   boAA := TAArray.Create;
   boAA['PDocumentType'] := PDocumentType;
   boAA['PDocument_ID'] := PDocument_ID;
   sResponse := self.abraBoUpdateWebApi(boAA, 'bankstatement', Vypis_ID, 'row', RadekVypisu_ID);
+  Result := 'ok';
 
-  //podívat se, jestli není po spárování pøeplacená (ii.LOCALAMOUNT - ii.LOCALPAIDAMOUNT - ii.LOCALCREDITAMOUNT + ii.LOCALPAIDCREDITAMOUNT) bude záporné
-  //pokud je pøeplacená, 1) vložíme nový øádek s pøeplatkem - vyplníme Firm_ID, ale nevyplòujeme VS
-  // 2) amount spárovaného øádku RadekVypisu_ID ponížíme o velikost pøeplatku
 
+  {* podívat se, jestli není po spárování pøeplacená (ii.LOCALAMOUNT - ii.LOCALPAIDAMOUNT - ii.LOCALCREDITAMOUNT + ii.LOCALPAIDCREDITAMOUNT)
+     bude záporné. Pokud je pøeplacená,
+     1) vložíme nový øádek s pøeplatkem - vyplníme Firm_ID, ale nevyplòujeme VS
+     2) amount spárovaného øádku RadekVypisu_ID ponížíme o velikost pøeplatku
+  *}
   DesU.dbAbra.Reconnect;
   faktura := TDoklad.create(PDocument_ID, PDocumentType);
 
@@ -923,6 +945,7 @@ begin
 
       Close;
     end;
+    Result := 'new_bsline_added';
   end;
 
 
