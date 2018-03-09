@@ -2,7 +2,7 @@ object fmSeskupeniVDeniku: TfmSeskupeniVDeniku
   Left = 0
   Top = 0
   Caption = 'SeskupeniGenLedger'
-  ClientHeight = 794
+  ClientHeight = 762
   ClientWidth = 1338
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -13,7 +13,7 @@ object fmSeskupeniVDeniku: TfmSeskupeniVDeniku
   OldCreateOrder = False
   DesignSize = (
     1338
-    794)
+    762)
   PixelsPerInch = 96
   TextHeight = 13
   object lblLimit: TLabel
@@ -118,7 +118,7 @@ object fmSeskupeniVDeniku: TfmSeskupeniVDeniku
     Left = 8
     Top = 88
     Width = 1321
-    Height = 698
+    Height = 666
     Cursor = crDefault
     Anchors = [akLeft, akTop, akBottom]
     BorderStyle = bsNone
@@ -240,6 +240,7 @@ object fmSeskupeniVDeniku: TfmSeskupeniVDeniku
     SearchFooter.MatchCaseCaption = 'Match case'
     SortSettings.DefaultFormat = ssAutomatic
     Version = '7.4.2.0'
+    ExplicitHeight = 698
     ColWidths = (
       20
       278

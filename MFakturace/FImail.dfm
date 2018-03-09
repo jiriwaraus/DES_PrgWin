@@ -1,7 +1,7 @@
 object dmMail: TdmMail
   OldCreateOrder = False
   Height = 94
-  Width = 180
+  Width = 256
   object idMessage: TIdMessage
     AttachmentEncoding = 'MIME'
     BccList = <>

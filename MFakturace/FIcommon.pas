@@ -4,7 +4,7 @@ unit FIcommon;
 interface
 
 uses
-  Windows, SysUtils, Classes, Forms, Controls, DateUtils, Math, Registry, AdvGrid, FIMain;
+  Windows, SysUtils, Classes, Forms, Controls, DateUtils, Math, Registry, AdvGrid;
 
 type
   TdmCommon = class(TDataModule)
@@ -21,19 +21,13 @@ const
   Ap = chr(39);
   ApC = Ap + ',';
   ApZ = Ap + ')';
-{$IFDEF ABAK}
-  MyAddress_Id: string[10] = '4000000101';
-  MyUser_Id: string[10] = '2600000101';
-  MyAccount_Id: string[10] = '1000000101';
-  MyPayment_Id: string[10] = '9000000101';
-  DRCTag_Id = 21;
-{$ELSE}
+
   MyAddress_Id: string[10] = '7000000101';
   MyUser_Id: string[10] = '2200000101';          // automatická fakturace
   MyAccount_Id: string[10] = '1400000101';       // Fio
   MyPayment_Id: string[10] = '1000000101';       // typ platby: na bankovní úèet
   DRCTag_Id = 50;
-{$ENDIF}
+
 
 var
   dmCommon: TdmCommon;
@@ -42,7 +36,7 @@ implementation
 
 {$R *.dfm}
 
-uses FILogin;
+uses FIMain, FILogin;
 
 // ------------------------------------------------------------------------------------------------
 
@@ -92,15 +86,23 @@ end;
 
 procedure TdmCommon.Zprava(TextZpravy: string);
 // do listboxu a logfile uloží èas a text zprávy
+// 30.11.17 úprava pro konkurenèní ukládání
+var
+  TimeOut: integer;
 begin
+  TimeOut := 0;
   with fmMain do begin
     lbxLog.Items.Add(FormatDateTime('dd.mm.yy hh:nn:ss  ', Now) + TextZpravy);
     lbxLog.ItemIndex := lbxLog.Count - 1;
     Application.ProcessMessages;
-    Sleep(10);
-    Append(F);
-    Writeln (F, Format('(%s - %s) ', [Trim(CompName), Trim(UserName)]) + FormatDateTime('dd.mm.yy hh:nn:ss  ', Now) + TextZpravy);
-    CloseFile(F);
+    while TimeOut < 1000 do try         // 30.11.17 zkouší to 100x po 10 ms  //TODO je to takhle dobøe?
+      Append(F);
+      Writeln (F, Format('(%s - %s) ', [Trim(CompName), Trim(UserName)]) + FormatDateTime('dd.mm.yy hh:nn:ss  ', Now) + TextZpravy);
+      CloseFile(F);
+    except
+      Sleep(10);
+      Inc(TimeOut, 10);
+    end;  
   end;
 end;
 
@@ -386,26 +388,34 @@ begin
               Exit;
             end;
           end;
-
-          // view pro fakturaci
+// view pro fakturaci
           dmCommon.AktualizaceView;
           dmCommon.Zprava(Format('Naètení zákazníkù k fakturaci na období %s.%s od VS %s do %s.', [aseMesic.Text, aseRok.Text, aedOd.Text, aedDo.Text]));
-
+{$IFDEF ABAK}
+          if rbInternet.Checked then dmCommon.Zprava('      - internetové smlouvy')
+          else dmCommon.Zprava('      - smlouvy VoIP');
+{$ELSE}
           if cbBezVoIP.Checked then dmCommon.Zprava('      - zákazníci bez VoIP');
           if cbSVoIP.Checked then dmCommon.Zprava('      - zákazníci s VoIP');
-
-          // ne Fakturace
+{$ENDIF}
+// ne Fakturace
         end else begin              // if rbFakturace.Checked
           dmCommon.Zprava(Format('Naètení faktur na období %s.%s od VS %s do %s.', [aseMesic.Text, aseRok.Text, aedOd.Text, aedDo.Text]));
-
+{$IFDEF ABAK}
+          if rbInternet.Checked then dmCommon.Zprava('      - internetové smlouvy')
+          else dmCommon.Zprava('      - smlouvy VoIP');
+{$ELSE}
           if cbBezVoIP.Checked then dmCommon.Zprava('      - zákazníci bez VoIP');
           if cbSVoIP.Checked then dmCommon.Zprava('      - zákazníci s VoIP');
-
+{$ENDIF}
         end;      // if rbFakturace.Checked else ...
         SQLStr := 'SELECT DISTINCT VS, Abrakod, Mail, Reklama FROM ' + InvoiceView
         + ' WHERE VS >= ' + Ap + aedOd.Text + Ap
         + ' AND VS <= ' + Ap + aedDo.Text + Ap;
-
+{$IFDEF ABAK}
+        if rbInternet.Checked then SQLStr := SQLStr + ' AND (Typ = ''InternetContract'' OR Typ = ''StoryContract'')'
+        else SQLStr := SQLStr + ' AND Typ = ''VoipContract''';
+{$ELSE}
         if cbBezVoIP.Checked and not cbSVoIP.Checked then
           SQLStr := SQLStr + ' AND NOT EXISTS (SELECT Variable_symbol FROM ' + VoIP_customers
           + ' WHERE Variable_symbol = ' + InvoiceView + '.VS)';
@@ -418,7 +428,7 @@ begin
           else if rbSeSlozenkou.Checked then SQLStr := SQLStr + ' AND Posilani LIKE ''S%'''
           else if rbKuryr.Checked then SQLStr := SQLStr + ' AND Posilani LIKE ''K%''';
         end;
-
+{$ENDIF}
         Close;
         SQL.Text := SQLStr;
         Open;
@@ -471,9 +481,12 @@ begin
               + ' WHERE Firm_ID = ' + Ap + FId + Ap
               + ' AND VATDate$DATE >= ' + FloatToStr(Trunc(StartOfAMonth(aseRok.Value, aseMesic.Value)))
               + ' AND VATDate$DATE <= ' + FloatToStr(Trunc(EndOfAMonth(aseRok.Value, aseMesic.Value)));
-
+{$IFDEF ABAK}
+              if rbInternet.Checked then SQLStr := SQLStr + ' AND DocQueue_ID = ' + Ap + IDocQueue_Id + Ap
+              else SQLStr := SQLStr + ' AND DocQueue_ID = ' + Ap + VDocQueue_Id + Ap;
+{$ELSE}
               SQLStr := SQLStr + ' AND DocQueue_ID = ' + Ap + IDocQueue_Id + Ap;
-
+{$ENDIF}
               SQL.Text := SQLStr;
               Open;
               if RecordCount = 0 then begin       // faktura v Abøe neexistuje
@@ -539,9 +552,12 @@ begin
         + ' AND VATDate$DATE >= ' + FloatToStr(Trunc(StartOfAMonth(aseRok.Value, aseMesic.Value)))
         + ' AND VATDate$DATE <= ' + FloatToStr(Trunc(EndOfAMonth(aseRok.Value, aseMesic.Value)));
         if rbMail.Checked then SQLStr := SQLStr + ' AND F.Firm_ID IS NULL';
-
+{$IFDEF ABAK}
+        if rbInternet.Checked then SQLStr := SQLStr + ' AND DocQueue_ID = ' + Ap + IDocQueue_Id + Ap       // 1N00000101
+        else SQLStr := SQLStr + ' AND DocQueue_ID = ' + Ap + VDocQueue_Id + Ap;                            // 1P00000101
+{$ELSE}
         SQLStr := SQLStr + ' AND DocQueue_ID = ' + Ap + IDocQueue_Id + Ap;
-
+{$ENDIF}
         SQL.Text := SQLStr;
         Open;
         Radek := 0;
@@ -567,7 +583,7 @@ begin
 //            + ' WHERE VS = ' + VarSymbol;
             SQLStr := 'SELECT DISTINCT Postal_mail AS Mail, Disable_mailings AS Reklama FROM customers Cu'
             + ' WHERE Variable_symbol = ' + VarSymbol;
-
+{$IFNDEF ABAK}
             if cbBezVoIP.Checked and not cbSVoIP.Checked then
               SQLStr := SQLStr + ' AND NOT EXISTS (SELECT Variable_symbol FROM ' + VoIP_customers
               + ' WHERE Variable_symbol = ' + Ap + VarSymbol + ApZ;
@@ -580,7 +596,7 @@ begin
               else if rbSeSlozenkou.Checked then SQLStr := SQLStr + ' AND Invoice_sending_method_id = 11'
               else if rbKuryr.Checked then SQLStr := SQLStr + ' AND Invoice_sending_method_id = 12';
             end;
-
+{$ENDIF}
             SQL.Text := SQLStr;
             Open;
             while not EOF do begin

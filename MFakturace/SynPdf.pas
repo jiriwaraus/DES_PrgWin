@@ -6,7 +6,7 @@ unit SynPdf;
 {
     This file is part of Synopse framework.
 
-    Synopse framework. Copyright (C) 2015 Arnaud Bouchez
+    Synopse framework. Copyright (C) 2014 Arnaud Bouchez
       Synopse Informatique - http://synopse.info
 
   *** BEGIN LICENSE BLOCK *****
@@ -25,7 +25,7 @@ unit SynPdf;
 
   The Initial Developer of the Original Code is Arnaud Bouchez.
 
-  Portions created by the Initial Developer are Copyright (C) 2015
+  Portions created by the Initial Developer are Copyright (C) 2014
   the Initial Developer. All Rights Reserved.
 
   Contributor(s):
@@ -33,15 +33,9 @@ unit SynPdf;
    aweste
    CoMPi
    Damien (ddemars)
-   David Mead (MDW)
-   FalconB
-   Harald Simon
    Ondrej (reddwarf)
    Sinisa (sinisav)
    Pierre le Riche
-   MChaos
-   Mehrdad Momeni (nosa)
-   Marsh
 
   Alternatively, the contents of this file may be used under the terms of
   either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -222,7 +216,6 @@ unit SynPdf;
   - therefore, TPdfDocumentGDI will use much less resource and memory with no
     swaping to disk (tested with 200,000 simple text pages)
   - reduced generated file size, with optional PDFGeneratePDF15File property
-  - embedd ttc fonts [d2d6953fb3] - thanks David Mead (MDW) for the patch
   - fixed incorrect Postscript font name retrieval e.g. for Asiatic fonts
   - fixed potential GPF issue in TPdfWrite.AddUnicodeHex and TPdfWrite.AddHex
   - fixed compilation warnings regarding Delphi XE3 regressions
@@ -257,23 +250,13 @@ unit SynPdf;
   - added PdfCoord() function
   - increased allowed number of EMR_SAVEDC/EMR_RESTOREDC pairs during rendering
   - handle SetTextAlign(TA_UPDATECP) command for feature request [a8d7393af1]
-  - fix vertical text alignment and line drawing (patch from ddemars - thanks!)
+  - fix vertical text alignment and line drawing (patch from ddemars - thanks!) 
   - introducing TPdfDocumentGDI.UseMetaFileTextPositioning instead of former
     UseSetTextJustification property: now you can force exact font kerning
     positioning for each character, via tpExactTextCharacterPositining; this
     parameter has been also added to TPdfCanvas.RenderMetaFile() - it will
-    produce bigger pdf file size, but will fulfill feature request [7d6a3a3f0f]
+    produce bigger pdf file size, but will fulfill feature request [7d6a3a3f0f]  
   - fixed text clipping - thanks Pierre for the patch!
-  - added TPdfDocumentGDI.DisableMetaFileTextClipping property and corresponding
-    optional parameter to TPdfCanvas.RenderMetaFile()
-  - added vpEnforcePrintScaling to TPdfViewerPreferences set - forcing PDF 1.6 -
-    thanks MChaos for the proposal!
-  - added Harald Simon's patch for EMR_BITBLT/EMR_STRETCHBLT
-  - added PDF Group Content methods for creating layered content - thanks
-    Harald for the patch! see SynPdfLayers.dpr in sample 05
-  - added TPdfFormWithCanvas class - thanks Harald! see SynPdfFormCanvas.dpr
-  - EMR_INTERSECTCLIPRECT fix supplied by Marsh - but patch disabled by default
-  - huge UniScribe fixes supplied by Mehrdad Momeni (nosa) - THANKS A LOT!
 
 }
 
@@ -359,7 +342,7 @@ uses
   {$ifdef USE_SYNGDIPLUS}
   SynGdiPlus; // use our GDI+ library for handling TJpegImage and such
   {$else}
-  jpeg;
+  jpeg;            
   {$endif}
 
 const
@@ -456,8 +439,8 @@ type
   /// a PDF date, encoded as 'D:20100414113241'
   TPdfDate = PDFString;
 
-  /// the internal pdf file format
-  TPdfFileFormat = (pdf13, pdf14, pdf15, pdf16);
+  /// the internal pdf file format 
+  TPdfFileFormat = (pdf13, pdf14, pdf15);
 
   /// PDF exception, raised when an invalid value is given to a constructor
   EPdfInvalidValue = class(Exception);
@@ -499,10 +482,8 @@ type
     plSinglePage, plOneColumn, plTwoColumnLeft, plTwoColumnRight);
 
   /// Viewer preferences specifying how the reader User Interface must start
-  // - vpEnforcePrintScaling will set the file version to be PDF 1.6
   TPdfViewerPreference = (
-    vpHideToolbar, vpHideMenubar, vpHideWindowUI, vpFitWindow, vpCenterWindow,
-    vpEnforcePrintScaling);
+    vpHideToolbar, vpHideMenubar, vpHideWindowUI, vpFitWindow, vpCenterWindow);
 
   /// set of Viewer preferences
   TPdfViewerPreferences = set of TPdfViewerPreference;
@@ -645,7 +626,7 @@ type
       const aUserPassword, aOwnerPassword: string); virtual;
     /// prepare a specific document to be encrypted
     // - internally used by TPdfDocument.NewDoc method
-    procedure AttachDocument(aDoc: TPdfDocument); virtual;
+    procedure AttachDocument(aDoc: TPdfDocument); virtual; 
     /// will create the expected TPdfEncryption instance, depending on aLevel
     // - to be called as parameter of TPdfDocument/TPdfDocumentGDI.Create()
     // - currently, only elRC4_40 and elRC4_128 levels are implemented
@@ -727,14 +708,14 @@ type
     function Add(Value, DigitCount: Integer): TPdfWrite; overload;
     /// add a floating point numerical value to the buffer
     // - up to 2 decimals are written
-    function Add(Value: TSynExtended): TPdfWrite; overload;
+    function Add(Value: Extended): TPdfWrite; overload;
     /// add a floating point numerical value to the buffer
     // - up to 2 decimals are written, together with a trailing space
-    function AddWithSpace(Value: TSynExtended): TPdfWrite; overload;
+    function AddWithSpace(Value: Extended): TPdfWrite; overload;
     /// add a floating point numerical value to the buffer
     // - this version handles a variable number of decimals, together with
     // a trailing space - this is used by ConcatToCTM e.g. or enhanced precision
-    function AddWithSpace(Value: TSynExtended; Decimals: cardinal): TPdfWrite; overload;
+    function AddWithSpace(Value: Extended; Decimals: cardinal): TPdfWrite; overload;
     /// direct raw write of some data
     // - no conversion is made
     function Add(Text: PAnsiChar; Len: integer): TPdfWrite; overload;
@@ -776,8 +757,7 @@ type
       Canvas: TPdfCanvas): TPdfWrite;
     /// write some Unicode text, encoded as Glyphs indexes, corresponding
     // to the current font
-    function AddGlyphs(Glyphs: PWord; GlyphsCount: integer; Canvas: TPdfCanvas;
-      AVisAttrsPtr: Pointer=nil): TPdfWrite;
+    function AddGlyphs(Glyphs: PWord; GlyphsCount: integer; Canvas: TPdfCanvas): TPdfWrite;
     /// add some WinAnsi text as PDF text
     // - used by TPdfText object
     // - will optionally encrypt the content
@@ -829,7 +809,7 @@ type
   protected
     procedure InternalWriteTo(W: TPdfWrite); virtual;
     procedure SetObjectNumber(Value: integer);
-    function SpaceNotNeeded: boolean; virtual;
+    function SpaceNotNeeded: boolean; virtual; 
   public
     /// create the PDF object instance
     constructor Create; virtual;
@@ -839,11 +819,6 @@ type
     /// write indirect object to specified stream
     // - this method called by parent object
     procedure WriteValueTo(var W: TPdfWrite);
-    /// low-level force the object to be saved now
-    // - you should not use this low-level method, unless you want to force
-    // the FSaveAtTheEnd internal flag to be set to force, so that
-    // TPdfDocument.SaveToStreamDirectPageFlush would flush the object content
-    procedure ForceSaveNow;
     /// the associated PDF Object Number
     // - If you set an object number higher than zero, the object is considered
     // as indirect. Otherwise, the object is considered as direct object.
@@ -925,7 +900,7 @@ type
     FValue: RawUTF8;
   protected
     procedure InternalWriteTo(W: TPdfWrite); override;
-    function SpaceNotNeeded: boolean; override;
+    function SpaceNotNeeded: boolean; override; 
   public
     constructor Create(const AValue: RawUTF8); reintroduce;
     property Value: RawUTF8 read FValue write FValue;
@@ -982,7 +957,7 @@ type
     function GetItemCount: integer; {$ifdef HASINLINE}inline;{$endif}
   protected
     procedure InternalWriteTo(W: TPdfWrite); override;
-    function SpaceNotNeeded: boolean; override;
+    function SpaceNotNeeded: boolean; override; 
   public
     /// create an array of PDF objects
     constructor Create(AObjectMgr: TPdfObjectMgr); reintroduce; overload;
@@ -1003,9 +978,6 @@ type
     /// Add a PDF object to the array
     // - if AItem already exists, do nothing
     function AddItem(AItem: TPdfObject): integer;
-    /// insert a PDF object to the array
-    // - if AItem already exists, do nothing
-    procedure InsertItem(Index: Integer; AItem: TPdfObject);
     /// retrieve a TPDFName object stored in the array
     function FindName(const AName: PDFString): TPdfName;
     /// remove a specified TPDFName object stored in the array
@@ -1050,7 +1022,7 @@ type
     function GetItemCount: integer; {$ifdef HASINLINE}inline;{$endif}
   protected
     function getTypeOf: PDFString;
-    function SpaceNotNeeded: boolean; override;
+    function SpaceNotNeeded: boolean; override; 
     procedure DirectWriteto(W: TPdfWrite; Secondary: TPdfDictionary);
     procedure InternalWriteTo(W: TPdfWrite); override;
   public
@@ -1213,7 +1185,7 @@ type
     /// the associated Generation Number
     // - mostly 0, or 65535 (PDF_MAX_GENERATION_NUM) for the root 'f' entry
     property GenerationNumber: integer read FGenerationNumber write FGenerationNumber;
-    /// the associated PDF object
+    /// the associated PDF object 
     property Value: TPdfObject read FValue;
   end;
 
@@ -1249,8 +1221,6 @@ type
   /// generic PDF Outlines entries, stored as a PDF dictionary
   TPdfOutlines = class(TPdfDictionary);
 
-  /// generic PDF Optional Content entry
-  TPdfOptionalContentGroup = class(TPdfDictionary);
 
   TPdfInfo = class;
   TPdfCatalog = class;
@@ -1285,7 +1255,6 @@ type
     FDefaultPaperSize: TPDFPaperSize;
     FCompressionMethod: TPdfCompressionMethod;
     FUseOutlines: boolean;
-    FUseOptionalContent: boolean;
     FCharSet: integer;
     FCodePage: cardinal;
     FTrueTypeFonts: TRawUTF8DynArray;
@@ -1331,12 +1300,12 @@ type
     procedure SetDefaultPaperSize(const Value: TPDFPaperSize);
     procedure SetDefaultPageHeight(const Value: cardinal);
     procedure SetDefaultPageWidth(const Value: cardinal);
-    procedure SetUseOptionalContent(const Value: boolean);
     procedure SetPDFA1(const Value: boolean);
     function GetDefaultPageLandscape: boolean;
     procedure SetDefaultPageLandscape(const Value: boolean);
     procedure SetFontFallBackName(const Value: string);
     function GetFontFallBackName: string;
+    
   protected
     /// can be useful in descendant objects in other units
     fTPdfPageClass: TPdfPageClass;
@@ -1416,9 +1385,7 @@ type
     // and before a final SaveToStreamDirectEnd call
     // - see TPdfDocumentGDI.SaveToStream() in this unit, and
     // TGDIPages.ExportPDFStream() in mORMotReport.pas for real use cases
-    // - you can set FlushCurrentPageNow=true to force the current page to be
-    // part of the flushed content
-    procedure SaveToStreamDirectPageFlush(FlushCurrentPageNow: boolean=false); virtual;
+    procedure SaveToStreamDirectPageFlush; virtual;
     /// prepare to save the PDF file content into a specified Stream
     // - shall be made once after a SaveToStreamDirectBegin() call
     // - is called by SaveToStream() method
@@ -1450,7 +1417,7 @@ type
     /// create an Outline entry at a specified position of the current page
     // - the outline tree is created from the specified numerical level (0=root),
     // just after the item added via the previous CreateOutline call
-    // - the title is a generic VCL string, to handle fully Unicode support
+    // - the title is a generic VCL string, to handle fully Unicode support 
     function CreateOutline(const Title: string; Level: integer; TopPosition: Single): TPdfOutlineEntry;
     /// create a Destination
     // - the current PDF Canvas page is associated with this destination object
@@ -1469,18 +1436,6 @@ type
     // - if ForceCompression property is set, the picture will be stored as a JPEG
     // - you can specify a clipping rectangle region as ClipRc parameter
     function CreateOrGetImage(B: TBitmap; DrawAt: PPdfBox=nil; ClipRc: PPdfBox=nil): PDFString;
-    // create a new optional content group (layer)
-    // - returns a TPdfOptionalContentGroup needed for TPDFCanvas.BeginMarkedContent
-    // - if ParentContentGroup is not nil, the new content group is a subgroup to ParentContentGroup
-    // - Title is the string shown in the PDF Viewer
-    // - Visible controls the initial state of the content group
-    function CreateOptionalContentGroup(ParentContentGroup: TPdfOptionalContentGroup;
-      const Title: string; Visible: Boolean=true): TPdfOptionalContentGroup;
-    // create a Radio Optional ContentGroup
-    // - ContentGroups is a array of TPdfOptionalContentGroups which should behave like
-    // radiobuttons, i.e. only one active at a time
-    // - visibility must be set with CreateOptionalContentGroup, only one group should be visible
-    procedure CreateOptionalContentRadioGroup(const ContentGroups: array of TPdfOptionalContentGroup);
     /// retrieve the current PDF Canvas, associated to the current page
     property Canvas: TPdfCanvas read fCanvas;
     /// retrieve the PDF information, associated to the PDF document
@@ -1521,13 +1476,6 @@ type
     /// used to define if the PDF document will use outlines
     // - must be set to TRUE before any use of the OutlineRoot property
     property UseOutlines: boolean read FUseoutlines write FUseoutlines;
-    // used to define if the PDF document will use optional content (layers)
-    // - will also force PDF 1.5 as minimal file format
-    // - must be set to TRUE before calling NewDoc
-    // - warning: setting a value to this propery after creation will call the
-    // NewDoc method, therefore will erase all previous content and pages
-    // (including Info properties)
-    property UseOptionalContent: boolean read FUseOptionalContent write SetUseOptionalContent;
     /// the current Code Page encoding used for this PDF Document
     property CodePage: cardinal read FCodePage;
     /// the current CharSet used for this PDF Document
@@ -1552,7 +1500,7 @@ type
     // saving, e.g. before SaveToFile() or SaveToStream() methods calls)
     // - the PDF engine don't handle Font Fallback yet: the font you use
     // must contain ALL glyphs necessary for the supplied unicode text - squares
-    // or blanks will be drawn for any missing glyph/character
+    // or blanks will be drawn for any missing glyph/character 
     property UseUniscribe: boolean read fUseUniscribe write fUseUniscribe;
 {$endif}
     /// used to define if the PDF document will handle "font fallback" for
@@ -1600,11 +1548,11 @@ type
     // NewDoc method, therefore will erase all previous content and pages
     // (including Info properties)
     property PDFA1: boolean read fPDFA1 write SetPDFA1;
-    /// set to TRUE to force PDF 1.5 format, which may produce smaller files
+    /// set to TRUE to force PDF 1.5 format, which may produce smaller files 
     property GeneratePDF15File: boolean read GetGeneratePDF15File write SetGeneratePDF15File;
   end;
 
-  /// a PDF page
+  /// a PDF page          
   TPdfPage = class(TPdfDictionary)
   private
     function GetPageLandscape: Boolean;
@@ -1708,7 +1656,6 @@ type
 {$endif}
     /// parameters taken from RenderMetaFile() call
     fUseMetaFileTextPositioning: TPdfCanvasRenderMetaFileTextPositioning;
-    fDisableMetaFileTextClipping: boolean;
     fKerningHScaleBottom: Single;
     fKerningHScaleTop: Single;
     // some cache
@@ -1721,13 +1668,13 @@ type
     // result := FOffsetY - Y * fFactorY;
     function I2Y(Y: Integer): Single; overload;
     // result := FOffsetY - Y * fFactorY;
-    function I2Y(Y: Single): Single; overload;
+    function I2Y(Y: Single): Single; overload; 
     // wrapper call I2X() and I2Y() for conversion
     procedure LineToI(x, y: Integer); overload;
     procedure LineToI(x, y: Single); overload;
     // wrapper call I2X() and I2Y() for conversion
     procedure MoveToI(x, y: Integer); overload;
-    procedure MoveToI(x, y: Single); overload;
+    procedure MoveToI(x, y: Single); overload;  
     // wrapper call I2X() and I2Y() for conversion
     procedure CurveToCI(x1, y1, x2, y2, x3, y3: integer);
     // wrapper call I2X() and I2Y() for conversion
@@ -1767,93 +1714,93 @@ type
     // matrix, we added a custom decimal number parameter here
     procedure ConcatToCTM(a, b, c, d, e, f: Single; Decimals: Cardinal=6); {  cm  }
 
-    /// Set the flatness tolerance in the graphics state
-    // - see Section 6.5.1, “Flatness Tolerance” of the PDF 1.3 reference:
-    // The flatness tolerance controls the maximum permitted distance in
-    // device pixels between the mathematically correct path and an
-    // approximation constructed from straight line segments
-    // - Flatness is a number in the range 0 to 100; a value of 0 specifies
-    // the output device's default flatness tolerance
+    {{ Set the flatness tolerance in the graphics state
+      - see Section 6.5.1, “Flatness Tolerance” of the PDF 1.3 reference:
+      The flatness tolerance controls the maximum permitted distance in
+      device pixels between the mathematically correct path and an
+      approximation constructed from straight line segments
+      - Flatness is a number in the range 0 to 100; a value of 0 specifies
+      the output device's default flatness tolerance }
     procedure SetFlat(flatness: Byte);                           {  i   }
-    /// Set the line cap style in the graphics state
-    // - The line cap style specifies the shape to be used at the
-    // ends of open subpaths (and dashes, if any) when they are stroked
+    {{ Set the line cap style in the graphics state
+     - The line cap style specifies the shape to be used at the
+      ends of open subpaths (and dashes, if any) when they are stroked }
     procedure SetLineCap(linecap: TLineCapStyle);                {  J   }
-    /// Set the line dash pattern in the graphics state
-    // - The line dash pattern controls the pattern of dashes and gaps
-    // used to stroke paths. It is specified by a dash array and a dash phase.
-    // The dash array's elements are numbers that specify the lengths of
-    // alternating dashes and gaps; the dash phase specifies the distance into
-    // the dash pattern at which to start the dash. The elements of both the
-    // dash array and the dash phase are expressed in user space units.
-    // Before beginning to stroke a path, the dash array is cycled through,
-    // adding up the lengths of dashes and gaps. When the accumulated length
-    // equals the value specified by the dash phase, stroking of the path begins,
-    // using the dash array cyclically from that point onward.
+    {{ Set the line dash pattern in the graphics state
+     - The line dash pattern controls the pattern of dashes and gaps
+      used to stroke paths. It is specified by a dash array and a dash phase.
+      The dash array's elements are numbers that specify the lengths of
+      alternating dashes and gaps; the dash phase specifies the distance into
+      the dash pattern at which to start the dash. The elements of both the
+      dash array and the dash phase are expressed in user space units.
+      Before beginning to stroke a path, the dash array is cycled through,
+      adding up the lengths of dashes and gaps. When the accumulated length
+      equals the value specified by the dash phase, stroking of the path begins,
+      using the dash array cyclically from that point onward. }
     procedure SetDash(const aarray: array of integer; phase: integer=0); {  d   }
-    /// Set the line join style in the graphics state
-    // - The  line join style specifies the shape to be used at the
-    // corners of paths that are stroked
+    {{ Set the line join style in the graphics state
+     - The  line join style specifies the shape to be used at the
+     corners of paths that are stroked }
     procedure SetLineJoin(linejoin: TLineJoinStyle);             {  j   }
-    /// Set the line width in the graphics state
-    // - The line width parameter specifies the thickness of the line used
-    // to stroke a path. It is a nonnegative number expressed in user space
-    // units; stroking a path entails painting all points whose perpendicular
-    // distance from the path in user space is less than or equal to half the
-    // line width. The effect produced in device space depends on the current
-    // transformation matrix (CTM) in effect at the time the path is stroked.
-    // If the CTM specifies scaling by different factors in the x and y
-    // dimensions, the thickness of stroked lines in device space will vary
-    // according to their orientation. The actual line width achieved can differ
-    // from the requested width by as much as 2 device pixels, depending on
-    // the positions of lines with respect to the pixel grid.
+    {{ Set the line width in the graphics state
+     - The line width parameter specifies the thickness of the line used
+     to stroke a path. It is a nonnegative number expressed in user space
+     units; stroking a path entails painting all points whose perpendicular
+     distance from the path in user space is less than or equal to half the
+     line width. The effect produced in device space depends on the current
+     transformation matrix (CTM) in effect at the time the path is stroked.
+     If the CTM specifies scaling by different factors in the x and y
+     dimensions, the thickness of stroked lines in device space will vary
+     according to their orientation. The actual line width achieved can differ
+     from the requested width by as much as 2 device pixels, depending on
+     the positions of lines with respect to the pixel grid. }
     procedure SetLineWidth(linewidth: Single);                   {  w   }
-    /// Set the miter limit in the graphics state
-    // - When two line segments meet at a sharp angle and mitered joins have been
-    // specified as the line join style, it is possible for the miter to extend
-    // far beyond the thickness of the line stroking the path. The miter limit
-    // imposes a maximum on the ratio of the miter length to the line width.
-    // When the limit is exceeded, the join is converted from a miter to a bevel
+    {{ Set the miter limit in the graphics state
+      - When two line segments meet at a sharp angle and mitered joins have been
+      specified as the line join style, it is possible for the miter to extend
+      far beyond the thickness of the line stroking the path. The miter limit
+      imposes a maximum on the ratio of the miter length to the line width.
+      When the limit is exceeded, the join is converted from a miter to a bevel }
     procedure SetMiterLimit(miterlimit: Single);                 {  M   }
 
-    /// change the current coordinates position
-    // - Begin a new subpath by moving the current point to coordinates
-    // (x, y), omitting any connecting line segment. If the previous path
-    // construction operator in the current path was also MoveTo(), the new MoveTo()
-    // overrides it; no vestige of the previous MoveTo() call remains in the path.
+    {{ change the current coordinates position
+    - Begin a new subpath by moving the current point to coordinates
+      (x, y), omitting any connecting line segment. If the previous path
+      construction operator in the current path was also MoveTo(), the new MoveTo()
+      overrides it; no vestige of the previous MoveTo() call remains in the path. }
     procedure MoveTo(x, y: Single);                              {  m   }
-    /// Append a straight line segment from the current point to the point (x, y).
-    // -  The new current point is (x, y)
+    {{ Append a straight line segment from the current point to the point (x, y).
+     -  The new current point is (x, y) }
     procedure LineTo(x, y: Single);                              {  l   }
-    /// Append a cubic Bezier curve to the current path
-    // - The curve extends from the current point to the point (x3, y3),
-    // using (x1, y1) and (x2, y2) as the Bezier control points
-    // - The new current point is (x3, y3)
+    {{ Append a cubic Bezier curve to the current path
+      - The curve extends from the current point to the point (x3, y3),
+      using (x1, y1) and (x2, y2) as the Bezier control points
+      - The new current point is (x3, y3) }
     procedure CurveToC(x1, y1, x2, y2, x3, y3: Single);          {  c   }
-    /// Append a cubic Bezier curve to the current path
-    // - The curve extends from the current point to the point (x3, y3),
-    // using the current point and (x2, y2) as the Bezier control points
-    // - The new current point is (x3, y3)
+    {{ Append a cubic Bezier curve to the current path
+      - The curve extends from the current point to the point (x3, y3),
+      using the current point and (x2, y2) as the Bezier control points
+      - The new current point is (x3, y3) }
     procedure CurveToV(x2, y2, x3, y3: Single);                  {  v   }
-    /// Append a cubic Bezier curve to the current path
-    // - The curve extends from the current point to the point (x3, y3),
-    // using (x1, y1) and (x3, y3) as the Bezier control points
-    // - The new current point is (x3, y3)
+    {{ Append a cubic Bezier curve to the current path
+     - The curve extends from the current point to the point (x3, y3),
+     using (x1, y1) and (x3, y3) as the Bezier control points
+     - The new current point is (x3, y3) }
     procedure CurveToY(x1, y1, x3, y3: Single);                  {  y   }
-    /// Append a rectangle to the current path as a complete subpath, with
-    // lower-left corner (x, y) and dimensions  width and  height in user space
+    {{ Append a rectangle to the current path as a complete subpath, with
+      lower-left corner (x, y) and dimensions  width and  height in user space }
     procedure Rectangle(x, y, width, height: Single);            {  re  }
-    /// Close the current subpath by appending a straight line segment
-    // from the current point to the starting point of the subpath
-    // - This operator terminates the current subpath; appending another
-    // segment to the current path will begin a new subpath, even if the new
-    // segment begins at the endpoint reached by the h operation
-    // - If the current subpath is already closed or the current path is empty,
-    // it does nothing
+    {{ Close the current subpath by appending a straight line segment
+      from the current point to the starting point of the subpath
+      - This operator terminates the current subpath; appending another
+      segment to the current path will begin a new subpath, even if the new
+      segment begins at the endpoint reached by the h operation
+      - If the current subpath is already closed or the current path is empty,
+      it does nothing }
     procedure Closepath;                                         {  h   }
-    /// End the path object without filling or stroking it
-    // - This operator is a “path-painting no-op,” used primarily for the
-    // side effect of changing the clipping path
+    {{ End the path object without filling or stroking it
+     - This operator is a “path-painting no-op,” used primarily for the
+     side effect of changing the clipping path }
     procedure NewPath;                                           {  n   }
     /// Stroke the path
     procedure Stroke;                                            {  S   }
@@ -1865,101 +1812,101 @@ type
     procedure Fill;                                              {  f   }
     /// Fill the path, using the even-odd rule to determine the region to fill
     procedure EoFill;                                            {  f*  }
-    /// Fill and then stroke the path, using the nonzero winding number rule
-    // to determine the region to fill
-    // - This produces the same result as constructing two identical path
-    // objects, painting the first with Fill and the second with Stroke. Note,
-    // however, that the filling and stroking portions of the operation consult
-    // different values of several graphics state parameters, such as the color
+    {{ Fill and then stroke the path, using the nonzero winding number rule
+      to determine the region to fill
+      - This produces the same result as constructing two identical path
+      objects, painting the first with Fill and the second with Stroke. Note,
+      however, that the filling and stroking portions of the operation consult
+      different values of several graphics state parameters, such as the color }
     procedure FillStroke;                                        {  B   }
-    /// Close, fill, and then stroke the path, using the nonzero winding number
-    // rule to determine the region to fill
-    // - This operator has the same effect as the sequence ClosePath; FillStroke;
+    {{ Close, fill, and then stroke the path, using the nonzero winding number
+     rule to determine the region to fill
+      - This operator has the same effect as the sequence ClosePath; FillStroke; }
     procedure ClosepathFillStroke;                               {  b   }
-    /// Fill and then stroke the path, using the even-odd rule to determine
-    // the region to fill
-    // - This operator produces the same result as FillStroke, except that
-    // the path is filled as if with Eofill instead of Fill
+    {{ Fill and then stroke the path, using the even-odd rule to determine
+      the region to fill
+      - This operator produces the same result as FillStroke, except that
+      the path is filled as if with Eofill instead of Fill }
     procedure EofillStroke;                                      {  B*  }
-    /// Close, fill, and then stroke the path, using the even-odd rule to
-    // determine the region to fill
-    // - This operator has the same effect as the sequence Closepath; EofillStroke;
+    {{ Close, fill, and then stroke the path, using the even-odd rule to
+      determine the region to fill
+     - This operator has the same effect as the sequence Closepath; EofillStroke; }
     procedure ClosepathEofillStroke;                             {  b*  }
-    /// Nonzero winding clipping path set
-    // - Modify the current clipping path by intersecting it with the current path,
-    // using the nonzero winding number rule to determine which regions
-    // lie inside the clipping path
-    // - The graphics state contains a clipping path that limits the regions of
-    // the page affected by painting operators. The closed subpaths of this path
-    // define the area that can be painted. Marks falling inside this area will
-    // be applied to the page; those falling outside it will not. (Precisely what
-    // is considered to be “inside” a path is discussed under “Filling,” above.)
-    // - The initial clipping path includes the entire page. Both clipping path
-    // methods (Clip and EoClip) may appear after the last path construction operator
-    // and before the path-painting operator that terminates a path object.
-    // Although the clipping path operator appears before the painting operator,
-    // it does not alter the clipping path at the point where it appears. Rather,
-    // it modifies the effect of the succeeding painting operator. After the path
-    // has been painted, the clipping path in the graphics state is set to the
-    // intersection of the current clipping path and the newly constructed path.
+    {{ Nonzero winding clipping path set
+      - Modify the current clipping path by intersecting it with the current path,
+      using the nonzero winding number rule to determine which regions
+      lie inside the clipping path
+      - The graphics state contains a clipping path that limits the regions of
+       the page affected by painting operators. The closed subpaths of this path
+       define the area that can be painted. Marks falling inside this area will
+       be applied to the page; those falling outside it will not. (Precisely what
+       is considered to be “inside” a path is discussed under “Filling,” above.)
+      - The initial clipping path includes the entire page. Both clipping path
+       methods (Clip and EoClip) may appear after the last path construction operator
+       and before the path-painting operator that terminates a path object.
+       Although the clipping path operator appears before the painting operator,
+       it does not alter the clipping path at the point where it appears. Rather,
+       it modifies the effect of the succeeding painting operator. After the path
+       has been painted, the clipping path in the graphics state is set to the
+       intersection of the current clipping path and the newly constructed path. }
     procedure Clip;                                              {  W   }
-    /// Even-Odd winding clipping path set
-    // - Modify the current clipping path by intersecting it with the current path,
-    // using the even-odd rule to determine which regions lie inside the clipping path
+    {{ Even-Odd winding clipping path set
+      - Modify the current clipping path by intersecting it with the current path,
+      using the even-odd rule to determine which regions lie inside the clipping path }
     procedure EoClip;                                            {  W*  }
 
-    /// Set the character spacing
-    // - CharSpace is a number expressed in unscaled text space units.
-    // - Character spacing is used by the ShowText and ShowTextNextLine methods
-    // - Default value is 0
+    {{ Set the character spacing
+     - CharSpace is a number expressed in unscaled text space units.
+     - Character spacing is used by the ShowText and ShowTextNextLine methods
+     - Default value is 0 }
     procedure SetCharSpace(charSpace: Single);                   {  Tc  }
-    /// Set the word spacing
-    // - WordSpace is a number expressed in unscaled text space units
-    // - word spacing is used by the ShowText and ShowTextNextLine methods
-    // - Default value is 0
+    {{ Set the word spacing
+      - WordSpace is a number expressed in unscaled text space units
+      - word spacing is used by the ShowText and ShowTextNextLine methods
+      - Default value is 0 }
     procedure SetWordSpace(wordSpace: Single);                   {  Tw  }
-    /// Set the horizontal scaling to (scale ÷ 100)
-    // - hScaling is a number specifying the percentage of the normal width
-    // - Default value is 100 (e.g. normal width)
-    procedure SetHorizontalScaling(hScaling: Single);              {  Tz  }
-    /// Set the text leading, Tl, to the specified leading value
-    // - leading which is a number expressed in unscaled text space units;
-    // it specifies the vertical distance between the baselines of adjacent
-    // lines of text
-    // - Text leading is used only by the MoveToNextLine and ShowTextNextLine methods
-    // - you can force the next line to be just below the current one by calling:
-    // ! SetLeading(Attributes.FontSize);
-    // - Default value is 0
+    {{ Set the horizontal scaling to (scale ÷ 100)
+      - hScaling is a number specifying the percentage of the normal width
+      - Default value is 100 (e.g. normal width) }
+    procedure SetHorizontalScaling(hScaling: Single);              {  Tz  } 
+    {{ Set the text leading, Tl, to the specified leading value
+      - leading which is a number expressed in unscaled text space units;
+        it specifies the vertical distance between the baselines of adjacent
+        lines of text
+      - Text leading is used only by the MoveToNextLine and ShowTextNextLine methods
+      - you can force the next line to be just below the current one by calling:
+      ! SetLeading(Attributes.FontSize);
+      - Default value is 0 }
     procedure SetLeading(leading: Single);                       {  TL  }
-    /// Set the font, Tf, to  font and the font size, Tfs , to size.
-    // - font is the name of a font resource in the Font subdictionary of the
-    // current resource dictionary (e.g. 'F0')
-    // - size is a number representing a scale factor
-    // - There is no default value for either font or size; they must be specified
-    // using this method before any text is shown
+    {{ Set the font, Tf, to  font and the font size, Tfs , to size.
+     - font is the name of a font resource in the Font subdictionary of the
+      current resource dictionary (e.g. 'F0')
+     - size is a number representing a scale factor
+     - There is no default value for either font or size; they must be specified
+       using this method before any text is shown }
     procedure SetFontAndSize(const fontshortcut: PDFString; size: Single);    {  Tf  }
       {$ifdef HASINLINE}inline;{$endif}
-    /// Set the text rendering mode
-    // - the text rendering mode determines whether text is stroked, filled,
-    // or used as a clipping path
+    {{ Set the text rendering mode
+      - the text rendering mode determines whether text is stroked, filled,
+      or used as a clipping path }
     procedure SetTextRenderingMode(mode: TTextRenderingMode);    {  Tr  }
-    /// Set the text rise, Trise, to the specified value
-    // - rise is a number expressed in unscaled text space units, which
-    // specifies the distance, in unscaled text space units, to move the
-    // baseline up or down from its default location. Positive values of
-    // text rise move the baseline up. Adjustments to the baseline are
-    // useful for drawing superscripts or subscripts. The default location of
-    // the baseline can be restored by setting the text rise to 0.
-    // - Default value is 0
+    {{ Set the text rise, Trise, to the specified value
+      - rise is a number expressed in unscaled text space units, which
+      specifies the distance, in unscaled text space units, to move the
+      baseline up or down from its default location. Positive values of
+      text rise move the baseline up. Adjustments to the baseline are
+      useful for drawing superscripts or subscripts. The default location of
+      the baseline can be restored by setting the text rise to 0.
+      - Default value is 0 }
     procedure SetTextRise(rise: word);                           {  Ts  }
     /// Begin a text object
     // - Text objects cannot be nested
     procedure BeginText;   {$ifdef HASINLINE}inline;{$endif}     {  BT  }
     /// End a text object, discarding the text matrix
     procedure EndText;     {$ifdef HASINLINE}inline;{$endif}     {  ET  }
-    /// Move to the start of the next line, offset from the start of the current
-    // line by (tx ,ty)
-    // - tx and ty are numbers expressed in unscaled text space units
+    {{ Move to the start of the next line, offset from the start of the current
+      line by (tx ,ty)
+      - tx and ty are numbers expressed in unscaled text space units }
     procedure MoveTextPoint(tx, ty: Single); {$ifdef HASINLINE}inline;{$endif} {  Td  }
     /// set the Text Matrix to a,b,c,d and the text line Matrix x,y
     procedure SetTextMatrix(a, b, c, d, x, y: Single);           {  Tm  }
@@ -2082,19 +2029,10 @@ type
     // if the EMF content used SetTextJustification() API call to justify text
     // - KerningHScaleBottom/KerningHScaleTop are limits below which and over
     // which Font Kerning is transformed into PDF Horizontal Scaling commands
-    // - DisableTextClipping can be set to fix some issues e.g. when using Wine
     procedure RenderMetaFile(MF: TMetaFile; Scale: Single=1.0;
       XOff: single=0.0; YOff: single=0.0;
       TextPositioning: TPdfCanvasRenderMetaFileTextPositioning=tpSetTextJustification;
-      KerningHScaleBottom: single=99.0; KerningHScaleTop: single=101.0;
-      DisableTextClipping: boolean=false);
-    // starts optional content (layer)
-    // - Group must be registered with TPdfDocument.CreateOptionalContentGroup
-    // - each BeginMarkedContent must have a corresponding EndMarkedContent
-    // - nested BeginMarkedContent/EndMarkedContent are possible
-    procedure BeginMarkedContent(Group: TPdfOptionalContentGroup);
-    // ends optional content (layer)
-    procedure EndMarkedContent;
+      KerningHScaleBottom: single=99.0; KerningHScaleTop: single=101.0);
   public
     /// retrieve the current Canvas content stream, i.e. where the PDF
     // commands are to be written to
@@ -2115,7 +2053,7 @@ type
     FData: TPdfDictionary;
     function GetHasData: boolean;
   protected
-    procedure SetData(AData: TPdfDictionary);
+    procedure SetData(AData: TPdfDictionary); 
   public
     /// the associated dictionary, containing all data
     property Data: TPdfDictionary read FData write SetData;
@@ -2173,17 +2111,16 @@ type
     property Title: string read GetTitle write SetTitle;
   end;
 
-  /// a dictionary wrapper class for the PDF document catalog fields
-  // - It contains references to other objects defining the document's contents,
-  // outline, article threads (PDF 1.1), named destinations, and other attributes.
-  // In addition, it contains information about how the document should be displayed
-  // on the screen, such as whether its outline and thumbnail page images should be
-  // displayed automatically and whether some location other than the first page
-  // should be shown when the document is opened
+  { a dictionary wrapper class for the PDF document catalog fields
+   - It contains references to other objects defining the document's contents,
+   outline, article threads (PDF 1.1), named destinations, and other attributes.
+   In addition, it contains information about how the document should be displayed
+   on the screen, such as whether its outline and thumbnail page images should be
+   displayed automatically and whether some location other than the first page
+   should be shown when the document is opened }
   TPdfCatalog = class(TPdfDictionaryWrapper)
   private
     FOpenAction: TPdfDestination;
-    FOwner: TPdfDocument;
     procedure SetPageLayout(Value: TPdfPageLayout);
     procedure SetPageMode(Value: TPdfPageMode);
     procedure SetNonFullScreenPageMode(Value: TPdfPageMode);
@@ -2205,10 +2142,10 @@ type
     property NonFullScreenPageMode: TPdfPageMode read GetNonFullScreenPageMode write SetNonFullScreenPageMode;
     /// Page mode determines how the document should appear when opened
     property PageMode: TPdfPageMode read GetPageMode write SetPageMode;
-    /// A viewer preferences dictionary specifying the way the document is to be
-    // displayed on the screen
-    // - If this entry is absent, viewer applications should use their own current
-    // user preference settings
+    {{ A viewer preferences dictionary specifying the way the document is to be
+     displayed on the screen
+      - If this entry is absent, viewer applications should use their own current
+      user preference settings }
     property ViewerPreference: TPdfViewerPreferences read GetViewerPreference write SetViewerPreference;
     /// The page tree node that is the root of the document's page tree
     // - Required, must be an indirect reference
@@ -2366,7 +2303,6 @@ type
     fFontFile2: TPdfStream;
     fUnicodeFont: TPdfFontTrueType;
     fWinAnsiFont: TPdfFontTrueType;
-    fIsSymbolFont: Boolean;
     // below are some bigger structures
     fLogFont: TLogFontW;
     fM: TTextMetric;
@@ -2407,10 +2343,10 @@ type
     property WinAnsiFont: TPdfFontTrueType read fWinAnsiFont;
   end;
 
-  /// A destination defines a particular view of a document, consisting of the following:
-  // - The page of the document to be displayed
-  // - The location of the display window on that page
-  // - The zoom factor to use when displaying the page
+  {{ A destination defines a particular view of a document, consisting of the following:
+    - The page of the document to be displayed
+    - The location of the display window on that page
+    - The zoom factor to use when displaying the page }
   TPdfDestination = class(TObject)
   private
     FDoc: TPdfDocument;
@@ -2551,7 +2487,6 @@ type
     fUseMetaFileTextPositioning: TPdfCanvasRenderMetaFileTextPositioning;
     fKerningHScaleTop: Single;
     fKerningHScaleBottom: Single;
-    fDisableTextClipping: boolean;
     function GetVCLCanvas: TCanvas;   {$ifdef HASINLINE}inline;{$endif}
     function GetVCLCanvasSize: TSize; {$ifdef HASINLINE}inline;{$endif}
   public
@@ -2595,7 +2530,7 @@ type
     // !   finally
     // !     Free;
     // !   end;
-    procedure SaveToStreamDirectPageFlush(FlushCurrentPageNow: boolean=false); override;
+    procedure SaveToStreamDirectPageFlush; override;
     /// the VCL Canvas of the current page
     property VCLCanvas: TCanvas read GetVCLCanvas;
     /// the VCL Canvas size of the current page
@@ -2612,10 +2547,6 @@ type
     // - replace deprecated property UseSetTextJustification
     property UseMetaFileTextPositioning: TPdfCanvasRenderMetaFileTextPositioning
       read fUseMetaFileTextPositioning write fUseMetaFileTextPositioning;
-    /// defines if TMetaFile text clipping should be disabled
-    // - has been reported to work better e.g. when app is running on Wine
-    property DisableMetaFileTextClipping: boolean
-      read fDisableTextClipping write fDisableTextClipping;
     /// the % limit below which Font Kerning is transformed into PDF Horizontal
     // Scaling commands (when text positioning is tpKerningFromAveragePosition)
     // - set to 99.0 by default
@@ -2670,25 +2601,6 @@ type
     constructor Create(aDoc: TPdfDocumentGDI; aMetaFile: TMetafile); reintroduce;
   end;
 
-  /// a form XObject with a Canvas for drawing
-  // - once created, you can create this XObject, then draw it anywhere on
-  // any page - see sample
-  TPdfFormWithCanvas = class(TPdfXObject)
-  private
-    FFontList: TPdfDictionary;
-    FPage: TPdfPage;
-    FCanvas: TPdfCanvas;
-  public
-    /// create a form XObject with TPDFCanvas
-    constructor Create(aDoc: TPdfDocument; W, H: Integer); reintroduce;
-    /// release used memory
-    destructor Destroy; override;
-    /// close the internal canvas
-    procedure CloseCanvas;
-    /// access to the private canvas associated with the PDF form XObject
-    property Canvas: TPdfCanvas read FCanvas;
-  end;
-
   /// used to handle compressed object stream (in PDF 1.5 format)
   TPdfObjectStream = class(TPdfXObject)
   protected
@@ -2720,9 +2632,6 @@ function _HasMultiByteString(Value: PAnsiChar): boolean;
 /// convert a specified UTF-8 content into a PDFString value
 function RawUTF8ToPDFString(const Value: RawUTF8): PDFString;
 
-/// convert an unsigned integer into a PDFString text
-function UInt32ToPDFString(Value: Cardinal): PDFString;
-
 /// convert a date, into PDF string format, i.e. as 'D:20100414113241'
 function _DateTimeToPdfDate(ADate: TDateTime): TPdfDate;
 
@@ -2730,7 +2639,7 @@ function _DateTimeToPdfDate(ADate: TDateTime): TPdfDate;
 function _PdfDateToDateTime(const AText: TPdfDate): TDateTime;
 
 /// wrapper to create a temporary PDF coordinates rectangle
-function PdfRect(Left, Top, Right, Bottom: Single): TPdfRect; overload; {$ifdef HASINLINE}inline;{$endif}
+function PdfRect(Left, Top, Right, Bottom: Single): TPdfRect; overload; {$ifdef HASINLINE}inline;{$endif} 
 
 /// wrapper to create a temporary PDF coordinates rectangle
 function PdfRect(const Box: TPdfBox): TPdfRect; overload; {$ifdef HASINLINE}inline;{$endif}
@@ -2820,55 +2729,55 @@ const
   USP_E_SCRIPT_NOT_IN_FONT = HRESULT((SEVERITY_ERROR shl 31) or (FACILITY_ITF shl 16)) or $200;
 
 type
-  /// UniScribe script state flag elements
-  // - r0,r1,r2,r3,r4: map TScriptState.uBidiLevel
-  // - fOverrideDirection: Set when in LRO/RLO embedding
-  // - fInhibitSymSwap: Set by U+206A (ISS), cleared by U+206B (ASS)
-  // - fCharShape: Set by U+206D (AAFS), cleared by U+206C (IAFS)
-  // - fDigitSubstitute: Set by U+206E (NADS), cleared by U+206F (NODS)
-  // - fInhibitLigate: Equiv !GCP_Ligate, no Unicode control chars yet
-  // - fDisplayZWG: Equiv GCP_DisplayZWG, no Unicode control characters yet
-  // - fArabicNumContext: For EN->AN Unicode rule
-  // - fGcpClusters: For Generating Backward Compatible GCP Clusters (legacy Apps)
+  {{ UniScribe script state flag elements
+    - r0,r1,r2,r3,r4: map TScriptState.uBidiLevel
+    - fOverrideDirection: Set when in LRO/RLO embedding
+    - fInhibitSymSwap: Set by U+206A (ISS), cleared by U+206B (ASS)
+    - fCharShape: Set by U+206D (AAFS), cleared by U+206C (IAFS)
+    - fDigitSubstitute: Set by U+206E (NADS), cleared by U+206F (NODS)
+    - fInhibitLigate: Equiv !GCP_Ligate, no Unicode control chars yet
+    - fDisplayZWG: Equiv GCP_DisplayZWG, no Unicode control characters yet
+    - fArabicNumContext: For EN->AN Unicode rule
+    - fGcpClusters: For Generating Backward Compatible GCP Clusters (legacy Apps) }
   TScriptState_enum = (
     r0,r1,r2,r3,r4,
     fOverrideDirection, fInhibitSymSwap, fCharShape, fDigitSubstitute,
     fInhibitLigate, fDisplayZWG, fArabicNumContext, fGcpClusters);
 
-  /// a set of UniScribe script state flags
+  {{ a set of UniScribe script state flags }
   TScriptState_set = set of TScriptState_enum;
 
   PScriptState = ^TScriptState;
 
-  /// an UniScribe script state
-  // - uBidiLevel: Unicode Bidi algorithm embedding level (0..16)
-  // - fFlags: Script state flags
+  {{ an UniScribe script state
+    - uBidiLevel: Unicode Bidi algorithm embedding level (0..16) 
+    - fFlags: Script state flags }
   TScriptState = packed record
    case Byte of
     0: (uBidiLevel: Byte)    {:5};
     1: (fFlags: TScriptState_set)
   end;
-  /// Uniscribe script analysis flag elements
-  // - s0,s1,s2,s3,s4,s5,s6,s7,s8,s9: map TScriptAnalysis.eScript
-  // - fRTL: Rendering direction
-  // - fLayoutRTL: Set for GCP classes ARABIC/HEBREW and LOCALNUMBER
-  // - fLinkBefore: Implies there was a ZWJ before this item
-  // - fLinkAfter: Implies there is a ZWJ following this item.
-  // - fLogicalOrder: Set by client as input to ScriptShape/Place
-  // - fNoGlyphIndex: Generated by ScriptShape/Place - this item does not use
-  // glyph indices
+  {{ Uniscribe script analysis flag elements
+    - s0,s1,s2,s3,s4,s5,s6,s7,s8,s9: map TScriptAnalysis.eScript
+    - fRTL: Rendering direction
+    - fLayoutRTL: Set for GCP classes ARABIC/HEBREW and LOCALNUMBER
+    - fLinkBefore: Implies there was a ZWJ before this item
+    - fLinkAfter: Implies there is a ZWJ following this item.
+    - fLogicalOrder: Set by client as input to ScriptShape/Place
+    - fNoGlyphIndex: Generated by ScriptShape/Place - this item does not use
+     glyph indices }
   TScriptAnalysis_enum = (
     s0,s1,s2,s3,s4,s5,s6,s7,s8,s9,
     fRTL, fLayoutRTL, fLinkBefore, fLinkAfter, fLogicalOrder, fNoGlyphIndex);
 
-  /// a set of Uniscribe script analysis flags
+  {{ a set of Uniscribe script analysis flags }
   TScriptAnalysis_set = set of TScriptAnalysis_enum;
 
   PScriptAnalysis = ^TScriptAnalysis;
-  /// an Uniscribe script analysis
-  // - eScript:  Shaping engine
-  // - fFlags: Script analysis flags
-  // - s: Script state
+  {{ an Uniscribe script analysis
+    - eScript:  Shaping engine
+    - fFlags: Script analysis flags
+    - s: Script state }
   TScriptAnalysis = packed record
    case Byte of
     0: (eScript: Word);
@@ -2880,25 +2789,25 @@ type
   TScriptItem = packed record
     /// Logical offset to first character in this item
     iCharPos: Integer;
-    /// corresponding Uniscribe script analysis
+    /// corresponding Uniscribe script analysis 
     a: TScriptAnalysis;
   end;
-
-  /// all possible Uniscribe processing properties of a given language
-  // - fNumeric:  if a script contains only digits
-  // - fComplex: Script requires special shaping or layout
-  // - fNeedsWordBreaking: Requires ScriptBreak for word breaking information
-  // - fNeedsCaretInfo: Requires caret restriction to cluster boundaries
-  // - bCharSet0 .. bCharSet7: Charset to use when creating font
-  // - fControl: Contains only control characters
-  // - fPrivateUseArea: This item is from the Unicode range U+E000 through U+F8FF
-  // - fNeedsCharacterJustify: Requires inter-character justification
-  // - fInvalidGlyph: Invalid combinations generate glyph wgInvalid in the glyph buffer
-  // - fInvalidLogAttr: Invalid combinations are marked by fInvalid in the logical attributes
-  // - fCDM: Contains Combining Diacritical Marks
-  // - fAmbiguousCharSet: Script does not correspond 1// :1 with a charset
-  // - fClusterSizeVaries: Measured cluster width depends on adjacent clusters
-  // - fRejectInvalid: Invalid combinations should be rejected
+  
+  {{ all possible Uniscribe processing properties of a given language
+    - fNumeric:  if a script contains only digits
+    - fComplex: Script requires special shaping or layout
+    - fNeedsWordBreaking: Requires ScriptBreak for word breaking information
+    - fNeedsCaretInfo: Requires caret restriction to cluster boundaries
+    - bCharSet0 .. bCharSet7: Charset to use when creating font
+    - fControl: Contains only control characters
+    - fPrivateUseArea: This item is from the Unicode range U+E000 through U+F8FF
+    - fNeedsCharacterJustify: Requires inter-character justification
+    - fInvalidGlyph: Invalid combinations generate glyph wgInvalid in the glyph buffer
+    - fInvalidLogAttr: Invalid combinations are marked by fInvalid in the logical attributes
+    - fCDM: Contains Combining Diacritical Marks
+    - fAmbiguousCharSet: Script does not correspond 1//:1 with a charset
+    - fClusterSizeVaries: Measured cluster width depends on adjacent clusters
+    - fRejectInvalid: Invalid combinations should be rejected }
   TScriptProperties_enum = (
     fNumeric, fComplex, fNeedsWordBreaking, fNeedsCaretInfo,
     bCharSet0, bCharSet1, bCharSet2, bCharSet3, bCharSet4, bCharSet5,
@@ -2914,7 +2823,7 @@ type
   TScriptProperties = packed record
     /// Primary and sublanguage associated with script
     langid: Word;
-    /// set of possible Uniscribe processing properties for a given language
+    /// set of possible Uniscribe processing properties for a given language                   
     fFlags: TScriptProperties_set;
   end;
 
@@ -2922,12 +2831,12 @@ type
   /// an array of Uniscribe processing information
   TPScriptPropertiesArray = array[byte] of PScriptProperties;
 
-  /// Uniscribe visual (glyph) attributes
-  // - a0 .. a3: map the Justification class number
-  // - fClusterStart: First glyph of representation of cluster
-  // - fDiacritic: Diacritic
-  // - fZeroWidth: Blank, ZWJ, ZWNJ etc, with no width
-  // - fReserved: General reserved bit
+  {{ Uniscribe visual (glyph) attributes
+    - a0 .. a3: map the Justification class number
+    - fClusterStart: First glyph of representation of cluster
+    - fDiacritic: Diacritic
+    - fZeroWidth: Blank, ZWJ, ZWNJ etc, with no width
+    - fReserved: General reserved bit }
   TScriptVisAttr_enum = (
     a0,a1,a2,a3,
     fClusterStart,     {:1}  // First glyph of representation of cluster
@@ -2939,11 +2848,11 @@ type
   TScriptVisAttr_set = set of TScriptVisAttr_enum;
 
   PScriptVisAttr = ^TScriptVisAttr;
-  /// Contains the visual (glyph) attributes that identify clusters and
-  // justification points, as generated by ScriptShape
-  // - uJustification: Justification class
-  // - fFlags: Uniscribe visual (glyph) attributes
-  // - fShapeReserved: Reserved for use by shaping engines
+  {{ Contains the visual (glyph) attributes that identify clusters and
+    justification points, as generated by ScriptShape
+  - uJustification: Justification class
+  - fFlags: Uniscribe visual (glyph) attributes
+  - fShapeReserved: Reserved for use by shaping engines }
   TScriptVisAttr = packed record
    case Byte of
     0: (uJustification: Byte) {:4};
@@ -2951,87 +2860,62 @@ type
         fShapeReserved: Byte) {:8};
   end;
 
-  TScriptControlAttr_enum = (
-    fContextDigits,
-    fInvertPreBoundDir,
-    fInvertPostBoundDir,
-    fLinkStringBefore,
-    fLinkStringAfter,
-    fNeutralOverride,
-    fNumericOverride,
-    fLegacyBidiClass,
-    scr0, scr1, scr2, scr3, scr4, scr5, scr6, scr7);
-
-  TScriptControlAttr_set = set of TScriptControlAttr_enum;
-
-  TScriptControl = packed record
-    uDefaultLanguage: Word;
-    fFlags: TScriptControlAttr_set;
-  end;
-  PScriptControl = ^TScriptControl;
-
-/// Uniscribe function to break a Unicode string into individually shapeable items
-// - pwcInChars: Pointer to a Unicode string to itemize.
-// - cInChars: Number of characters in pwcInChars to itemize.
-// - cMaxItems: Maximum number of SCRIPT_ITEM structures defining items to process.
-// - psControl: Optional. Pointer to a SCRIPT_CONTROL structure indicating the
-// type of itemization to perform. Alternatively, the application can set this
-// parameter to NULL if no SCRIPT_CONTROL properties are needed.
-// - psState: Optional. Pointer to a SCRIPT_STATE structure indicating
-// the initial bidirectional algorithm state. Alternatively, the application
-// can set this parameter to NULL if the script state is not needed.
-// - pItems: Pointer to a buffer in which the function retrieves SCRIPT_ITEM
-// structures representing the items that have been processed. The buffer
-// should be cMaxItems*sizeof(SCRIPT_ITEM) + 1 bytes in length. It is invalid
-// to call this function with a buffer to hold less than two SCRIPT_ITEM
-// structures. The function always adds a terminal item to the item analysis
-// array so that the length of the item with zero-based index "i" is
-// always available as:
-// ! pItems[i+1].iCharPos - pItems[i].iCharPos;
-// - pcItems: Pointer to the number of SCRIPT_ITEM structures processed
+{{ Uniscribe function to break a Unicode string into individually shapeable items
+   - pwcInChars: Pointer to a Unicode string to itemize.
+   - cInChars: Number of characters in pwcInChars to itemize.
+   - cMaxItems: Maximum number of SCRIPT_ITEM structures defining items to process.
+   - psControl: Optional. Pointer to a SCRIPT_CONTROL structure indicating the
+   type of itemization to perform. Alternatively, the application can set this
+   parameter to NULL if no SCRIPT_CONTROL properties are needed.
+   - psState: Optional. Pointer to a SCRIPT_STATE structure indicating
+   the initial bidirectional algorithm state. Alternatively, the application
+   can set this parameter to NULL if the script state is not needed.
+   - pItems: Pointer to a buffer in which the function retrieves SCRIPT_ITEM
+   structures representing the items that have been processed. The buffer
+   should be cMaxItems*sizeof(SCRIPT_ITEM) + 1 bytes in length. It is invalid
+   to call this function with a buffer to hold less than two SCRIPT_ITEM
+   structures. The function always adds a terminal item to the item analysis
+   array so that the length of the item with zero-based index "i" is
+   always available as:
+   ! pItems[i+1].iCharPos - pItems[i].iCharPos;
+   - pcItems: Pointer to the number of SCRIPT_ITEM structures processed }
 function ScriptItemize(
     const pwcInChars: PWideChar; cInChars: Integer; cMaxItems: Integer;
     const psControl: pointer; const psState: pointer;
     pItems: PScriptItem; var pcItems: Integer): HRESULT; stdcall; external Usp10;
 
-/// Uniscribe function to retrieve information about the current scripts
-// - ppSp: Pointer to an array of pointers to SCRIPT_PROPERTIES structures
-// indexed by script.
-// - piNumScripts: Pointer to the number of scripts. The valid range for this
-// value is 0 through piNumScripts-1.
+{{ Uniscribe function to retrieve information about the current scripts
+   - ppSp: Pointer to an array of pointers to SCRIPT_PROPERTIES structures
+     indexed by script.
+   - piNumScripts: Pointer to the number of scripts. The valid range for this
+     value is 0 through piNumScripts-1. }
 function ScriptGetProperties(out ppSp: PScriptPropertiesArray;
   out piNumScripts: Integer): HRESULT; stdcall; external Usp10;
 
-/// Uniscribe function to convert an array of run embedding levels to a map
-// of visual-to-logical position and/or logical-to-visual position
-// - cRuns: Number of runs to process
-// - pbLevel: Array of run embedding levels
-// - piVisualToLogical: List of run indices in visual order
-// - piLogicalToVisual: List of visual run positions
+{{ Uniscribe function to convert an array of run embedding levels to a map
+  of visual-to-logical position and/or logical-to-visual position
+   - cRuns: Number of runs to process
+   - pbLevel: Array of run embedding levels
+   - piVisualToLogical: List of run indices in visual order
+   - piLogicalToVisual: List of visual run positions }
 function ScriptLayout(cRuns: Integer; const pbLevel: PByte;
     piVisualToLogical: PInteger; piLogicalToVisual: PInteger): HRESULT; stdcall; external Usp10;
 
-/// Uniscribe function to generate glyphs and visual attributes for an Unicode run
-// - hdc: Optional (see under caching)
-// - psc: Uniscribe font metric cache handle
-// - pwcChars: Logical unicode run
-// - cChars: Length of unicode run
-// - cMaxGlyphs: Max glyphs to generate
-// - psa: Result of ScriptItemize (may have fNoGlyphIndex set)
-// - pwOutGlyphs: Output glyph buffer
-// - pwLogClust: Logical clusters
-// - psva: Visual glyph attributes
-// - pcGlyphs: Count of glyphs generated
+{{ Uniscribe function to generate glyphs and visual attributes for an Unicode run
+   - hdc: Optional (see under caching)
+   - psc: Uniscribe font metric cache handle
+   - pwcChars: Logical unicode run
+   - cChars: Length of unicode run
+   - cMaxGlyphs: Max glyphs to generate
+   - psa: Result of ScriptItemize (may have fNoGlyphIndex set)
+   - pwOutGlyphs: Output glyph buffer
+   - pwLogClust: Logical clusters
+   - psva: Visual glyph attributes
+   - pcGlyphs: Count of glyphs generated }
 function ScriptShape(hdc: HDC; var psc: pointer; const pwcChars: PWideChar;
     cChars: Integer; cMaxGlyphs: Integer; psa: PScriptAnalysis;
     pwOutGlyphs: PWord; pwLogClust: PWord; psva: PScriptVisAttr;
     var pcGlyphs: Integer): HRESULT; stdcall; external Usp10;
-
-/// Uniscribe function to apply the specified digit substitution settings
-// to the specified script control and script state structures
-function ScriptApplyDigitSubstitution(
-    const psds: Pointer; const psControl: pointer;
-    const psState: pointer): HRESULT; stdcall; external Usp10;
 
 {$endif USE_UNISCRIBE}
 
@@ -3211,116 +3095,11 @@ begin // high(TPdfGDIComment)<$47 so it will never begin with GDICOMMENT_IDENTIF
   Windows.GdiComment(MetaHandle,L+(1+sizeof(TRect)),D);
 end;
 
-{$ifndef DELPHI5OROLDER}
-// used by TPdfFontTrueType.PrepareForSaving()
-function GetTTCIndex(const FontName: RawUTF8; var ttcIndex: Word;
-  const FontCount: LongWord): Boolean;
-// Looks up ttcIndex from list of font names in known ttc font collections.
-// For some locales, the lookup may fail
-// Result must not be greater than FontCount-1
-const
-  // Font names for Simp/Trad Chinese, Japanese, Korean locales.
-  BATANG_KO = #48148#53461;
-  BATANGCHE_KO = BATANG_KO + #52404;
-  GUNGSUH_KO = #44417#49436;
-  GUNGSUHCHE_KO = GUNGSUH_KO + #52404;
-  GULIM_KO = #44404#47548;
-  GULIMCHE_KO = GULIM_KO + #52404;
-  DOTUM_KO = #46027#50880;
-  DOTUMCHE_KO = DOTUM_KO + #52404;
-  MINGLIU_CH = #32048#26126#39636;
-  PMINGLIU_CH = #26032 + MINGLIU_CH;
-  MINGLIU_HK_CH = MINGLIU_CH + '_hkscs';
-  MINGLIU_XB_CH = MINGLIU_CH + '-extb';
-  PMINGLIU_XB_CH = PMINGLIU_CH + '-extb';
-  MINGLIU_XBHK_CH = MINGLIU_CH + '-extb_hkscs';
-  MSGOTHIC_JA = #65325#65331#32#12468#12471#12483#12463;
-  MSPGOTHIC_JA = #65325#65331#32#65328#12468#12471#12483#12463;
-  MSMINCHO_JA = #65325#65331#32#26126#26397;
-  MSPMINCHO_JA = #65325#65331#32#65328#26126#26397;
-  SIMSUN_CHS = #23435#20307;
-  NSIMSUN_CHS = #26032#23435#20307;
-var
-  lcfn: SynUnicode;
-begin
-  result := True;
-  UTF8ToSynUnicode(fontName,lcfn);
-  lcfn := {$ifdef UNICODE}SysUtils.LowerCase{$else}WideLowerCase{$endif}(lcfn);
-  // batang.ttc (Korean)
-  if (lcfn='batang') or (lcfn=BATANG_KO) then
-    ttcIndex := 0 else
-  if (lcfn='batangche') or (lcfn=BATANGCHE_KO) then
-    ttcIndex := 1 else
-  if (lcfn='gungsuh') or (lcfn=GUNGSUH_KO) then
-    ttcIndex := 2 else
-  if (lcfn='gungsuhche') or (lcfn=GUNGSUHCHE_KO) then
-    ttcIndex := 3 else
-  // cambria.ttc
-  if lcfn='cambria' then
-    ttcIndex := 0 else
-  if lcfn='cambria math' then
-    ttcIndex := 1 else
-  // gulim.ttc (Korean)
-  if (lcfn='gulim') or (lcfn=GULIM_KO) then
-    ttcIndex := 0 else
-  if (lcfn='gulimche') or (lcfn=GULIMCHE_KO) then
-    ttcIndex := 1 else
-  if (lcfn='dotum') or (lcfn=DOTUM_KO) then
-    ttcIndex := 2 else
-  if (lcfn='dotumche') or (lcfn=DOTUMCHE_KO) then
-    ttcIndex := 3 else
-  // mingliu.ttc (Traditional Chinese)
-  if (lcfn='mingliu') or (lcfn=MINGLIU_CH) then
-    ttcIndex := 0 else
-  if (lcfn='pmingliu') or (lcfn=PMINGLIU_CH) then
-    ttcIndex := 1 else
-  if (lcfn='mingliu_hkscs') or (lcfn=MINGLIU_HK_CH) then
-    ttcIndex := 2 else
-  // mingliub.ttc (Traditional Chinese)
-  if (lcfn='mingliu-extb') or (lcfn=MINGLIU_XB_CH) then
-    ttcIndex := 0 else
-  if (lcfn='pmingliu-extb') or (lcfn=PMINGLIU_XB_CH) then
-    ttcIndex := 1 else
-  if (lcfn='mingliu_hkscs-extb') or (lcfn=MINGLIU_XBHK_CH) then
-    ttcIndex := 2 else
-  // msgothic.ttc (Japanese)
-  if (lcfn='ms gothic') or
-     (lcfn={$ifdef UNICODE}SysUtils.LowerCase{$else}WideLowerCase{$endif}(MSGOTHIC_JA)) then
-    ttcIndex := 0 // MSGOTHIC_JA contains full-width uppercase chars
-  else if (lcfn='ms pgothic') or
-    (lcfn={$ifdef UNICODE}SysUtils.LowerCase{$else}WideLowerCase{$endif}(MSPGOTHIC_JA)) then
-      ttcIndex := 1 else
-  if lcfn='ms ui gothic' then
-    ttcIndex := 2 else
-  // msmincho.ttc (Japanese)
-  if (lcfn='ms mincho') or
-     (lcfn={$ifdef UNICODE}SysUtils.LowerCase{$else}WideLowerCase{$endif}(MSMINCHO_JA)) then
-    ttcIndex := 0 else
-  if (lcfn='ms pmincho') or
-     (lcfn={$ifdef UNICODE}SysUtils.LowerCase{$else}WideLowerCase{$endif}(MSPMINCHO_JA)) then
-    ttcIndex := 1 else
-  // simsun.ttc (Simplified Chinese)
-  if (lcfn='simsun') or (lcfn=SIMSUN_CHS) then
-    ttcIndex := 0 else
-  if (lcfn='nsimsun') or (lcfn=NSIMSUN_CHS) then
-    ttcIndex := 1 else
-    result := False;
-  if result and (ttcIndex>(FontCount-1)) then
-    result := False;
-end;
-{$endif DELPHI5OROLDER}
-
-
 { TPdfObject }
 
 constructor TPdfObject.Create;
 begin
   FObjectNumber := -1;
-end;
-
-procedure TPdfObject.ForceSaveNow;
-begin
-  FSaveAtTheEnd := False;
 end;
 
 procedure TPdfObject.InternalWriteTo(W: TPdfWrite);
@@ -3432,7 +3211,7 @@ procedure TPdfText.InternalWriteTo(W: TPdfWrite);
 begin
   // if the value has multibyte character, convert the value to hex unicode.
   // otherwise, escape characters.
-  if SysLocale.FarEast and _HasMultiByteString(pointer(FValue)) then
+  if SysLocale.FarEast and _HasMultiByteString(pointer(FValue)) then 
     W.Add('<FEFF').AddToUnicodeHex(FValue).Add('>') else
     W.Add('(').AddEscapeContent(FValue).Add(')');
 end;
@@ -3650,15 +3429,6 @@ begin
   if AItem.ObjectType=otDirectObject then
     result := FArray.Add(AItem) else
     result := FArray.Add(TPdfVirtualObject.Create(AItem.ObjectNumber))
-end;
-
-procedure TPdfArray.InsertItem(Index: Integer; AItem: TPdfObject);
-begin
-  if FArray.IndexOf(AItem)>=0 then
-    exit; // if AItem already exists, do nothing
-  if AItem.ObjectType=otDirectObject then
-    FArray.Insert(Index, AItem) else
-    FArray.Insert(Index, TPdfVirtualObject.Create(AItem.ObjectNumber))
 end;
 
 function TPdfArray.FindName(const AName: PDFString): TPdfName;
@@ -3967,7 +3737,7 @@ begin
       W.fDoc.fEncryption.EncodeBuffer(Buf^,Buf^,TmpSize);
   {$endif}
     W.Add(#10'stream'#10).Add(Buf,TmpSize).
-      Add(#10'endstream');
+      Add('endstream');
     FWriter.fDestStream.Size := 0; // release internal stream memory
   finally
     TmpStream.Free;
@@ -4083,14 +3853,6 @@ begin
   result := CurrentAnsiConvert.UTF8BufferToAnsi(pointer(Value),length(Value));
 end;
 
-function UInt32ToPDFString(Value : Cardinal): PDFString;
-var tmp: array[0..15] of AnsiChar;
-    P: PAnsiChar;
-begin
-  P := StrUInt32(@tmp[15],Value);
-  SetString(result,P,@tmp[15]-P);
-end;
-
 function PdfRect(Left, Top, Right, Bottom: Single): TPdfRect;
 begin
   result.Left := Left;
@@ -4104,7 +3866,7 @@ begin
   result.Left := Box.Left;
   result.Top := Box.Top;
   result.Right := Box.Left+Box.Width;
-  result.Bottom := Box.Top-Box.Height;
+  result.Bottom := Box.Top-Box.Height; 
 end;
 
 function PdfBox(Left, Top, Width, Height: Single): TPdfBox;
@@ -4129,7 +3891,7 @@ begin
             break else
             inc(result,2);
   end else
-    result := SynCommons.StrLen(pointer(Text));
+    result := SynCommons.StrLen(pointer(Text)); 
 end;
 
 function CombineTransform(xform1, xform2: XFORM): XFORM;
@@ -4205,7 +3967,7 @@ function TPdfWrite.Add(Value: Integer): TPdfWrite;
 var t: array[0..15] of AnsiChar;
     P: PAnsiChar;
 begin
-  if BEnd-B<=16 then
+  if B+16>Bend then
     Save;
   if Cardinal(Value)<10 then begin
     B^ := AnsiChar(Value+48);
@@ -4227,7 +3989,7 @@ var L: integer;
 begin
   if PtrInt(Text)<>0 then begin
     L := PInteger(PtrInt(Text)-4)^; // fast L := length(Text)
-    if BEnd-B<=L then begin
+    if B+L>=Bend then begin
       Save;
       inc(fDestStreamPosition,L);
       fDestStream.Write(pointer(Text)^,L);
@@ -4241,7 +4003,7 @@ end;
 
 function TPdfWrite.Add(Text: PAnsiChar; Len: integer): TPdfWrite;
 begin
-  if BEnd-B<=Len then begin
+  if B+Len>=Bend then begin
     Save;
     inc(fDestStreamPosition,Len);
     fDestStream.Write(Text^,Len);
@@ -4257,24 +4019,24 @@ var t: array[0..15] of AnsiChar;
     i64: array[0..1] of Int64 absolute t;
 begin
 //  assert(DigitCount<high(t));
-  if BEnd-B<=16 then
+  if B+16>Bend then
     Save;
   i64[0] := $3030303030303030; // t[0..14]='0'
   i64[1] := $2030303030303030; // t[15]=' '
   if Value<0 then
     Value := 0;
-  StrUInt32(@t[15],Value);
-  inc(DigitCount); // includes trailing t[15]=' '
+  StrInt32(@t[15],Value);
+  inc(DigitCount);
   Move(t[16-DigitCount],B^,DigitCount);
   inc(B,DigitCount);
   result := self;
 end;
 
-function TPdfWrite.Add(Value: TSynExtended): TPdfWrite;
+function TPdfWrite.Add(Value: Extended): TPdfWrite;
 var Buffer: ShortString;
     L: integer;
 begin
-  if BEnd-B<=32 then
+  if B+32>BEnd then
     Save;
   str(Value:0:2,Buffer);
   L := ord(Buffer[0]);
@@ -4420,7 +4182,7 @@ begin
   PW := pointer(Bin);
   repeat
     L := Len;
-    if BEnd-B<=L*2 then begin
+    if B+L*2>=BEnd then begin
       Save;
       if L>high(Tmp) shr 1 then
         L := high(Tmp) shr 1;
@@ -4463,15 +4225,15 @@ begin
 end;
 
 function TPdfWrite.AddIso8601(DateTime: TDateTime): TPdfWrite;
-begin // add e.g. '2010-06-16T15:06:59'
+begin // add e.g. '2010-06-16T15:06:59-07:00'
   result := Add(DateTimeToIso8601(DateTime,true,'T'));
 end;
 
-function TPdfWrite.AddWithSpace(Value: TSynExtended): TPdfWrite;
+function TPdfWrite.AddWithSpace(Value: Extended): TPdfWrite;
 var Buffer: ShortString;
     L: integer;
 begin
-  if BEnd-B<=32 then
+  if B+32>BEnd then
     Save;
   // Value := Trunc(Value * 100 + 0.5) / 100; // 2 decim rounding done by str()
   if Abs(Value)<1E-2 then
@@ -4492,7 +4254,7 @@ end;
 function TPdfWrite.AddIntegerBin(value: integer; bytesize: cardinal): TPdfWrite;
 var i: cardinal;
 begin
-  if BEnd-B<=4 then
+  if B+4>Bend then
     Save;
   for i := 1 to bytesize do
     B[i-1] := PAnsiChar(@value)[bytesize-i];
@@ -4500,11 +4262,11 @@ begin
   result := self;
 end;
 
-function TPdfWrite.AddWithSpace(Value: TSynExtended; Decimals: cardinal): TPdfWrite;
+function TPdfWrite.AddWithSpace(Value: Extended; Decimals: cardinal): TPdfWrite;
 var Buffer: ShortString;
     L: integer;
 begin
-  if BEnd-B<=32 then
+  if B+32>BEnd then
     Save;
   str(Value:0:Decimals,Buffer);
   L := ord(Buffer[0])+1;
@@ -4564,7 +4326,7 @@ begin
 {$endif}
     repeat
       L := WideCharCount;
-      if BEnd-B<=L*4 then begin
+      if B+L*4>=BEnd then begin
         Save;
         if L>high(Tmp) shr 2 then
           L := high(Tmp) shr 2; // max WideCharCount allowed in Tmp[]
@@ -4618,16 +4380,16 @@ var L, i,j: integer;
     res: HRESULT;
     max, count, numSp: integer;
     Sp: PScriptPropertiesArray;
+    W: PWideChar;
     items: array of TScriptItem;
     level: array of byte;
     VisualToLogical: array of integer;
     psc: pointer; // opaque Uniscribe font metric cache
     complex,R2L: boolean;
+    complexs: array of byte;
     glyphs: array of TScriptVisAttr;
     glyphsCount: integer;
     OutGlyphs, LogClust: array of word;
-    AScriptControl: TScriptControl;
-    AScriptState: TScriptState;
 procedure Append(i: Integer);
 // local procedure used to add glyphs from items[i] to the PDF content stream
 var L: integer;
@@ -4644,6 +4406,11 @@ begin
   if L=0 then
     exit; // nothing to append
   W := PW+items[i].iCharPos;
+  if not GetBit(complexs[0],i) then begin
+    // not complex items are rendered as fast as possible
+    DefaultAppend;
+    exit;
+  end;
   res := ScriptShape(0,psc,W,L,max,@items[i].a,
     pointer(OutGlyphs),pointer(LogClust),pointer(glyphs),glyphsCount);
   case res of
@@ -4667,7 +4434,7 @@ begin
   end;
   // add glyphs to the PDF content
   // (NextLine has already been handled: not needed here)
-  AddGlyphs(pointer(OutGlyphs),glyphsCount,Canvas,pointer(glyphs));
+  AddGlyphs(pointer(OutGlyphs),glyphsCount,Canvas);
 end;
 begin
   result := false; // on UniScribe error, handle as Unicode
@@ -4676,25 +4443,34 @@ begin
   max := L+2; // should be big enough
   SetLength(items,max);
   count := 0;
-  FillChar(AScriptControl, SizeOf(TScriptControl), 0);
-  FillChar(AScriptState, SizeOf(TScriptState), 0);
-  if ScriptApplyDigitSubstitution(nil,@AScriptControl,@AScriptState) <> 0 then
-    exit;
-  if Canvas.RightToLeftText then
-    AScriptState.uBidiLevel := 1;
-  if ScriptItemize(PW,L,max,@AScriptControl,@AScriptState,pointer(items),count) <> 0 then
+  if ScriptItemize(PW,L,max,nil,nil,pointer(items),count)<>0 then
     exit; // error trying processing Glyph Shaping -> fast return
   // 2. guess if requiring glyph shaping or layout
+  SetLength(complexs,(count shr 3)+1);
   ScriptGetProperties(sP,numSp);
   complex := false;
   R2L := false;
   for i := 0 to Count-2 do // don't need Count-1 = Terminator
-    if fComplex in sP^[items[i].a.eScript and (1 shl 10-1)]^.fFlags then
-      complex := true else
+    if fComplex in sP^[items[i].a.eScript and (1 shl 10-1)]^.fFlags then begin
+      complex := true;
+      SetBit(complexs[0],i);
+    end else
       if fRTL in items[i].a.fFlags then
         R2L := true;
-  if not complex and not R2L then
-    exit; // avoid slower UniScribe if content does not require it
+  if not complex then begin
+    // no glyph shaping -> fast append as normal Unicode Text
+    if R2L then begin
+      // handle Right To Left but not Complex text
+      W := pointer(items); // there is enough temp space in items[]
+      W[L] := #0;
+      dec(L);
+      for i := 0 to L do
+        W[i] := PW[L-i];
+      AddUnicodeHexTextNoUniScribe(W,WinAnsiTTF,NextLine,Canvas);
+      result := true; // mark handled here
+    end;
+    exit;
+  end;
   // 3. get Visual Order, i.e. how to render the content from left to right
   SetLength(level,count);
   for i := 0 to Count-1 do
@@ -4712,9 +4488,13 @@ begin
   SetLength(OutGlyphs,max);
   SetLength(LogClust,max);
   psc := nil; // cached for the same character style used
-  // append following logical order
-  for j := 0 to Count-2 do // Count-2: ignore last ending item
-    Append(VisualToLogical[j]);
+  if Canvas.RightToLeftText then
+    // append from right to left visual order
+    for j := Count-2 downto 0 do // Count-2: ignore last ending item
+      Append(VisualToLogical[j]) else
+    // append from left to right visual order
+    for j := 0 to Count-2 do // Count-2: ignore last ending item
+      Append(VisualToLogical[j]);
 end;
 {$endif}
 
@@ -4772,20 +4552,14 @@ end;
 procedure TPdfWrite.AddUnicodeHexTextNoUniScribe(PW: PWideChar;
   TTF: TPdfFontTrueType; NextLine: boolean; Canvas: TPdfCanvas);
 var Ansi: integer;
-    isSymbolFont: Boolean;
 begin
-  if TTF<>nil then begin
-    if TTF.UnicodeFont<>nil then
-      isSymbolFont := TTF.UnicodeFont.fIsSymbolFont else
-      isSymbolFont := TTF.fIsSymbolFont;
-    TTF := TTF.WinAnsiFont; // we expect the WinAnsi font in the code below
-  end else
-    isSymbolFont := false;
   Ansi := WideCharToWinAnsi(cardinal(PW^));
-  if (TTF=nil) and (Ansi<0) then
-    Ansi := ord('?'); // WinAnsi only font shows ? glyph for unicode chars
+  if TTF<>nil then
+    TTF := TTF.WinAnsiFont else // we expect the WinAnsi font in the code below
+    if Ansi<0 then
+      Ansi := ord('?'); // WinAnsi only font shows ? glyph for unicode chars
   while Ansi<>0 do begin
-    if (Ansi>0) and (not isSymbolFont) then begin
+    if Ansi>0 then begin
       // add WinAnsi-encoded chars as such
       if (TTF<>nil) and (Canvas.FPage.Font<>TTF) then
         Canvas.SetPDFFont(TTF,Canvas.FPage.FontSize);
@@ -4842,12 +4616,10 @@ begin
   result := self;
 end;
 
-function TPdfWrite.AddGlyphs(Glyphs: PWord; GlyphsCount: integer;
-  Canvas: TPdfCanvas; AVisAttrsPtr: Pointer): TPdfWrite;
+function TPdfWrite.AddGlyphs(Glyphs: PWord; GlyphsCount: integer; Canvas: TPdfCanvas): TPdfWrite;
 var TTF: TPdfFontTrueType;
     first: boolean;
     glyph: integer;
-    AVisAttrs: PScriptVisAttr;
 begin
   if (Glyphs<>nil) and (GlyphsCount>0) then begin
     with Canvas.FPage do
@@ -4859,26 +4631,21 @@ begin
         TTF.CreateAssociatedUnicodeFont;
       Canvas.SetPDFFont(TTF.UnicodeFont,Canvas.FPage.FontSize);
       first := true;
-      AVisAttrs := AVisAttrsPtr;
       while GlyphsCount>0 do begin
-        if (AVisAttrs=nil) or
-           not(AVisAttrs^.fFlags*[fDiacritic,fZeroWidth]=[fZeroWidth]) then begin
-          glyph := TTF.WinAnsiFont.GetAndMarkGlyphAsUsed(Glyphs^);
-          // this font shall by definition contain all needed glyphs
-          // -> no Font Fallback is to be implemented here
-          if first then begin
-            first := false;
-            Add('<');
-          end;
-          AddHex4(glyph);
+        glyph := TTF.WinAnsiFont.GetAndMarkGlyphAsUsed(Glyphs^);
+        // this font shall by definition contain all needed glyphs
+        // -> no Font Fallback is to be implemented here
+        if first then begin
+          first := false;
+          Add('<');
         end;
+        AddHex4(glyph);
         inc(Glyphs);
         dec(GlyphsCount);
-        if AVisAttrs<>nil then
-          inc(AVisAttrs);
       end;
       if not first then
-        Add('> Tj'#10);
+        Add('>');
+      Add(' Tj'#10);
     end;
   end;
   result := self;
@@ -4888,7 +4655,7 @@ function TPdfWrite.AddWithSpace(Value: Integer): TPdfWrite;
 var t: array[0..15] of AnsiChar;
     P: PAnsiChar;
 begin
-  if BEnd-B<=16 then
+  if B+16>Bend then
     Save;
   if Cardinal(Value)<10 then begin
     PWord(B)^ := Value+(48+32 shl 8);
@@ -5433,7 +5200,7 @@ end;
 
 const
   PDF_PRODUCER = 'Synopse PDF engine '+SYNOPSE_FRAMEWORK_VERSION;
-
+  
 procedure TPdfDocument.CreateInfo;
 var FInfoDictionary: TPdfDictionary;
 begin
@@ -5471,7 +5238,7 @@ begin
         exit;
   result := -1;
 end;
-
+                                
 function TPdfDocument.GetXObject(const AName: PDFString): TPdfXObject;
 var i: integer;
 begin
@@ -5501,7 +5268,7 @@ begin
       Obj := TPdfXObject(FXRef.GetObject(Obj.FObjectNumber));
     if (Obj<>nil) and Obj.InheritsFrom(TPdfImage) and
        (Img.PixelWidth=Width) and (Img.PixelHeight=Height) and
-       (not IsZero(@Img.fHash,sizeof(Hash))) and
+       (not IsZero(@Img.fHash,sizeof(Hash))) and 
        CompareMem(@Img.fHash,@Hash,SizeOf(Hash)) and
        (Obj.Attributes<>nil) then begin
       result := TPdfName(Obj.Attributes.ValueByName('Name')).Value;
@@ -5582,7 +5349,6 @@ end;
 procedure TPdfDocument.NewDoc;
 var CatalogDictionary: TPdfDictionary;
     Dico: TPdfDictionary;
-    DicoD: TPdfDictionary;
     RGB: TPdfStream;
     ID: TPdfArray;
     IDs: PDFString;
@@ -5616,7 +5382,6 @@ begin
   FXObjectList.FSaveAtTheEnd := true;
   FObjectList := TList.Create;
   FRoot := TPdfCatalog.Create;
-  FRoot.FOwner := self;
   CatalogDictionary := TPdfDictionary.Create(FXref);
   FXref.AddObject(CatalogDictionary);
   CatalogDictionary.AddItem('Type', 'Catalog');
@@ -5633,20 +5398,6 @@ begin
   FCurrentPages := CreatePages(nil); // nil -> create root Pages XObject
   FRoot.SetPages(FCurrentPages);
   NeedFileID := false;
-  if FUseOptionalContent then begin
-    if fFileFormat<pdf15 then
-      fFileFormat := pdf15;
-    Dico := TPdfDictionary.Create(FXRef);
-    DicoD := TPdfDictionary.Create(FXRef);
-    DicoD.AddItem('BaseState','ON');  // must be ON in default configuration
-    DicoD.AddItem('OFF',TPDFArray.Create(FXRef));
-    DicoD.AddItem('Order',TPDFArray.Create(FXRef));
-    DicoD.AddItem('ListMode','AllPages');  // default value but some viewers cause trouble when missing
-    DicoD.AddItem('RBGroups',TPDFArray.Create(FXRef));
-    Dico.AddItem('D',DicoD);
-    Dico.AddItem('OCGs',TPdfArray.Create(FXRef));
-    FRoot.Data.AddItem('OCProperties',Dico);
-  end;
   {$ifdef USE_PDFSECURITY}
   if fEncryption<>nil then
     NeedFileID := true;
@@ -5700,7 +5451,7 @@ begin
     FTrailer.Attributes.AddItem('ID',ID);
   end;
   {$ifdef USE_PDFSECURITY}
-  if fEncryption<>nil then
+  if fEncryption<>nil then 
     fEncryption.AttachDocument(self);
   {$endif}
 end;
@@ -5792,7 +5543,7 @@ procedure TPdfDocument.SaveToStreamDirectBegin(AStream: TStream;
   ForceModDate: TDateTime);
 const PDFHEADER: array[TPdfFileFormat] of PDFString = (
     '%PDF-1.3'#10, '%PDF-1.4'#10'%'#228#229#230#240#10,
-    '%PDF-1.5'#10'%'#241#242#243#244#10, '%PDF-1.6'#10'%'#245#246#247#248#10);
+    '%PDF-1.5'#10'%'#241#242#243#244#10);
 begin
   if fSaveToStreamWriter<>nil then
     raise EPdfInvalidOperation.Create('SaveToStreamDirectBegin called twice');
@@ -5808,8 +5559,8 @@ begin
       '<x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="SynPdf">'+
       '<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">'+
       '<rdf:Description rdf:about="" xmlns:xmp="http://ns.adobe.com/xap/1.0/">'+
-      '<xmp:CreateDate>')).AddIso8601(Info.CreationDate).Add('Z</xmp:CreateDate>'+
-      '<xmp:ModifyDate>').AddIso8601(Info.ModDate).Add('Z</xmp:ModifyDate>'+
+      '<xmp:CreateDate>')).AddIso8601(Info.CreationDate).Add('</xmp:CreateDate>'+
+      '<xmp:ModifyDate>').AddIso8601(Info.ModDate).Add('</xmp:ModifyDate>'+
       '<xmp:CreatorTool>').Add(StringToUTF8(Info.Creator)).
        Add('</xmp:CreatorTool></rdf:Description>'+
       '<rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/">'+
@@ -5832,13 +5583,11 @@ begin
   fSaveToStreamWriter.Add(PDFHEADER[fFileformat]);
 end;
 
-procedure TPdfDocument.SaveToStreamDirectPageFlush(FlushCurrentPageNow: boolean);
+procedure TPdfDocument.SaveToStreamDirectPageFlush;
 var i: integer;
 begin
   if (self=nil) or (fSaveToStreamWriter=nil) or (FCanvas.FPage=nil) then
     raise EPdfInvalidOperation.Create('SaveToStreamDirectPageFlush');
-  if FlushCurrentPageNow then
-    FCanvas.FPage.FSaveAtTheEnd := false;
   for i := 1 to FXref.ItemCount-1 do  // ignore FXref[0] = root PDF_FREE_ENTRY
     with FXref.Items[i] do
     if (ByteOffset<=0) and not Value.FSaveAtTheEnd then begin
@@ -5872,7 +5621,7 @@ begin
           Value.WriteValueTo(fSaveToStreamWriter);
       end;
     FTrailer.XrefAddress := fSaveToStreamWriter.Position;
-    if fFileFormat<pdf15 then
+    if fFileFormat<pdf15 then 
       FXref.WriteTo(fSaveToStreamWriter);
     FTrailer.Attributes.PdfNumberByName('Size').Value := FXref.ItemCount;
     FTrailer.WriteTo(fSaveToStreamWriter);
@@ -6033,8 +5782,6 @@ const
 
   TTFCFP_FLAGS_SUBSET = 1;
   TTFMFP_SUBSET = 0;
-  TTFCFP_FLAGS_TTC = 4;
-  TTCF_TABLE = $66637474;
 
 type
   /// a TTF name record used for the 'name' Format 4 table
@@ -6091,7 +5838,7 @@ begin
   if (name=nil) or (name^.format<>0) then
     exit;
   Rec := @name^.FirstNameRecord;
-  for i := 0 to name^.count-1 do
+  for i := 0 to name^.count-1 do 
     if (Rec^.nameID=NAME_POSTCRIPT) and (Rec^.platformID=TTFCFP_MS_PLATFORMID) and
        (Rec^.encodingID=1) and (Rec^.languageID=$409) then begin
       PW := PAnsiChar(name)+name^.stringOffset+Rec^.offset;
@@ -6130,6 +5877,91 @@ begin
   fLastOutline := result;
 end;
 
+function HashOf(P: PByteArray; Len: integer): cardinal;
+// algorithm from IniFiles.TStringHash.HashOf
+{$ifdef PUREPASCAL}
+var I: Integer;
+begin
+  Result := 0;
+  for I := 0 to Len-1 do
+    Result := ((Result shl 2) or (Result shr (SizeOf(Result)*8-2))) xor P[I];
+end;
+{$else}
+asm // faster asm version by Synopse
+    or edx,edx
+    jz @z
+    push ebx
+    mov ebx,edx     // ebx = length(Key)
+    mov edx,eax     // edx = Text
+    xor eax,eax     // eax = Result
+    xor ecx,ecx     // ecx = Result shl 2 = 0
+@1: shr eax,$1e     // eax = Result shr (SizeOf(Result) * 8 - 2))
+    or ecx,eax      // ecx = ((Result shl 2) or (Result shr (SizeOf(Result)*8-2)))
+    movzx eax,byte ptr [edx] // eax = ord(Key[i])
+    inc edx
+    xor eax,ecx     // eax = () xor ord(Key[i])
+    dec ebx
+    lea ecx,[eax*4] // ecx = Result shl 2
+    jnz @1
+    pop ebx
+@z:
+end;
+{$endif}
+
+{$ifndef USE_SYNZIP} // ZLib.pas from Borland times does not export those functions
+var
+  crc32Tab : array [0..255] of cardinal;
+
+procedure InitCrc32Tab;
+var i,n,crc: cardinal;
+begin // this code is 49 bytes long, generating a 1KB table
+  for i := 0 to 255 do begin
+    crc := i;
+    for n := 1 to 8 do
+      if (crc and 1)<>0 then
+        // $edb88320 from polynomial p=(0,1,2,4,5,7,8,10,11,12,16,22,23,26)
+        crc := (crc shr 1) xor $edb88320 else
+        crc := crc shr 1;
+    CRC32Tab[i] := crc;
+  end;
+end;
+
+function crc32(aCRC32: cardinal; inBuf: pointer; inLen: integer) : cardinal;
+var i: integer;
+begin // slowest but always accurate version
+  result := not aCRC32;
+  for i := 1 to inLen do begin
+    result := crc32Tab[byte(result xor pByte(inBuf)^)] xor (result shr 8);
+    inc(PByte(inBuf));
+  end;
+  result := not result;
+end;
+
+function adler32(Adler: cardinal; p: pointer; Count: Integer): cardinal;
+// simple Adler32 implementation (twice slower than Asm, but shorter code size)
+var s1, s2: cardinal;
+    i, n: integer;
+begin
+  s1 := LongRec(Adler).Lo;
+  s2 := LongRec(Adler).Hi;
+  while Count>0 do begin
+    if Count<5552 then
+      n := Count else
+      n := 5552;
+    for i := 1 to n do begin
+      inc(s1,pByte(p)^);
+      inc(PtrUInt(p));
+      inc(s2,s1);
+    end;
+    s1 := s1 mod 65521;
+    s2 := s2 mod 65521;
+    dec(Count,n);
+  end;
+  result := word(s1)+cardinal(word(s2)) shl 16;
+end;
+{$endif}
+
+
 function TPdfDocument.CreateOrGetImage(B: TBitmap; DrawAt: PPdfBox; ClipRc: PPdfBox): PDFString;
 var J: TJpegImage;
     Img: TPdfImage;
@@ -6139,11 +5971,11 @@ var J: TJpegImage;
     Pals: array of TPaletteEntry;
 const PERROW: array[TPixelFormat] of byte = (0,1,4,8,15,16,24,32,0);
 procedure DoHash(bits: pointer; size: Integer);
-begin // "4 algorithms to rule them all": all SynCommons hashers to the rescue!
-  Hash[0] := crc32c(Hash[0],bits,size);
-  Hash[1] := kr32(Hash[1],bits,size);
-  Hash[2] := fnv32(Hash[2],bits,size);
-  Hash[3] := Hash[3] xor Hash32(bits,size);
+begin // "4 algorithms to rule them all"
+  Hash[0] := Hash[0] xor Hash32(bits,size);
+  Hash[1] := Hash[1] xor HashOf(bits,size);
+  Hash[2] := crc32(Hash[2],bits,size);
+  Hash[3] := adler32(Hash[3],bits,size);
 end;
 begin
   result := '';
@@ -6169,7 +6001,7 @@ begin
     row := BytesPerScanline(w,row,32);
     for y := 0 to h-1 do
       DoHash(B.ScanLine[y],row);
-    result := GetXObjectImageName(Hash,w,h); // search for matching image
+    result := GetXObjectImageName(Hash,w,h);
   end;
   if result='' then begin
      // create new if no existing TPdfImage match
@@ -6184,110 +6016,23 @@ begin
       end;
     end;
     Img.fHash := Hash;
-    result := 'SynImg'+UInt32ToPDFString(FXObjectList.ItemCount);
+    result := 'SynImg'+PDFString(IntToStr(FXObjectList.ItemCount));
     if ForceJPEGCompression=0 then
-      AddXObject(result,Img) else
+      AddXObject(result,Img)
+    else
       RegisterXObject(Img, result);
   end;
   // draw bitmap as XObject
-  if DrawAt<>nil then begin
+  if DrawAt<>nil then
+  begin
     if ClipRc<>nil then
       with DrawAt^ do
         Canvas.DrawXObjectEx(Left,Top,Width,Height,
-          ClipRc^.Left,ClipRc^.Top,ClipRc^.Width,ClipRc^.Height, result) else
+          ClipRc^.Left,ClipRc^.Top,ClipRc^.Width,ClipRc^.Height, result)
+    else
       with DrawAt^ do
         Canvas.DrawXObject(Left,Top,Width,Height, result);
   end;
-end;
-
-function TPdfDocument.CreateOptionalContentGroup(
-  ParentContentGroup: TPdfOptionalContentGroup;
-  const Title: string; Visible: Boolean): TPdfOptionalContentGroup;
-var Dico, DicoD: TPdfDictionary;
-    Arr: TPDFArray;
-
-  function FindParentContentGroupArray(Current: TPDFArray): TPDFArray;
-  var i: Integer;
-  begin
-    result := nil;
-    if Current=nil then
-      exit;
-    for i := 0 to Current.ItemCount-1 do
-      if Current.Items[i]=ParentContentGroup then begin
-        if (i<Current.ItemCount-1) and Current.Items[i+1].InheritsFrom(TPDFArray) then
-          result := TPDFArray(Current.Items[i+1]) else begin
-          result := TPDFArray.Create(FXRef);
-          Current.InsertItem(i+1, result);
-        end;
-        exit;
-      end;
-    for i := 0 to Current.ItemCount-1 do
-      if Current.Items[i].InheritsFrom(TPDFArray) then begin
-        result := FindParentContentGroupArray(TPDFArray(Current.Items[i]));
-        if result<>nil then
-          exit;
-      end;
-  end;
-
-begin
-  if FUseOptionalContent then begin
-    result := TPdfOptionalContentGroup.Create(FXRef);
-    FXref.AddObject(result);
-    result.AddItem('Type','OCG');
-    result.AddItemTextString('Name',Title);
-    Dico := FRoot.Data.PdfDictionaryByName('OCProperties');
-    if Dico<>nil then begin
-      DicoD := Dico.PdfDictionaryByName('D');
-      if DicoD<>nil then begin
-        Arr := DicoD.PdfArrayByName('Order');
-        if ParentContentGroup<>nil then
-          Arr := FindParentContentGroupArray(Arr);
-        if Arr<>nil then
-          Arr.AddItem(result);
-        if not Visible then begin
-          Arr := DicoD.PdfArrayByName('OFF');
-          if Arr<>nil then
-            Arr.AddItem(result);
-        end;
-      end;
-      Arr := Dico.PdfArrayByName('OCGs');
-      if Arr<>nil then
-        Arr.AddItem(result);
-    end;
-  end else
-    result := nil;
-end;
-
-procedure TPdfDocument.CreateOptionalContentRadioGroup(
-  const ContentGroups: array of TPdfOptionalContentGroup);
-var i: Integer;
-    Dico, DicoD: TPdfDictionary;
-    Arr, RadioArr: TPDFArray;
-begin
-  if FUseOptionalContent and (Length(ContentGroups)>0) then begin
-    Dico := FRoot.Data.PdfDictionaryByName('OCProperties');
-    if Dico<>nil then begin
-      DicoD := Dico.PdfDictionaryByName('D');
-      if DicoD<>nil then begin
-        Arr := DicoD.PdfArrayByName('RBGroups');
-        if Arr<>nil then begin
-          RadioArr := TPDFArray.Create(FXref);
-          for i  :=  Low(ContentGroups) to High(ContentGroups) do
-            if ContentGroups[i]<>nil then
-              RadioArr.AddItem(ContentGroups[i]);
-          if RadioArr.ItemCount>0 then
-            Arr.AddItem(RadioArr) else
-            FreeAndNil(RadioArr);
-        end;
-      end;
-    end;
-  end;
-end;
-
-procedure TPdfDocument.SetUseOptionalContent(const Value: boolean);
-begin
-  FUseOptionalContent := Value;
-  NewDoc;
 end;
 
 procedure TPdfDocument.SetPDFA1(const Value: boolean);
@@ -6315,10 +6060,9 @@ end;
 
 procedure TPdfDocument.SetGeneratePDF15File(const Value: boolean);
 begin
-  if fFileFormat<>pdf16 then
-    if Value then
-      fFileFormat := pdf15 else
-      fFileFormat := pdf14;
+  if Value then
+    fFileFormat := pdf15 else
+    fFileFormat := pdf14;
 end;
 
 
@@ -6839,7 +6583,7 @@ end;
 procedure TPdfCanvas.Eoclip;
 begin
   if FContents<>nil then
-    FContents.Writer.Add('w*'#10);
+    FContents.Writer.Add('W*'#10);
 end;
 
 
@@ -7251,42 +6995,13 @@ end;
 function TPdfCanvas.RectI(Rect: TRect; Normalize: boolean): TPdfRect;
 begin
   result.Left := I2X(Rect.Left);
-  result.Right := I2X(Rect.Right-1);
+  result.Right := I2X(Rect.Right);
   result.Top := I2Y(Rect.Top);
-  result.Bottom := I2Y(Rect.Bottom-1);
+  result.Bottom := I2Y(Rect.Bottom);
   if Normalize then
     NormalizeRect(result);
 end;
 
-procedure TPdfCanvas.BeginMarkedContent(Group : TPdfOptionalContentGroup);
-var Resources, Properties: TPdfDictionary;
-    ID: PDFString;
-begin
-  if (FContents=nil) or not FDoc.UseOptionalContent then
-    exit;
-  if Group<>nil  then begin
-    ID := 'oc'+UInt32ToPDFString(Group.ObjectNumber);
-    // register Group in page resources properties
-    Resources := FPage.PdfDictionaryByName('Resources');
-    if Resources<>nil then begin
-      Properties := Resources.PdfDictionaryByName('Properties');
-      if Properties = nil then begin
-        Properties := TPdfDictionary.Create(FDoc.FXRef);
-        Resources.AddItem('Properties', Properties);
-      end;
-      if Properties<>nil then
-        Properties.AddItem(ID,Group);
-    end;
-    FContents.Writer.Add('/OC /').Add(ID).Add(' BDC'#10);
-  end else
-    FContents.Writer.Add('/OC BMC'#10);
-end;
-
-procedure TPdfCanvas.EndMarkedContent;
-begin
-  if (FContents<>nil) and FDoc.UseOptionalContent then
-    FContents.Writer.Add('EMC'#10);
-end;
 
 { TPdfDictionaryWrapper }
 
@@ -7446,8 +7161,7 @@ end;
 
 const
   PDF_PAGE_VIEWER_NAMES: array[TPdfViewerPreference] of PDFString = (
-    'HideToolbar', 'HideMenubar', 'HideWindowUI', 'FitWindow', 'CenterWindow',
-    'PrintScaling');
+    'HideToolbar', 'HideMenubar', 'HideWindowUI', 'FitWindow', 'CenterWindow');
 
 function TPdfCatalog.GetViewerPreference: TPdfViewerPreferences;
 var FDictionary: TPdfDictionary;
@@ -7498,20 +7212,11 @@ begin
     FDictionary := TPdfDictionary.Create(Data.ObjectMgr);
     FData.AddItem('ViewerPreferences', FDictionary);
   end;
-  if FDictionary<>nil then begin
+  if FDictionary<>nil then
     for V := low(V) to high(V) do
       if V in Value then
-        if V=vpEnforcePrintScaling then
-          FDictionary.AddItem(PDF_PAGE_VIEWER_NAMES[V],TPdfName.Create('None')) else
-          FDictionary.AddItem(PDF_PAGE_VIEWER_NAMES[V],TPdfBoolean.Create(true)) else
+        FDictionary.AddItem(PDF_PAGE_VIEWER_NAMES[V], TPdfBoolean.Create(true)) else
         FDictionary.RemoveItem(PDF_PAGE_VIEWER_NAMES[V]);
-    if vpEnforcePrintScaling in Value then begin
-      FDictionary.AddItem('Enforce', TPdfArray.CreateNames(Data.ObjectMgr,['PrintScaling']));
-      if fOwner<>nil then
-        fOwner.fFileFormat := pdf16;
-    end else
-      FDictionary.RemoveItem('Enforce');
-  end;
 end;
 
 function TPdfCatalog.GetPageMode: TPdfPageMode;
@@ -7648,7 +7353,6 @@ const
 
 function TPdfFontTrueType.FindOrAddUsedWideChar(aWideChar: WideChar): integer;
 var n, i: integer;
-    aSymbolAnsiChar: AnsiChar;
 begin
   self := WinAnsiFont;
   result := fUsedWideChar.Add(ord(aWideChar));
@@ -7667,12 +7371,6 @@ begin
     CreateAssociatedUnicodeFont;
   // update fUsedWide[result] for current glyph
   i := UnicodeFont.fUsedWideChar.IndexOf(ord(aWideChar));
-  if (i<0) and UnicodeFont.fIsSymbolFont then begin
-    TSynAnsiConvert.Engine(fDoc.CodePage).UnicodeBufferToAnsi(
-      @aSymbolAnsiChar,@aWideChar,1);
-    aWideChar := WideChar($f000+ord(aSymbolAnsiChar));
-    i := UnicodeFont.fUsedWideChar.IndexOf(ord(aWideChar));
-  end;
   if i<0 then // if this glyph doesn't exist in this font -> set to zero
     i := 0 else
     i := UnicodeFont.fUsedWide[i].int;
@@ -7704,7 +7402,7 @@ constructor TPdfFontTrueType.Create(ADoc: TPdfDocument; AFontIndex: integer;
 var W: packed array of TABC;
     c: AnsiChar;
     aFontName: PDFString;
-    Flags: integer;
+    Flags: integer;    
 begin
   if AWinAnsiFont<>nil then begin
     fWinAnsiFont := AWinAnsiFont;
@@ -7818,7 +7516,7 @@ end;
 
 { font subset embedding using Windows XP CreateFontPackage() FontSub.dll
   see http://msdn.microsoft.com/en-us/library/dd183502 }
-
+  
 function lpfnAllocate(Size: Integer): pointer; cdecl;
 begin
   GetMem(result,Size);
@@ -7842,7 +7540,7 @@ var
     var pulBytesWritten: Cardinal; usFlags, usTTCIndex, usSubsetFormat,
     usSubsetLanguage, usSubsetPlatform, usSubsetEncoding: word;
     pusSubsetKeepList: PWordArray; usSubsetKeepListCount: word;
-    lpfnAllocate, lpfnReAllocate, lpfnFree, reserved: pointer): cardinal; cdecl;
+    lpfnAllocate, lpfnReAllocate, lpfnFree, reserved: pointer): cardinal; cdecl; 
 
 procedure TPdfFontTrueType.PrepareForSaving;
 var c: AnsiChar;
@@ -7858,13 +7556,6 @@ var c: AnsiChar;
     SubSetMem: cardinal;
     SubSetSize: cardinal;
     Used: TSortedWordArray;
-    usFlags: Word;  // For CreateFontPackage
-    ttcIndex: Word; // For CreateFontPackage
-    tableTag: Longword;
-    {$ifndef DELPHI5OROLDER}
-    ttcNumFonts: Longword;
-    ttcBytes: array of byte;
-    {$endif}
 begin
   DS := THeapMemoryStream.Create;
   WR := TPdfWrite.Create(fDoc,DS);
@@ -7876,8 +7567,6 @@ begin
       Descendant.AddItem('Type','Font');
       Descendant.AddItem('Subtype','CIDFontType2');
       Descendant.AddItem('BaseFont',FName);
-      if fDoc.PDFA1 then
-        Descendant.AddItem('CIDToGIDMap','Identity');
       CIDSystemInfo := TPdfDictionary.Create(FDoc.FXref);
       CIDSystemInfo.AddItem('Supplement',0);
       CIDSystemInfo.AddItemText('Ordering','Identity');
@@ -7961,34 +7650,10 @@ begin
          ((fDoc.fEmbeddedTTFIgnore=nil) or (fDoc.fEmbeddedTTFIgnore.
            IndexOf(fDoc.FTrueTypeFonts[fTrueTypeFontsIndex-1])<0))) then begin
         fDoc.GetDCWithFont(self);
-        {$ifndef DELPHI5OROLDER}
-        // is the font in a .ttc collection?
-        ttfSize := GetFontData(fDoc.FDC,TTCF_TABLE,0,nil,0);
-        if ttfSize<>GDI_ERROR then begin
-          // Yes, the font is in a .ttc collection
-          // find out how many fonts are included in the collection
-          SetLength(ttcBytes,4);
-          if GetFontData(fDoc.FDC,TTCF_TABLE,8,pointer(ttcBytes),4) <> GDI_ERROR then
-            ttcNumFonts := ttcBytes[3] else // Higher bytes will be zero
-            ttcNumFonts := 1;
-          // we need to find out the index of the font within the ttc collection
-          // (this is not easy, so GetTTCIndex uses lookup on known ttc fonts)
-          if (ttcNumFonts < 2) or not
-             GetTTCIndex(fDoc.FTrueTypeFonts[fTrueTypeFontsIndex-1],ttcIndex,ttcNumFonts) then
-            ttcIndex := 0;
-          usFlags := TTFCFP_FLAGS_SUBSET or TTFCFP_FLAGS_TTC;
-          tableTag := TTCF_TABLE;
-        end else
-        {$endif}
-        begin
-          ttfSize := GetFontData(fDoc.FDC,0,0,nil,0);
-          usFlags := TTFCFP_FLAGS_SUBSET;
-          ttcIndex := 0;
-          tableTag := 0;
-        end;
+        ttfSize := GetFontData(fDoc.FDC, 0, 0, nil, 0);
         if ttfSize<>GDI_ERROR then begin
           SetLength(ttf,ttfSize);
-          if GetFontData(fDoc.FDC,tableTag,0,pointer(ttf),ttfSize)<>GDI_ERROR then begin
+          if GetFontData(fDoc.FDC, 0, 0, pointer(ttf), ttfSize)<>GDI_ERROR then begin
             fFontFile2 := TPdfStream.Create(fDoc);
             if not fDoc.fEmbeddedWholeTTF then begin
               if FontSub=INVALID_HANDLE_VALUE then begin
@@ -8007,10 +7672,10 @@ begin
                     Used.Add(Values[i]);
                 if CreateFontPackage(pointer(ttf),ttfSize,
                     SubSetData,SubSetMem,SubSetSize,
-                    usFlags,ttcIndex,TTFMFP_SUBSET,0,
+                    TTFCFP_FLAGS_SUBSET,0,TTFMFP_SUBSET,0,
                     TTFCFP_MS_PLATFORMID,TTFCFP_UNICODE_CHAR_SET,
                     pointer(Used.Values),Used.Count,
-                    @lpfnAllocate,@lpfnReAllocate,@lpfnFree,nil)=0 then begin
+                    @lpfnAllocate, @lpfnReAllocate, @lpfnFree, nil)=0 then begin
                   // subset was created successfully -> save to PDF file
                   SetString(ttf,SubSetData,SubSetSize);
                   FreeMem(SubSetData);
@@ -8278,12 +7943,9 @@ begin
   for i := 0 to Header^.numberSubtables-1 do
     with SubTable^[i] do
       if platformID=TTFCFP_MS_PLATFORMID then
-        if platformSpecificID=TTFCFP_SYMBOL_CHAR_SET then begin
-          aUnicodeTTF.fIsSymbolFont := true;
-          off := offset;
-        end else
+        if platformSpecificID=TTFCFP_SYMBOL_CHAR_SET then
+          off := offset else
         if platformSpecificID=TTFCFP_UNICODE_CHAR_SET then begin
-          aUnicodeTTF.fIsSymbolFont := false;
           off := offset;
           break; // prefered specific ID
         end;
@@ -8566,8 +8228,7 @@ begin
       try
         FCanvas.SetPage(P);
         FCanvas.RenderMetaFile(P.fVCLCurrentMetaFile,1,0,0,
-          fUseMetaFileTextPositioning,KerningHScaleBottom,KerningHScaleTop,
-          fDisableTextClipping);
+          fUseMetaFileTextPositioning,KerningHScaleBottom,KerningHScaleBottom);
       finally
         FreeAndNil(P.fVCLCurrentMetaFile);
       end;
@@ -8578,7 +8239,7 @@ begin
   SaveToStreamDirectEnd;
 end;
 
-procedure TPdfDocumentGDI.SaveToStreamDirectPageFlush(FlushCurrentPageNow: boolean);
+procedure TPdfDocumentGDI.SaveToStreamDirectPageFlush;
 var P: TPdfPageGDI;
 begin
   if fRawPages.Count>0 then begin
@@ -8589,8 +8250,7 @@ begin
       try
         FCanvas.FContents.FSaveAtTheEnd := false; // force flush NOW
         FCanvas.RenderMetaFile(P.fVCLCurrentMetaFile,1,0,0,
-          fUseMetaFileTextPositioning,KerningHScaleBottom,KerningHScaleTop,
-          fDisableTextClipping);
+          fUseMetaFileTextPositioning,KerningHScaleBottom,KerningHScaleBottom);
       finally
         FreeAndNil(P.fVCLCurrentMetaFile);
       end;
@@ -8743,7 +8403,7 @@ type
     procedure DrawBitmap(xs,ys,ws,hs, xd,yd,wd,hd,usage: integer;
       Bmi: PBitmapInfo; bits: pointer; clipRect: PRect; xSrcTransform: PXForm; dwRop: DWord;
       transparent: TColorRef = $FFFFFFFF);
-    procedure FillRectangle(const Rect: TRect; ResetNewPath: boolean);
+    procedure FillRectangle(const Rect: TRect);
     // the current value set to SetRGBFillColor (rg)
     property FillColor: integer read fFillColor write SetFillColor;
     // the current value set to SetRGBStrokeColor (RG)
@@ -8884,7 +8544,7 @@ begin
   EMR_FILLRGN: begin
     E.SelectObjectFromIndex(PEMRFillRgn(R)^.ihBrush);
     E.NeedBrushAndPen;
-    E.FillRectangle(PRgnDataHeader(@PEMRFillRgn(R)^.RgnData[0])^.rcBound,false);
+    E.FillRectangle(PRgnDataHeader(@PEMRFillRgn(R)^.RgnData[0])^.rcBound);
   end;
   EMR_POLYGON, EMR_POLYLINE, EMR_POLYGON16, EMR_POLYLINE16:
   if (not brush.null) or (not pen.null) then begin
@@ -9112,7 +8772,7 @@ begin
     case PEMRBitBlt(R)^.dwRop of // we only handle PATCOPY = fillrect
       PATCOPY:
         with PEMRBitBlt(R)^ do
-          E.FillRectangle(Rect(xDest,yDest,xDest+cxDest,yDest+cyDest),true);
+          E.FillRectangle(Rect(xDest,yDest,xDest+cxDest,yDest+cyDest));
     end;
   end;
   EMR_STRETCHBLT: begin
@@ -9125,7 +8785,7 @@ begin
     case PEMRStretchBlt(R)^.dwRop of // we only handle PATCOPY = fillrect
       PATCOPY:
         with PEMRStretchBlt(R)^ do
-          E.FillRectangle(Rect(xDest,yDest,xDest+cxDest,yDest+cyDest),true);
+          E.FillRectangle(Rect(xDest,yDest,xDest+cxDest,yDest+cyDest));
     end;
   end;
   EMR_STRETCHDIBITS:
@@ -9140,7 +8800,7 @@ begin
       end;
   EMR_TRANSPARENTBLT:
     with PEMRTransparentBLT(R)^ do // only handle RGB bitmaps (no palette)
-      if (offBmiSrc<>0) and (offBitsSrc<>0) then
+      if (offBmiSrc<>0) and (offBitsSrc<>0) then 
         E.DrawBitmap(xSrc,ySrc,cxSrc,cySrc,xDest,yDest,cxDest,cyDest,iUsageSrc,
           pointer(PtrUInt(R)+offBmiSrc),pointer(PtrUInt(R)+offBitsSrc),
           @PEMRTransparentBLT(R)^.rclBounds, @PEMRTransparentBLT(R)^.xformSrc,
@@ -9157,7 +8817,7 @@ begin
       kind := OBJ_PEN;
       PenColor := elp.elpColor;
       PenWidth := elp.elpWidth;
-      PenStyle := elp.elpPenStyle and (PS_STYLE_MASK or PS_ENDCAP_MASK);
+      PenStyle := elp.elpPenStyle and PS_STYLE_MASK;
     end;
   EMR_SETMITERLIMIT:
     if PEMRSetMiterLimit(R)^.eMiterLimit>0.1 then
@@ -9166,13 +8826,8 @@ begin
     E.SetMetaRgn;
   EMR_EXTSELECTCLIPRGN:
     E.ExtSelectClipRgn(@PEMRExtSelectClipRgn(R)^.RgnData[0],PEMRExtSelectClipRgn(R)^.iMode);
-  EMR_INTERSECTCLIPRECT: begin
-    ClipRgn := e.IntersectClipRect(e.Canvas.BoxI(PEMRIntersectClipRect(r)^.rclClip,true),ClipRgn);
-    {e.Canvas.Clip; // revert patch supplied by Marsh, which seems to break
-    with e.Canvas.BoxI(PEMRIntersectClipRect(r)^.rclClip,true) do
-      e.Canvas.Rectangle(Left,Top,Width,Height);
-    e.Canvas.EoClip;}
-  end;
+  EMR_INTERSECTCLIPRECT:
+    ClipRgn := E.IntersectClipRect(E.Canvas.BoxI(PEMRIntersectClipRect(R)^.rclClip,true), ClipRgn);
   EMR_SETMAPMODE:
     MappingMode := PEMRSetMapMode(R)^.iMode;
   EMR_BEGINPATH: begin
@@ -9284,7 +8939,7 @@ end;
 
 procedure TPdfCanvas.RenderMetaFile(MF: TMetaFile; Scale, XOff, YOff: single;
   TextPositioning: TPdfCanvasRenderMetaFileTextPositioning;
-  KerningHScaleBottom, KerningHScaleTop: single; DisableTextClipping: boolean);
+  KerningHScaleBottom, KerningHScaleTop: single);
 var E: TPdfEnum;
     R: TRect;
 begin
@@ -9299,7 +8954,6 @@ begin
     FDevScale := Scale * FFactor;
     FEmfBounds := R; // keep device rect
     fUseMetaFileTextPositioning := TextPositioning;
-    fDisableMetaFileTextClipping := DisableTextClipping;
     fKerningHScaleBottom := KerningHScaleBottom;
     fKerningHScaleTop := KerningHScaleTop;
     if FDoc.FPrinterPxPerInch.X=0 then
@@ -9541,7 +9195,7 @@ begin
   end;
 end;
 
-procedure TPdfEnum.FillRectangle(const Rect: TRect; ResetNewPath: boolean);
+procedure TPdfEnum.FillRectangle(const Rect: TRect);
 begin
   if DC[nDC].brush.null then
     exit;
@@ -9550,8 +9204,6 @@ begin
   with Canvas.BoxI(Rect,true) do
     Canvas.Rectangle(Left,Top,Width,Height);
   Canvas.Fill;
-  if ResetNewPath then
-    Canvas.FNewPath := false;
 end;
 
 procedure TPdfEnum.FlushPenBrush;
@@ -9663,17 +9315,12 @@ begin
   if not pen.null then begin
     StrokeColor := pen.color;
     if pen.style<>fPenStyle then begin
-      case pen.style and PS_STYLE_MASK of
+      case pen.style of
         PS_DASH:       Canvas.SetDash([4,4]);
         PS_DOT:        Canvas.SetDash([1,1]);
         PS_DASHDOT:    Canvas.SetDash([4,1,1,1]);
         PS_DASHDOTDOT: Canvas.SetDash([4,1,1,1,1,1]);
         else           Canvas.SetDash([]);
-      end;
-      case Pen.style and PS_ENDCAP_MASK of
-        PS_ENDCAP_ROUND:  Canvas.SetLineCap(lcRound_End);
-        PS_ENDCAP_SQUARE: Canvas.SetLineCap(lcProjectingSquareEnd);
-        PS_ENDCAP_FLAT:   Canvas.SetLineCap(lcButt_End);
       end;
       fPenStyle := pen.style;
     end;
@@ -9902,27 +9549,22 @@ begin
   for i := 0 to n-1 do
     inc(result,DX^[i]);
 end;
-
+        
 procedure TPdfEnum.TextOut(var R: TEMRExtTextOut);
 var nspace,i: integer;
     cur: cardinal;
     wW, measW, W,H,hscale: Single;
     DX: PIntegerArray; // not handled during drawing yet
     Posi: TPoint;
-    AWidth, ASize, PosX, PosY: single;
-    APDFFont: TPDFFont;
+    ASize, PosX, PosY: single;
     tmp: array of WideChar; // R.emrtext is not #0 terminated -> use tmp[]
     tmpChar: array[0..1] of WideChar;
     a, acos, asin, fscaleX, fscaleY: single;
-    AUseDX, WithClip, bOpaque: Boolean;
+    WithClip, bOpaque: Boolean;
     ClipRect: TPdfBox;
     ASignX, ASignY: Integer;
     backRect: TRect;
     Positioning: TPdfCanvasRenderMetaFileTextPositioning;
-    {$ifdef USE_UNISCRIBE}
-    ADC: HDC;
-    AnExtent: TSize;
-    {$endif}
 
 procedure DrawLine(var P: TPoint; aH: Single);
 var tmp: TPdfEnumStatePen;
@@ -9975,30 +9617,13 @@ begin
       ASize := Abs(font.LogFont.lfHeight)*fscaleY else
       ASize := Abs(font.spec.cell)*fscaleY;
     // ensure this font is selected (very fast if was already selected)
-    APDFFont := Canvas.SetFont(Canvas.FDoc.FDC, font.LogFont, ASize);
+    Canvas.SetFont(Canvas.FDoc.FDC, font.LogFont, ASize);
     // calculate coordinates
     Positioning := Canvas.fUseMetaFileTextPositioning;
     if (R.emrtext.fOptions and ETO_GLYPH_INDEX<>0) then
-      measW := 0 else begin
-      AWidth := 0;
-      {$ifdef USE_UNISCRIBE}
-      if Assigned(APDFFont) and Canvas.fDoc.UseUniScribe and
-         APDFFont.InheritsFrom(TPdfFontTrueType) then begin
-        ADC := Canvas.FDoc.GetDCWithFont(TPdfFontTrueType(APDFFont));
-        if GetTextExtentPoint32W(ADC,Pointer(tmp),R.emrtext.nChars,AnExtent) then
-          AWidth := (AnExtent.cX * Canvas.FPage.FFontSize) / 1000;
-      end;
-      {$endif}
-      if AWidth=0 then
-        AWidth := Canvas.UnicodeTextWidth(Pointer(tmp));
-      measW := Round(AWidth / fscaleX);
-    end;
-    AUseDX := R.emrtext.offDx > 0;
-    {$ifdef USE_UNISCRIBE}
-    if Canvas.fDoc.UseUniScribe then
-      AUseDX := AUseDX and (R.emrtext.fOptions and ETO_GLYPH_INDEX <> 0);
-    {$endif}
-    if AUseDX then begin
+      measW := 0 else
+      measW := Round(Canvas.UnicodeTextWidth(Pointer(tmp)) / fscaleX);
+    if R.emrtext.offDx>0 then begin
       DX := pointer(PtrUInt(@R)+R.emrtext.offDx);
       W := DXTextWidth(DX, R.emrText.nChars);
       if W<R.rclBounds.Right-R.rclBounds.Left then // offDX=0 or within box
@@ -10067,10 +9692,8 @@ begin
       Posi := Position else
       Posi := R.emrtext.ptlReference;
     // detect clipping
-    if Canvas.fDisableMetaFileTextClipping then
-      WithClip := False else
-      with R.emrtext.rcl do
-        WithClip := (Right>Left) and (Bottom>Top);
+    with R.emrtext.rcl do
+      WithClip := (Right>Left) and (Bottom>Top);
     bOpaque := (not brush.null) and (brush.Color<>clWhite) and
        ((R.emrtext.fOptions and ETO_OPAQUE<>0) or
         ((font.BkMode=OPAQUE) and (font.BkColor=brush.color)));
@@ -10095,7 +9718,7 @@ begin
       Canvas.ClosePath;
       Canvas.Clip;
       if bOpaque then begin
-        FillRectangle(backRect,false);
+        FillRectangle(backRect);
         bOpaque := False; //do not handle more
       end else
         Canvas.NewPath;
@@ -10112,10 +9735,12 @@ begin
       end;
     end;
     // draw background (if any)
-    if bOpaque then
+    if bOpaque then begin
       // don't handle BkMode, since global to the page, but only specific text
       // don't handle rotation here, since should not be used much
-      FillRectangle(backRect,true);
+      FillRectangle(backRect);
+      Canvas.fNewPath := False;
+    end;
     // draw text
     FillColor := font.color;
 {$ifdef USE_UNISCRIBE}
@@ -10245,7 +9870,7 @@ begin
       if aDoc.ForceJPEGCompression=0 then // recompression only if necessary
         SaveInternalToStream(FWriter.fDestStream) else
       {$endif}
-        SaveToStream(FWriter.fDestStream); // with CompressionQuality recompress
+        SaveToStream(FWriter.fDestStream); // with CompressionQuality recompress 
       end;
     FWriter.fDestStreamPosition := FWriter.fDestStream.Seek(0,soFromCurrent);
   end else begin
@@ -10421,40 +10046,6 @@ begin
   end;
 end;
 
-{ TPdfFormWithCanvas }
-
-constructor TPdfFormWithCanvas.Create(aDoc: TPdfDocument; W, H: Integer);
-var FResources: TPdfDictionary;
-begin
-  inherited Create(aDoc,true);
-  FResources := TPdfDictionary.Create(aDoc.FXref);
-  FFontList := TPdfDictionary.Create(nil);
-  FResources.AddItem('Font',FFontList);
-  FResources.AddItem('ProcSet',TPdfArray.CreateNames(nil,['PDF','Text','ImageC']));
-  FPage := TPdfPage.Create(nil);
-  FCanvas := TPdfCanvas.Create(aDoc);
-  FCanvas.FPage:=FPage;
-  FCanvas.FPageFontList := FFontList;
-  FCanvas.FContents := self;
-  FCanvas.FFactor := 1;
-  FAttributes.AddItem('Type','XObject');
-  FAttributes.AddItem('Subtype','Form');
-  FAttributes.AddItem('BBox',TPdfArray.Create(nil,[0,0,H,W]));
-  FAttributes.AddItem('Matrix',TPdfRawText.Create('[1 0 0 1 0 0]'));
-  FAttributes.AddItem('Resources',FResources);
-end;
-
-destructor TPdfFormWithCanvas.Destroy;
-begin
-  CloseCanvas;
-  inherited;
-end;
-
-procedure TPdfFormWithCanvas.CloseCanvas;
-begin
-  FreeAndNil(FCanvas);
-  FreeAndNil(FPage);
-end;
 
 {$ifdef USE_PDFSECURITY}
 
@@ -10670,6 +10261,9 @@ initialization
   // initialize the Gdi+ library if necessary
   if Gdip=nil then
     Gdip := TGDIPlus.Create('gdiplus.dll');
+{$endif}
+{$ifndef USE_SYNZIP}
+  InitCrc32Tab;
 {$endif}
 
 finalization

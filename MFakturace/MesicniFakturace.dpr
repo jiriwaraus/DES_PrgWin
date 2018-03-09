@@ -2,25 +2,34 @@ program MesicniFakturace;
 
 uses
   Forms,
-  FImain in 'FImain.pas' {fmMain},
+  AArray in '..\DE$_Common\AArray.pas',
+  AbraEntities in '..\DE$_Common\AbraEntities.pas',
+  DesUtils in '..\DE$_Common\DesUtils.pas' {DesU},
+  Superdate in '..\DE$_Common\Superdate.pas',
+  Superobject in '..\DE$_Common\Superobject.pas',
+  Supertimezone in '..\DE$_Common\Supertimezone.pas',
+  Supertypes in '..\DE$_Common\Supertypes.pas',
   FIcommon in 'FIcommon.pas' {dmCommon: TDataModule},
   FIfaktura in 'FIfaktura.pas' {dmFaktura: TDataModule},
+  FIlogin in 'FIlogin.pas' {fmLogin},
   FImail in 'FImail.pas' {dmMail: TDataModule},
-  FItisk in 'FItisk.pas' {dmTisk: TDataModule},
+  FImain in 'FImain.pas' {fmMain},
   FIprevod in 'FIprevod.pas' {dmPrevod: TDataModule},
-  FIlogin in 'FIlogin.pas' {fmLogin};
+  FItisk in 'FItisk.pas' {dmTisk: TDataModule},
+  frxExportSynPDF in 'frxExportSynPDF.pas' {frxExportSynPDF};
 
 {$R *.res}
 
 begin
   Application.Initialize;
   Application.Title := 'Mìsíèní fakturace s ÈTÚ';
-  Application.CreateForm(TfmMain, fmMain);
+  Application.CreateForm(TDesU, DesU);
   Application.CreateForm(TdmCommon, dmCommon);
   Application.CreateForm(TdmFaktura, dmFaktura);
-  Application.CreateForm(TdmMail, dmMail);
-  Application.CreateForm(TdmTisk, dmTisk);
-  Application.CreateForm(TdmPrevod, dmPrevod);
   Application.CreateForm(TfmLogin, fmLogin);
+  Application.CreateForm(TdmMail, dmMail);
+  Application.CreateForm(TfmMain, fmMain);
+  Application.CreateForm(TdmPrevod, dmPrevod);
+  Application.CreateForm(TdmTisk, dmTisk);
   Application.Run;
 end.

@@ -9,7 +9,7 @@ unit SynGdiPlus;
 {
     This file is part of Synopse framework.
 
-    Synopse framework. Copyright (C) 2015 Arnaud Bouchez
+    Synopse framework. Copyright (C) 2014 Arnaud Bouchez
       Synopse Informatique - http://synopse.info
 
   *** BEGIN LICENSE BLOCK *****
@@ -28,7 +28,7 @@ unit SynGdiPlus;
 
   The Initial Developer of the Original Code is Arnaud Bouchez.
 
-  Portions created by the Initial Developer are Copyright (C) 2015
+  Portions created by the Initial Developer are Copyright (C) 2014
   the Initial Developer. All Rights Reserved.
 
   Contributor(s):
@@ -106,8 +106,6 @@ unit SynGdiPlus;
      to specify the destination image DPI
 
    Version 1.18
-   - ensure all created TBitmap are DIB (device-independent bitmap)
-   - added TSynPicture.CreateFromFile() constructor
    - fixed ticket [ebbce6be8b] about Win64 initialization
    - fixed ticket [84dae0a2da] about EMR_BITBLT, thanks to Pierre le Riche
    - implemented clipping - ticket [ba90f15370] - thanks to Pierre le Riche
@@ -167,7 +165,7 @@ type
 
   /// GDI+ types of conversion from EMF to EMF+
   TEmfType = (
-     etEmf0, etEmf1, etEmf2, { for Delphi 5: no etEmfOnly=3 syntax }
+     etEmf0, etEmf1, etEmf2, { for Delphi 5: no etEmfOnly=3 syntax } 
      etEmfOnly, etEmfPlusOnly, etEmfPlusDual);
 
   /// GDI+ available filling modes
@@ -209,20 +207,20 @@ type
 
   /// GDI+ integer coordinates rectangles
   // - use width and height instead of right and bottom
-  TGdipRect = record
+  TGdipRect = packed record
     X, Y, Width, Height: Integer;
   end;
   PGdipRectF = ^TGdipRectF;
 
   /// GDI+ floating point coordinates rectangles
   // - use width and height instead of right and bottom
-  TGdipRectF = record
+  TGdipRectF = packed record
     X, Y, Width, Height: Single;
   end;
   PGdipPointF = ^TGdipPointF;
 
   /// GDI+ floating point coordinates for a point
-  TGdipPointF = record
+  TGdipPointF = packed record
     X,Y: Single;
   end;
   PGdipPointFArray = ^TGdipPointFArray;
@@ -231,7 +229,7 @@ type
   TGdipPointFArray = array[0..1000] of TGdipPointF;
 
   /// data as retrieved by GdipFull.BitmapLockBits
-  TGdipBitmapData = record
+  TGdipBitmapData = packed record
     Width: Cardinal;
     Height: Cardinal;
     Stride: Integer;
@@ -299,14 +297,11 @@ type
     SelectActiveFrame: function(image: THandle; dimensionID: PGUID; frameIndex: UINT): TGdipStatus; stdcall;
   protected
     fToken: THandle;
-    fStartupHook: record
+    fStartupHook: packed record
       Hook: TGDIPlusHookProc;
       Unhook: TGDIPlusUnhookProc;
     end;
     fStartupHookToken: THandle;
-    {$ifdef USEENCODERS}
-    function GetEncoderClsid(format: PAnsiChar; out pClsid: TGUID): integer;
-    {$endif}
   public
     /// load the GDI+ library and all needed procedures
     // - returns TRUE on success
@@ -329,7 +324,6 @@ type
     // - use a TGDIPlusFull instance for true GDI+ AntiAliaised drawing
     // - you can specify a zoom factor by the ScaleX and ScaleY parameters in
     // percent: e.g. 100 means 100%, i.e. no scaling
-    // - returned image is a DIB (device-independent bitmap)
     function DrawAntiAliased(Source: TMetafile; ScaleX: integer=100; ScaleY: integer=100;
       aSmoothing: TSmoothingMode=smAntiAlias;
       aTextRendering: TTextRenderingHint=trhClearTypeGridFit): TBitmap; overload;
@@ -370,8 +364,8 @@ type
     evFrameDimensionPage);
 
   /// GIF, PNG, TIFF and JPG pictures support using GDI+ library
-  // - cf @http://msdn.microsoft.com/en-us/library/ms536393
-  // for available image formats
+  // - cf @http://msdn.microsoft.com/en-us/library/ms536393(VS.85).aspx
+  // for all available image formats
   TSynPicture = class(TGraphic)
   protected
     fHasContent: boolean;
@@ -391,7 +385,7 @@ type
     procedure fImageSet;
     procedure BitmapSetResolution(DPI: single);
   public
-    constructor CreateFromFile(const FileName: string);
+    constructor Create; override;
     destructor Destroy; override;
     procedure Assign(Source: TPersistent); override;
     procedure Draw(ACanvas: TCanvas; const Rect: TRect); override;
@@ -419,7 +413,6 @@ type
     function SaveAs(Stream: TStream; Format: TGDIPPictureType;
       CompressionQuality: integer=80; IfBitmapSetResolution: single=0): TGdipStatus;
     /// create a bitmap from the corresponding picture
-    // - kind of returned image is DIB (device-independent bitmap)
     function ToBitmap: TBitmap;
     /// guess the picture type from its internal format
     // - return gptBMP if no format is found
@@ -480,7 +473,7 @@ type
 {$A-}
   /// handle most GDI+ library calls
   // - an instance of this object is initialized by this unit: you don't have
-  // to create a new instance
+  // to create a new instance    
   TGDIPlusFull = class(TGDIPlus)
   protected
     DrawLine: function(graphics, pen: THandle; x1,y1,x2,y2: integer): TGdipStatus; stdcall;
@@ -651,7 +644,8 @@ procedure SaveAs(Graphic: TPersistent; const FileName: TFileName;
 // - if MaxPixelsForBiggestSide is set to something else than 0, the resulting
 // picture biggest side won't exceed this pixel number
 procedure SaveAsRawByteString(Graphic: TPersistent;
-  out DataRawByteString; Format: TGDIPPictureType; CompressionQuality: integer=80;
+  out Data: {$ifdef UNICODE}RawByteString{$else}AnsiString{$endif};
+  Format: TGDIPPictureType; CompressionQuality: integer=80;
   MaxPixelsForBiggestSide: cardinal=0; BitmapSetResolution: single=0);
 
 /// helper to load a specified graphic from GIF/PNG/JPG/TIFF format content
@@ -880,7 +874,7 @@ end;
 
 {$ifdef USEENCODERS}
 type
-  ImageCodecInfo = record
+  ImageCodecInfo = packed record
     Clsid             : TGUID;
     FormatID          : TGUID;
     CodecName         : PWCHAR;
@@ -897,8 +891,6 @@ type
   end;
   TImageCodecInfo = ImageCodecInfo;
   PImageCodecInfo = ^TImageCodecInfo;
-  TImageCodecInfoArray = array[byte] of TImageCodecInfo;
-
 
 function StrWCompAnsi(Str1: PWideChar; Str2: PAnsiChar): integer; assembler;
 asm // to avoid widestring usage + compatibility with Delphi 2009/2010/XE
@@ -911,7 +903,7 @@ asm // to avoid widestring usage + compatibility with Delphi 2009/2010/XE
         JZ      @Exit2  // Str1=''
         OR      EDX,EDX
         JE      @min
-@1:     MOV     AL,[ECX] // rough Ansi compare value of PWideChar
+@1:     MOV     AL,[ECX] // Ansi compare value of PWideChar
         ADD     ECX,2
         MOV     AH,[EDX]
         INC     EDX
@@ -926,25 +918,28 @@ asm // to avoid widestring usage + compatibility with Delphi 2009/2010/XE
 @min:   OR      EAX,-1
 end;
 
-function TGDIPlus.GetEncoderClsid(format: PAnsiChar; out pClsid: TGUID): integer;
+function GetEncoderClsid(format: PAnsiChar; out pClsid: TGUID): integer;
 var num, size: cardinal;
     ImageCodecInfo: AnsiString;
-    P: ^TImageCodecInfoArray;
+    P: PImageCodecInfo;
 begin
   num  := 0; // number of image encoders
   size := 0; // size of the image encoder array in bytes
   result := -1;
-  if (GetImageEncodersSize(num, size)<>stOk) or (size=0) then
+  if not Gdip.Exists then
+    exit;
+  if (Gdip.GetImageEncodersSize(num, size)<>stOk) or (size=0) then
     exit;
   SetLength(ImageCodecInfo, size);
   P := pointer(ImageCodecInfo);
-  if GetImageEncoders(num, size, P)<>stOk then
+  if Gdip.GetImageEncoders(num, size, P))<>stOk then
     exit;
   for result := 0 to num-1 do
-    if StrWCompAnsi(P^[result].MimeType,format)=0 then begin
-      pClsid := P^[result].Clsid;
+    if StrWCompAnsi(P^.MimeType,format)=0 then begin
+      pClsid := P^.Clsid;
       exit;
-    end;
+    end else
+      inc(P);
   result := -1;
 end;
 
@@ -964,12 +959,11 @@ const
     '{557CF401-1A04-11D3-9A73-0000F81EF32E}',
     '{557CF400-1A04-11D3-9A73-0000F81EF32E}',
     '{557CF405-1A04-11D3-9A73-0000F81EF32E}');
-{$endif}
-
-const
   FrameDimensionPage: TGUID = '{7462dc86-6180-4c7e-8e3f-ee7333a7a483}';
 
-  GdiPProcNames: array[0..18{$ifdef USEDPI}+1{$endif}
+{$endif}
+
+const GdiPProcNames: array[0..18{$ifdef USEDPI}+1{$endif}
       {$ifdef USEENCODERS}+2{$endif}] of PChar =
     ('GdiplusStartup','GdiplusShutdown',
      'GdipDeleteGraphics','GdipCreateFromHDC',
@@ -984,7 +978,7 @@ const
      nil);
 
 constructor TGDIPlus.Create(const aDllFileName: TFileName);
-var Input: record
+var Input: packed record
       Version: Integer;               // Must be one
       DebugEventCallback: Pointer;    // Only for debug builds
       SuppressBackgroundThread: Bool; // True if replacing GDI+ background processing
@@ -1036,7 +1030,6 @@ begin
   R.Top := 0;
   R.Bottom := (Source.Height*ScaleY)div 100;
   result := TBitmap.Create;
-  result.PixelFormat := pf24bit; // create as DIB (device-independent bitmap)
   result.Width := R.Right;
   result.Height := R.Bottom;
   if Self=nil then begin // no GDI+ available -> use GDI drawing
@@ -1056,7 +1049,6 @@ begin
     fToken := 0;
   end;
   UnLoad;
-  inherited Destroy;
 end;
 
 const
@@ -1148,10 +1140,9 @@ begin
   fGlobalLen := 0;
 end;
 
-constructor TSynPicture.CreateFromFile(const FileName: string);
+constructor TSynPicture.Create;
 begin
-  inherited Create;
-  LoadFromFile(FileName);
+  inherited;
 end;
 
 destructor TSynPicture.Destroy;
@@ -1353,17 +1344,17 @@ begin
 end;
 
 type
-  EncoderParameter = record
+  EncoderParameter = packed record
     Guid           : TGUID;   // GUID of the parameter
-    NumberOfValues : ULONG;   // number of values for this parameter
-    Type_          : ULONG;   // value type, like ValueTypeLONG  etc.
-    Value          : Pointer; // a pointer to the parameter values
+    NumberOfValues : ULONG;   // Number of the parameter values
+    Type_          : ULONG;   // Value type, like ValueTypeLONG  etc.
+    Value          : Pointer; // A pointer to the parameter values
   end;
   TEncoderParameter = EncoderParameter;
   PEncoderParameter = ^TEncoderParameter;
-  EncoderParameters = record
-    Count     : UINT;  // number of parameters in this structure
-    Parameter : array[0..0] of TEncoderParameter;  // parameter values
+  EncoderParameters = packed record
+    Count     : UINT;               // Number of parameters in this structure
+    Parameter : array[0..0] of TEncoderParameter;  // Parameter values
   end;
   TEncoderParameters = EncoderParameters;
   PEncoderParameters = ^TEncoderParameters;
@@ -1376,7 +1367,7 @@ const
 function TSynPicture.SaveAs(Stream: TStream; Format: TGDIPPictureType;
   CompressionQuality: integer; IfBitmapSetResolution: single): TGdipStatus;
 var fStream: IStream;
-    Len,Dummy: {$ifdef ISDELPHIXE8}LargeUInt{$else}Int64{$endif};
+    Len,Dummy: Int64;
     tmp: pointer;
     Params: TEncoderParameters;
     PParams: pointer;
@@ -1476,7 +1467,6 @@ begin
   if not fHasContent then
     result := nil else begin
     result := TBitmap.Create;
-    result.PixelFormat := pf24bit; // create as DIB (device-independent bitmap)
     result.Width := Width;
     result.Height := Height;
     result.Canvas.Draw(0,0,self);
@@ -1565,7 +1555,6 @@ begin
       // resize to the maximum side specified parameter
       Bmp := TBitmap.Create;
       try
-        Bmp.PixelFormat := pf24bit; // create as DIB (device-independent bitmap)
         R := Pic.RectNotBiggerThan(MaxPixelsForBiggestSide);
         Bmp.Width := R.Right;
         Bmp.Height := R.Bottom;
@@ -1595,12 +1584,9 @@ begin
   end;
 end;
 
-{$ifndef UNICODE}
-type RawByteString = AnsiString;
-{$endif}
-
 procedure SaveAsRawByteString(Graphic: TPersistent;
-  out DataRawByteString; Format: TGDIPPictureType; CompressionQuality: integer=80;
+  out Data: {$ifdef UNICODE}RawByteString{$else}AnsiString{$endif};
+  Format: TGDIPPictureType; CompressionQuality: integer=80;
   MaxPixelsForBiggestSide: cardinal=0; BitmapSetResolution: single=0); overload;
 var Stream: TMemoryStream;
 begin
@@ -1608,7 +1594,7 @@ begin
   try
     SaveAs(Graphic,Stream,Format,CompressionQuality,MaxPixelsForBiggestSide,
       BitmapSetResolution);
-    SetString(RawByteString(DataRawByteString),PAnsiChar(Stream.Memory),Stream.Seek(0,soFromCurrent));
+    SetString(Data,PAnsiChar(Stream.Memory),Stream.Seek(0,soFromCurrent));
   finally
     Stream.Free;
   end;
@@ -1804,8 +1790,7 @@ const GdiPFullProcNames: array[0..70] of PChar =
    'GdipAddPathRectangleI','GdipClosePathFigure',
    'GdipDrawArcI','GdipDrawBezierI','GdipDrawPieI',
    'GdipCreateBitmapFromScan0', 'GdipBitmapLockBits', 'GdipBitmapUnlockBits',
-   'GdipGetClip','GdipSetClipRegion', 'GdipSetClipRectI', 'GdipResetClip',
-   'GdipCreateRegion', 'GdipDeleteRegion',
+   'GdipGetClip','GdipSetClipRegion', 'GdipSetClipRectI', 'GdipResetClip', 'GdipCreateRegion', 'GdipDeleteRegion',
    nil);
 {$ifndef WIN64}
    Office2003Version= $B0000; // Office 2003 = Office 11 ($B)
@@ -1930,7 +1915,7 @@ type
     CachedFont: array of packed record
       handle: THandle;
       objfont: TFontSpec;
-      LogFont: TLogFontW;
+      LogFont: TLogFontW; 
     end;
     // the DC states, as stored by SaveDC / RestoreDC methods
     nDC: integer;
@@ -2185,7 +2170,7 @@ begin
     end;
   EMR_STRETCHDIBITS: begin
       NormalizeRect(PEMRStretchDIBits(Rec)^.rclBounds);
-      with PEMRStretchDIBits(Rec)^ do
+      with PEMRStretchDIBits(Rec)^ do 
         if (offBmiSrc<>0) and (offBitsSrc<>0) and (iUsageSrc=DIB_RGB_COLORS) then
           Ref.DrawBitmap(xSrc,ySrc,cxSrc,cySrc, xDest,yDest,cxDest,cyDest,
             pointer(PAnsiChar(Rec)+offBmiSrc),pointer(PAnsiChar(Rec)+offBitsSrc));

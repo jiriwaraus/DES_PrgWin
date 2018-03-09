@@ -20,9 +20,7 @@ uses
   AdvObj, AdvPanel, AdvEdit, AdvSpin, AdvDateTimePicker, AdvEdBtn, AdvFileNameEdit, AdvProgressBar, GradientLabel,
   Grids, BaseGrid, AdvGrid, pCore2D, pBarcode2D, pQRCode, IniFiles, DateUtils, Math,
   DB, ZAbstractConnection, ZConnection, ZAbstractRODataset, ZAbstractDataset, ZDataset,
-{$IFNDEF ABAK}
-  Registry,
-{$ENDIF}
+
   frxClass, frxDBSet, frxDesgn;
 
 type
@@ -38,7 +36,7 @@ type
     qrDPH: TZQuery;
     qrRadky: TZQuery;
     frxReport: TfrxReport;
-    //HW frxDesigner: TfrxDesigner;
+    frxDesigner: TfrxDesigner;
     fdsDPH: TfrxDBDataset;
     fdsRadky: TfrxDBDataset;
     QRCode: TBarcode2D_QRCode;
@@ -157,7 +155,6 @@ type
     VATIndex_Id: string[10];
     FStr,                              // prefix faktury
     PDFDir,
-    AbraConnection,
     VoIP_customers,
     BBmax,
     BillingView,
@@ -184,7 +181,7 @@ var
 
 implementation
 
-uses FICommon, FIfaktura, FIPrevod, FITisk, FIMail;
+uses DesUtils, FICommon, FIfaktura, FIPrevod, FITisk, FIMail;
 
 {$R *.dfm}
 
@@ -203,24 +200,23 @@ var
   FIFileName: AnsiString;
 
 begin
-// jména pro viewjsou unikátní, aby program nebyl omezen na jednu instanci
+  // jména pro viewjsou unikátní, aby program nebyl omezen na jednu instanci
   VoIP_customers := FormatDateTime('VoIPyymmddhhnnss', Now);
   BBmax := FormatDateTime('BByymmddhhnnss', Now);
   BillingView := FormatDateTime('BVyymmddhhnnss', Now);
   InvoiceView := FormatDateTime('IVyymmddhhnnss', Now);
-// jméno FI.ini
-{$IFDEF ABAK}
-  FIFileName := ExtractFilePath(ParamStr(0)) + 'FIABAK.ini';
-{$ELSE}
-  FIFileName := ExtractFilePath(ParamStr(0)) + 'FIDES.ini';
-{$ENDIF}
-// 2.1.15 adresáø pro logy
-  LogDir := ExtractFilePath(ParamStr(0)) + '\Mìsíèní fakturace - logy';
-  if not DirectoryExists(LogDir) then CreateDir(LogDir);
+
+
+  //FIFileName := ExtractFilePath(ParamStr(0)) + 'FIDES.ini';
+
+  //adresáø pro logy
+  LogDir := DesU.PROGRAM_PATH + '\logy\Mìsíèní fakturace\';
+  if not DirectoryExists(LogDir) then Forcedirectories(LogDir);
+
 // vytvoøení logfile, pokud neexistuje - 5.11. do jména pøidáno datum - 9.4.15 jen rok a mìsíc
 // 2.1.  LogFileName := ExtractFilePath(ParamStr(0)) + FormatDateTime('"Fakturace "dd.mm.yyyy".log"', Date);
 // 8.4.  LogFileName := LogDir + FormatDateTime('\yyyy.mm.dd".log"', Date);
-  LogFileName := LogDir + FormatDateTime('\yyyy.mm".log"', Date);
+  LogFileName := LogDir + FormatDateTime('yyyy.mm".log"', Date);
   if not FileExists(LogFileName) then begin
     FileHandle := FileCreate(LogFileName);
     FileClose(FileHandle);
@@ -230,8 +226,11 @@ begin
   Writeln(F);
   CloseFile(F);
   dmCommon.Zprava('Start programu "Mìsíèní fakturace".');
+
+  {
   if FileExists(FIFileName) then begin                     // existuje FI.ini ?
     FIIni := TIniFile.Create(FIFileName);
+
 // pøihlašovací údaje z FI.ini
     with FIIni do try
       dbAbra.HostName := ReadString('Preferences', 'AbraHN', '');
@@ -263,20 +262,33 @@ begin
     fmMain.Close;
     Exit;
   end;
-  Prerusit := True;                   // pøíznak startu
-// fajfky v asgMain
+  }
+
+  dbAbra.HostName := DesU.getIniValue('Preferences', 'AbraHN');
+  dbAbra.Database := DesU.getIniValue('Preferences', 'AbraDB');
+  dbAbra.User := DesU.getIniValue('Preferences', 'AbraUN');
+  dbAbra.Password := DesU.getIniValue('Preferences', 'AbraPW');
+
+  dbVoIP.HostName := DesU.getIniValue('Preferences', 'VoIPHN');
+  dbVoIP.Database := DesU.getIniValue('Preferences', 'VoIPDB');
+  dbVoIP.User := DesU.getIniValue('Preferences', 'VoIPUN');
+  dbVoIP.Password := DesU.getIniValue('Preferences', 'VoIPPW');
+
+  PDFDir := DesU.getIniValue('Preferences', 'PDFDir');
+  //Check := ReadBool('Preferences', 'Check', False);
+  Check := false; //TODO k èemu to je?
+
+
+  Prerusit := True; // pøíznak startu
+  // fajfky v asgMain
   asgMain.CheckFalse := '0';
   asgMain.CheckTrue := '1';
-{$IFDEF ABAK}
-  aseMesic.Value := MonthOf(Date);
-  aseRok.Value := YearOf(Date);
-  apnFakturyZa.Visible := True;                            // rb místo cb
-{$ELSE}
+
 // do 25. se oèekává fakturace za minulý mìsíc, pak už za aktuální
   if DayOf(Date)> 25 then aseMesic.Value := MonthOf(Date) else aseMesic.Value := MonthOf(IncMonth(Date, -1));
   if DayOf(Date)> 25 then aseRok.Value := YearOf(Date) else aseRok.Value := YearOf(IncMonth(Date, -1));
   apnFakturyZa.Visible := False;
-{$ENDIF}
+
 end;
 
 // ------------------------------------------------------------------------------------------------
@@ -309,24 +321,19 @@ begin
       fmMain.Close;
     end;
   end;
-{$IFDEF ABAK}
-  if not dbVoIP.Connected and rbVoIP.Enabled then try
-{$ELSE}
+
   if not dbVoIP.Connected and cbSVoIP.Enabled then try
-{$ENDIF}
+
     dmCommon.Zprava('Pøipojení databáze VoIP ...');
     dbVoIP.Connect;
   except on E: exception do
     begin
       Application.MessageBox(PChar('Nedá se pøipojit k databázi VoIP.' + ^M + E.Message), 'Abra', MB_ICONERROR + MB_OK);
       dmCommon.Zprava('Nedá se pøipojit k databázi VoIP. ' + #13#10 + 'Chyba: ' + E.Message);
-{$IFDEF ABAK}
-      rbVoIP.Checked := False;
-      rbVoIP.Enabled := False;
-{$ELSE}
+
       cbSVoIP.Checked := False;
       cbSVoIP.Enabled := False;
-{$ENDIF}
+
     end;
   end;  // try .. except
   Prerusit := False;
@@ -352,17 +359,10 @@ procedure TfmMain.dbAbraAfterConnect(Sender: TObject);
 begin
   with qrAbra do begin
     Close;
-{$IFDEF ABAK}
-// Id øady dokladù FiI a FtI
-    SQL.Text := 'SELECT Id FROM DocQueues WHERE Code = ''FtI'' AND DocumentType = ''03''';
-    Open;
-    VDocQueue_Id := FieldByName('Id').AsString;
-    Close;
-    SQL.Text := 'SELECT Id FROM DocQueues WHERE Code = ''FiI'' AND DocumentType = ''03''';
-{$ELSE}
+
 // Id øady dokladù FO1
     SQL.Text := 'SELECT Id FROM DocQueues WHERE Code = ''FO1'' AND DocumentType = ''03''';
-{$ENDIF}
+
     Open;
     IDocQueue_Id := FieldByName('Id').AsString;
     Close;
@@ -555,36 +555,21 @@ begin
     Period_Id := FieldByName('Id').AsString;
     Close;
   end;  // with qrAbra
-{$IFDEF ABAK}
-// datum fakturace je aktuální datum
-  deDatumDokladu.Date := Date;
-// datum plnìní je aktuální datum (internet), nebo poslední den v mìsíci (VoIP)
-  if rbInternet.Checked then begin
-    deDatumPlneni.Date := Date;
-    aedSplatnost.Text := '7';
-  end else begin
-    deDatumPlneni.Date := EndOfAMonth(aseRok.Value, aseMesic.Value);
-    aedSplatnost.Text := '14';
-  end;
-{$ELSE}
+
 // datum fakturace i datum plnìní je poslední den v mìsíci
   deDatumDokladu.Date := EndOfAMonth(aseRok.Value, aseMesic.Value);
   deDatumPlneni.Date := deDatumDokladu.Date;
   aedSplatnost.Text := '10';
-{$ENDIF}
+
 // *** výbìr podle smlouvy
   if rbPodleSmlouvy.Checked then with qrMain do try
     Screen.Cursor := crSQLWait;
 // view pro fakturaci
     dmCommon.AktualizaceView;
 // první a poslední èíslo smlouvy
-{$IFDEF ABAK}
-    SQL.Text := 'SELECT MIN(Number), MAX(Number) FROM contracts'
-    + ' WHERE Invoice = 1';
-//    SQL.Text := 'SELECT MIN(Smlouva), MAX(Smlouva) FROM InvoiceView';       18.11.2014 jde to furt dìsnì pomalu
-{$ELSE}
+
     SQL.Text := 'SELECT MIN(VS), MAX(VS) FROM InvoiceView';
-{$ENDIF}
+
     Open;
     aedOd.Text := Fields[0].AsString;
     aedDo.Text := Fields[1].AsString;
@@ -597,18 +582,11 @@ begin
     dbAbra.Reconnect;
     with qrAbra do begin
 // rozpìtí èísel FO1 v mìsíci
-{$IFDEF ABAK}
-      SQL.Text := 'SELECT MIN(OrdNumber), MAX(OrdNumber) FROM IssuedInvoices'
-      + ' WHERE VATDate$DATE >= ' + FloatToStr(Trunc(StartOfAMonth(aseRok.Value, aseMesic.Value)))
-      + ' AND VATDate$DATE <= ' + FloatToStr(Trunc(EndOfAMonth(aseRok.Value, aseMesic.Value)));
-      if rbInternet.Checked then SQL.Text := SQL.Text + ' AND DocQueue_ID = ' + Ap + IDocQueue_Id + Ap;
-      if rbVoIP.Checked then SQL.Text := SQL.Text + ' AND DocQueue_ID = ' + Ap + VDocQueue_Id + Ap;
-{$ELSE}
       SQL.Text := 'SELECT MIN(OrdNumber), MAX(OrdNumber) FROM IssuedInvoices'
       + ' WHERE VATDate$DATE >= ' + FloatToStr(Trunc(StartOfAMonth(aseRok.Value, aseMesic.Value)))
       + ' AND VATDate$DATE <= ' + FloatToStr(Trunc(EndOfAMonth(aseRok.Value, aseMesic.Value)))
       + ' AND DocQueue_ID = ' + Ap + IDocQueue_Id + Ap;
-{$ENDIF}
+
       Open;
       if RecordCount > 0 then begin
         aedOd.Text := Fields[0].AsString;
@@ -826,13 +804,10 @@ begin
   end;
 // QR kód
   if not rbSeSlozenkou.Checked then begin
-{$IFDEF ABAK}
-    QRCode.Barcode := Format('SPD*1.0*ACC:CZ7903000000000478561843*AM:%d*CC:CZK*DT:%s*X-VS:%s*X-SS:%s*MSG:QR PLATBA ABAK',
-     [Round(Zaplatit), FormatDateTime('yyyymmdd', DatumSplatnosti), VS, SS]);
-{$ELSE}
+
     QRCode.Barcode := Format('SPD*1.0*ACC:CZ6020100000002100098382*AM:%d*CC:CZK*DT:%s*X-VS:%s*X-SS:%s*MSG:QR PLATBA EUROSIGNAL',
      [Round(Zaplatit), FormatDateTime('yyyymmdd', DatumSplatnosti), VS, SS]);
-{$ENDIF}
+
     QRCode.DrawToSize(AWidth, AHeight, ASymbolWidth, ASymbolHeight);
     with TfrxPictureView(frxReport.FindObject('pQR')).Picture.Bitmap do begin
       Width := AWidth;
@@ -867,10 +842,7 @@ begin
   else if ParName = 'Celkem' then ParValue := Celkem
   else if ParName = 'Saldo' then ParValue := Saldo
   else if ParName = 'Zaplatit' then ParValue := Format('%.2f Kè', [Zaplatit])
-{$IFDEF ABAK}
-  else if ParName = 'Resume' then ParValue := Format('Èástku %.0f,- Kè uhraïte, prosím, do %s na úèet 478561843/0300 s variabilním symbolem %s.',
-   [Zaplatit, Splatnost, VS]);
-{$ELSE}
+
   else if ParName = 'Resume' then ParValue := Format('Èástku %.0f,- Kè uhraïte, prosím, do %s na úèet 2100098382/2010 s variabilním symbolem %s.',
    [Zaplatit, Splatnost, VS])
   else if ParName = 'DRCText' then
@@ -906,7 +878,6 @@ begin
     else if ParName = 'SS2' then ParValue := SS
     else if ParName = 'Castka' then ParValue := C + ',-';
   end;
-{$ENDIF}
 end;
 
 // ------------------------------------------------------------------------------------------------
@@ -957,13 +928,8 @@ end;
 procedure TfmMain.btOdeslatClick(Sender: TObject);
 // odeslání faktur pøevedených do PDF na vzdálený server
 begin
-{$IFDEF ABAK}
-  WinExec(PChar(Format('WinSCP.com /command "option batch abort" "option confirm off" "open AbraABAK" "synchronize remote'
-   + ' \\172.23.0.100\abra\FakturyPDF\%4d\%2.2d /home/abra/%4d" "exit"', [aseRok.Value, aseMesic.Value, aseRok.Value])), SW_SHOWNORMAL);
-{$ELSE}
-  WinExec(PChar(Format('WinSCP.com /command "option batch abort" "option confirm off" "open AbraPDF" "synchronize remote'
-   + ' J:\eurosignal\Faktury-archiv\%4d\%2.2d /home/abrapdf/%4d" "exit"', [aseRok.Value, aseMesic.Value, aseRok.Value])), SW_SHOWNORMAL);
-{$ENDIF}
+  WinExec(PChar(Format('WinSCP.com /command "option batch abort" "option confirm off" "open AbraPDF" "synchronize remote '
+   + '%s\%4d\%2.2d /home/abrapdf/%4d" "exit"', [PDFDir, aseRok.Value, aseMesic.Value, aseRok.Value])), SW_SHOWNORMAL);
 end;
 
 // ------------------------------------------------------------------------------------------------
@@ -983,10 +949,8 @@ end;
 procedure TfmMain.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
   with qrMain do try
-{$IFNDEF ABAK}
     SQL.Text := 'DROP VIEW ' + VoIP_customers;
     ExecSQL;
-{$ENDIF}
     SQL.Text := 'DROP VIEW ' + InvoiceView;
     ExecSQL;
     SQL.Text := 'DROP VIEW ' + BillingView;

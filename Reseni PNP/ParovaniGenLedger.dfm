@@ -2,8 +2,8 @@ object fmSparovaniVDeniku: TfmSparovaniVDeniku
   Left = 0
   Top = 0
   Caption = 'Sp'#225'rov'#225'n'#237' v den'#237'ku'
-  ClientHeight = 453
-  ClientWidth = 1068
+  ClientHeight = 508
+  ClientWidth = 1154
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -14,8 +14,8 @@ object fmSparovaniVDeniku: TfmSparovaniVDeniku
   Position = poDesigned
   OnShow = FormShow
   DesignSize = (
-    1068
-    453)
+    1154
+    508)
   PixelsPerInch = 96
   TextHeight = 13
   object lblLimit: TLabel
@@ -31,15 +31,32 @@ object fmSparovaniVDeniku: TfmSparovaniVDeniku
     Font.Style = []
     ParentFont = False
   end
+  object Label1: TLabel
+    Left = 8
+    Top = 485
+    Width = 967
+    Height = 13
+    Caption = 
+      'Jsou nalezeny p'#225'ry z GL, kde polo'#382'ka A je sama ve skupin'#283' a na M' +
+      'D m'#225' zadan'#253' '#250#269'et a k tomu se p'#225'ruje polo'#382'ka B, kter'#225' je tak'#233' sam' +
+      'a ve skupin'#283' a zadan'#253' '#250#269'et m'#225' na D. Polo'#382'ky mus'#237' pat'#345'it stejn'#233' f' +
+      'irm'#283'.'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    ParentFont = False
+  end
   object asgSparovaniVDeniku: TAdvStringGrid
     Left = 0
     Top = 48
-    Width = 1051
-    Height = 389
+    Width = 1133
+    Height = 431
     Cursor = crDefault
     Anchors = [akLeft, akTop, akBottom]
     BorderStyle = bsNone
-    ColCount = 9
+    ColCount = 13
     DefaultRowHeight = 19
     DrawingStyle = gdsClassic
     FixedCols = 0
@@ -64,11 +81,15 @@ object fmSparovaniVDeniku: TfmSparovaniVDeniku
     ColumnHeaders.Strings = (
       ''
       'Jm'#233'no'
-      'MD text'
-      'MD '#269#225'stka'
-      'D text'
-      'D '#269#225'stka'
-      'rozd'#237'l'
+      'A datum'
+      'A text'
+      'A '#269#225'stka'
+      'A proti'#250#269'et'
+      'B datum'
+      'B text'
+      'B '#269#225'stka'
+      'B proti'#250#269'et'
+      'Rozd'#237'l'
       'AccGroupId'
       'ID z'#225'znamu')
     ControlLook.FixedGradientHoverFrom = clGray
@@ -152,20 +173,23 @@ object fmSparovaniVDeniku: TfmSparovaniVDeniku
     SearchFooter.HintHighlight = 'Highlight occurrences'
     SearchFooter.MatchCaseCaption = 'Match case'
     SortSettings.DefaultFormat = ssAutomatic
-    SortSettings.Column = 3
+    SortSettings.Column = 2
     SortSettings.Show = True
     Version = '7.4.2.0'
-    ExplicitHeight = 367
     ColWidths = (
       27
-      200
-      200
-      73
-      200
-      73
+      160
       64
-      89
-      108)
+      150
+      62
+      70
+      64
+      150
+      62
+      68
+      64
+      71
+      89)
   end
   object btnProvedSparovani: TButton
     Left = 768
