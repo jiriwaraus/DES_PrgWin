@@ -110,7 +110,7 @@ begin
   LogDir := DesU.PROGRAM_PATH + '\logy\Nezaplacené FO\';
   if not DirectoryExists(LogDir) then Forcedirectories(LogDir);
 // vytvoøení logfile, pokud neexistuje - 20.11.14 do jména pøidáno datum - 8.4.15 jen rok a mìsíc
-  LogFileName := LogDir + FormatDateTime('\yyyy.mm".log"', Date);
+  LogFileName := LogDir + FormatDateTime('yyyy.mm".log"', Date);
   if not FileExists(LogFileName) then begin
     FileHandle := FileCreate(LogFileName);
     FileClose(FileHandle);

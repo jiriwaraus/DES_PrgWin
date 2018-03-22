@@ -276,7 +276,7 @@ begin
 
   PDFDir := DesU.getIniValue('Preferences', 'PDFDir');
   //Check := ReadBool('Preferences', 'Check', False);
-  Check := false; //TODO k èemu to je?
+  Check := false; //TODO k èemu to je? už není potøeba
 
 
   Prerusit := True; // pøíznak startu

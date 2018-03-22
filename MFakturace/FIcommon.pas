@@ -95,13 +95,14 @@ begin
     lbxLog.Items.Add(FormatDateTime('dd.mm.yy hh:nn:ss  ', Now) + TextZpravy);
     lbxLog.ItemIndex := lbxLog.Count - 1;
     Application.ProcessMessages;
-    while TimeOut < 1000 do try         // 30.11.17 zkouší to 100x po 10 ms  //TODO je to takhle dobøe?
+    while TimeOut < 1000 do try         // 30.11.17 zkouší to 10x po 100 ms
       Append(F);
       Writeln (F, Format('(%s - %s) ', [Trim(CompName), Trim(UserName)]) + FormatDateTime('dd.mm.yy hh:nn:ss  ', Now) + TextZpravy);
       CloseFile(F);
+      Break;
     except
-      Sleep(10);
-      Inc(TimeOut, 10);
+      Sleep(100);
+      Inc(TimeOut, 100);
     end;  
   end;
 end;
