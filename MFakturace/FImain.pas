@@ -36,7 +36,7 @@ type
     qrDPH: TZQuery;
     qrRadky: TZQuery;
     frxReport: TfrxReport;
-    frxDesigner: TfrxDesigner;
+    // *HW* frxDesigner: TfrxDesigner;
     fdsDPH: TfrxDBDataset;
     fdsRadky: TfrxDBDataset;
     QRCode: TBarcode2D_QRCode;
@@ -83,6 +83,7 @@ type
     lbVyber: TLabel;
     rbPodleFaktury: TRadioButton;
     rbPodleSmlouvy: TRadioButton;
+    Button1: TButton;
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure FormActivate(Sender: TObject);
@@ -128,6 +129,7 @@ type
     procedure rbPrevodClick(Sender: TObject);
     procedure rbTiskClick(Sender: TObject);
     procedure rbMailClick(Sender: TObject);
+    procedure Button1Click(Sender: TObject);
   public
     F: TextFile;
     DRC,
@@ -269,6 +271,12 @@ begin
   dbAbra.User := DesU.getIniValue('Preferences', 'AbraUN');
   dbAbra.Password := DesU.getIniValue('Preferences', 'AbraPW');
 
+  dbMain.HostName := DesU.getIniValue('Preferences', 'ZakHN');
+  dbMain.Database := DesU.getIniValue('Preferences', 'ZakDB');
+  dbMain.User := DesU.getIniValue('Preferences', 'ZakUN');
+  dbMain.Password := DesU.getIniValue('Preferences', 'ZakPW');
+
+
   dbVoIP.HostName := DesU.getIniValue('Preferences', 'VoIPHN');
   dbVoIP.Database := DesU.getIniValue('Preferences', 'VoIPDB');
   dbVoIP.User := DesU.getIniValue('Preferences', 'VoIPUN');
@@ -289,6 +297,8 @@ begin
   if DayOf(Date)> 25 then aseRok.Value := YearOf(Date) else aseRok.Value := YearOf(IncMonth(Date, -1));
   apnFakturyZa.Visible := False;
 
+  aseRok.Value := 2017; // *HW*
+
 end;
 
 // ------------------------------------------------------------------------------------------------
@@ -298,7 +308,8 @@ procedure TfmMain.FormActivate(Sender: TObject);
 // z jiného okna, kontrolují se existující pøipojení
 begin
   if not Prerusit then Exit;             // to by mìlo ohlídat volání jen pøi startu
-// pøipojení databází
+
+  // pøipojení databází
   if not dbAbra.Connected then try
     dmCommon.Zprava('Pøipojení databáze Abry ...');
     dbAbra.Connect;
@@ -310,6 +321,7 @@ begin
       fmMain.Close;
     end;
   end;
+
   if not dbMain.Connected then try
     dmCommon.Zprava('Pøipojení databáze smluv ...');
     dbMain.Connect;
@@ -322,8 +334,8 @@ begin
     end;
   end;
 
+  {
   if not dbVoIP.Connected and cbSVoIP.Enabled then try
-
     dmCommon.Zprava('Pøipojení databáze VoIP ...');
     dbVoIP.Connect;
   except on E: exception do
@@ -336,6 +348,8 @@ begin
 
     end;
   end;  // try .. except
+  }
+
   Prerusit := False;
   aseRokChange(nil);
   rbFakturaceClick(nil);
@@ -802,7 +816,9 @@ begin
     SQL.Text := SQLStr;
     Open;
   end;
-// QR kód
+
+  { *HW*
+  // QR kód
   if not rbSeSlozenkou.Checked then begin
 
     QRCode.Barcode := Format('SPD*1.0*ACC:CZ6020100000002100098382*AM:%d*CC:CZK*DT:%s*X-VS:%s*X-SS:%s*MSG:QR PLATBA EUROSIGNAL',
@@ -815,6 +831,8 @@ begin
       QRCode.DrawTo(Canvas, 0, 0);
     end;
   end;
+  }
+
 end;
 
 // ------------------------------------------------------------------------------------------------
@@ -916,6 +934,11 @@ begin
   end;
 end;
 
+procedure TfmMain.Button1Click(Sender: TObject);
+begin
+  dmPrevod.demoPrevod;
+end;
+
 // ------------------------------------------------------------------------------------------------
 
 procedure TfmMain.btSablonaClick(Sender: TObject);
@@ -928,8 +951,10 @@ end;
 procedure TfmMain.btOdeslatClick(Sender: TObject);
 // odeslání faktur pøevedených do PDF na vzdálený server
 begin
+{ HW
   WinExec(PChar(Format('WinSCP.com /command "option batch abort" "option confirm off" "open AbraPDF" "synchronize remote '
    + '%s\%4d\%2.2d /home/abrapdf/%4d" "exit"', [PDFDir, aseRok.Value, aseMesic.Value, aseRok.Value])), SW_SHOWNORMAL);
+   }
 end;
 
 // ------------------------------------------------------------------------------------------------

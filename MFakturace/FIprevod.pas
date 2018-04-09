@@ -16,6 +16,7 @@ type
     procedure FakturaPrevod(Radek: integer);
   public
     procedure PrevedFaktury;
+    procedure demoPrevod();
   end;
 
 {$IFNDEF ABAK}
@@ -167,13 +168,14 @@ begin
       SQLStr := SQLStr + ' AND II.Period_ID = ' + Ap + Period_Id + Ap
       + ' AND II.OrdNumber = ' + Cells[2, Radek]
       + ' AND II.DocQueue_ID = ';
-{$IFDEF ABAK}
-      if rbVoIP.Checked then SQLStr := SQLStr + Ap + VDocQueue_Id + Ap
-      else
-{$ENDIF}
+
+
+
       SQLStr := SQLStr + Ap + IDocQueue_Id + Ap;
+
       SQL.Text := SQLStr;
       Open;
+
       if RecordCount = 0 then begin
         dmCommon.Zprava(Format('Neexistuje faktura %d nebo zákazník %s.', [Ints[2, Radek], Cells[4, Radek]]));
         Close;
@@ -204,14 +206,10 @@ begin
       Close;
       SS := Format('%6.6d%2.2d', [Ints[2, Radek], aseRok.Value - 2000]);
       Mesic := MonthOf(DatumDokladu);
-{$IFDEF ABAK}
-      if rbInternet.Checked then FStr := 'FiI'
-      else FStr := 'FtI';
-{$ELSE}
       FStr := 'FO1';
-{$ENDIF}
       Cislo := Format('%s-%5.5d/%d', [FStr, Ints[2, Radek], aseRok.Value]);
-// všechny Firm_Id pro Abrakód firmy
+
+      // všechny Firm_Id pro Abrakód firmy
       SQLStr := 'SELECT * FROM DE$_Code_To_Firm_Id (' + Ap + AbraKod + ApZ;
       SQL.Text := SQLStr;
       Open;
@@ -220,38 +218,35 @@ begin
         Close;
         Exit;
       end;
+
       Saldo := 0;
-// a saldo pro všechny Firm_Id (saldo je záporné, pokud zákazník dluží)
+      // a saldo pro všechny Firm_Id (saldo je záporné, pokud zákazník dluží)
       while not EOF do with qrAdresa do begin
         Close;
-{$IFDEF ABAK}
-        if rbInternet.Checked then
-          SQLStr := 'SELECT SaldoPo FROM AB$_Saldo_FiI (' + Ap + qrAbra.Fields[0].AsString + ApC + FloatToStr(DatumDokladu) + ')'
-        else SQLStr := 'SELECT SaldoPo FROM AB$_Saldo_FtI (' + Ap + qrAbra.Fields[0].AsString + ApC + FloatToStr(DatumDokladu) + ')';
-{$ELSE}
-        SQLStr := 'SELECT SaldoPo + SaldoZLPo + Ucet325 FROM DE$_Firm_Totals (' + Ap + qrAbra.Fields[0].AsString + ApC + FloatToStr(DatumDokladu) + ')';
-{$ENDIF}
-        SQL.Text := SQLStr;
+        SQL.Text := 'SELECT SaldoPo + SaldoZLPo + Ucet325 FROM DE$_Firm_Totals (' + Ap + qrAbra.Fields[0].AsString + ApC + FloatToStr(DatumDokladu) + ')';
         Open;
         Saldo := Saldo + Fields[0].AsFloat;
         qrAbra.Next;
       end; // while not EOF do with qrAdresa
     end;  // with qrAbra
-// právì pøevádìná faktura mùže být pøed splatností
-//    if Date <= DatumSplatnosti then begin
-      Saldo := Saldo + Zaplaceno;          // Saldo je po splatnosti (SaldoPo), je-li faktura už zaplacena, pøiète se platba
-      Zaplatit := Celkem - Saldo;          // Celkem k úhradì = Celkem za fakt. období - Zùstatek minulých období(saldo)
-// anebo je po splatnosti
-{    end else begin
+
+    // právì pøevádìná faktura mùže být pøed splatností
+    //    if Date <= DatumSplatnosti then begin
+    Saldo := Saldo + Zaplaceno;          // Saldo je po splatnosti (SaldoPo), je-li faktura už zaplacena, pøiète se platba
+    Zaplatit := Celkem - Saldo;          // Celkem k úhradì = Celkem za fakt. období - Zùstatek minulých období(saldo)
+    // anebo je po splatnosti
+    {end else begin
       Zaplatit := -Saldo;
       Saldo := Saldo + Celkem;             // èástka faktury se odeète ze salda, aby tam nebyla dvakrát
     end;  }
-// text na fakturu
+
+    // text na fakturu
     if Saldo > 0 then Platek := 'pøeplatek'
     else if Saldo < 0 then Platek := 'nedoplatek'
     else Platek := ' ';
     if Zaplatit < 0 then Zaplatit := 0;
-// údaje z tabulky Smlouvy do globálních promìnných
+
+    // údaje z tabulky Smlouvy do globálních promìnných
     with qrMain do begin
       Close;
       SQLStr := 'SELECT Postal_name, Postal_street, Postal_PSC, Postal_city FROM customers'
@@ -263,30 +258,34 @@ begin
       PObec := FieldByName('Postal_PSC').AsString + ' ' + FieldByName('Postal_city').AsString;
       Close;
     end;  // with qrMain
-// zasílací adresa
+
+    // zasílací adresa
     if (PJmeno = '') or (PObec = '') then begin
       PJmeno := OJmeno;
       PUlice := OUlice;
       PObec := OObec;
     end;
-// adresáø pro ukládání faktur v PDF nemusí existovat
+
+    // adresáø pro ukládání faktur v PDF nemusí existovat
     if not DirectoryExists(PDFDir) then CreateDir(PDFDir);           // PDFDir je v FI.ini
     OutDir := PDFDir + Format('\%4d', [aseRok.Value]);
     if not DirectoryExists(OutDir) then CreateDir(OutDir);
     OutDir := OutDir + Format('\%2.2d', [Mesic]);
     if not DirectoryExists(OutDir) then CreateDir(OutDir);
-// jméno souboru s fakturou
+
+    // jméno souboru s fakturou
     OutFileName := OutDir + Format('\%s-%5.5d.pdf', [FStr, Ints[2, Radek]]);
-// soubor už existuje
+    // soubor už existuje
     if FileExists(OutFileName) then
       if cbNeprepisovat.Checked then begin
         dmCommon.Zprava(Format('%s (%s): Soubor %s už existuje.', [Cells[4, Radek], Cells[1, Radek], OutFileName]));
         Exit;
-      end else DeleteFile(OutFileName);
-// vytvoøená faktura se zpracuje do vlastního formuláøe a pøevede se do PDF
-{$IFNDEF ABAK}
+      end else
+        DeleteFile(OutFileName);
+    // vytvoøená faktura se zpracuje do vlastního formuláøe a pøevede se do PDF
+
     if JePrint2PDF then begin        // uložení pomocí Print2PDF
-// nastaví se jméno a cesta
+      // nastaví se jméno a cesta
       Reg := TRegistry.Create;
       try
         Reg.RootKey := HKEY_CURRENT_USER;
@@ -309,16 +308,7 @@ begin
 //      frPrevod.PrintPreparedReport('1', 1);
     end else begin                                         // uložení pomocí Synopse
       frxReport.LoadFromFile(ExtractFilePath(ParamStr(0)) + 'FOsPDP.fr3');
-{$ELSE}
-// 2.4.15 PDP 26.10.16
-      FrfFileName := ExtractFilePath(ParamStr(0)) + 'FIsPDP.fr3';
-      if rbInternet.Checked and FileExists(ExtractFilePath(ParamStr(0)) + 'FiIsPDP.fr3') then
-        FrfFileName := ExtractFilePath(ParamStr(0)) + 'FiIsPDP.fr3';
-      if rbVoIP.Checked and FileExists(ExtractFilePath(ParamStr(0)) + 'FtIsPDP.fr3') then
-        FrfFileName := ExtractFilePath(ParamStr(0)) + 'FtIsPDP.fr3';
-      frxReport.LoadFromFile(FrfFileName);
-//      frxReport.LoadFromFile(ExtractFilePath(ParamStr(0)) + 'FIdoPDF.fr3');
-{$ENDIF}
+
       frxReport.PrepareReport;
 //  frxReport.ShowPreparedReport;
 // uložení
@@ -328,11 +318,9 @@ begin
       with frxSynPDFExport do try
         FileName := OutFileName;
         Title := 'Faktura za pøipojení k internetu';
-{$IFDEF ABAK}
-        Author := 'ABAK, s.r.o.';
-{$ELSE}
+
         Author := 'Družstvo Eurosignal';
-{$ENDIF}
+
         EmbeddedFonts := False;
         Compressed := True;
         OpenAfterExport := False;
@@ -343,9 +331,143 @@ begin
       finally
         Free;
       end;
-{$IFNDEF ABAK}
+
     end;      // if JePrint2PDF else
-{$ENDIF}
+
+// èekání na soubor - max. 5s
+    for i := 1 to 50 do begin
+      if FileExists(OutFileName) then Break;
+      Sleep(100);
+    end;
+// hotovo
+    if not FileExists(OutFileName) then
+      dmCommon.Zprava(Format('%s (%s): Nepodaøilo se vytvoøit soubor %s.', [OJmeno, VS, OutFileName]))
+    else begin
+      dmCommon.Zprava(Format('%s (%s): Vytvoøen soubor %s.', [OJmeno, VS, OutFileName]));
+      Ints[0, Radek] := 0;
+      Row := Radek;
+    end;
+  end;  // with fmMain
+end;
+
+
+procedure TdmPrevod.demoPrevod();
+// podle faktury v Abøe a stavu pohledávek vytvoøí formuláø v PDF
+var
+  FrfFileName,
+  OutFileName,
+  OutDir,
+  AbraKod,
+  SQLStr: AnsiString;
+  Zaplaceno: double;
+  Radek, i: integer;
+  Reg: TRegistry;
+  frxSynPDFExport: TfrxSynPDFExport;
+begin
+  Radek := 1;
+
+  with fmMain, fmMain.asgMain do begin
+    with qrAbra do begin
+
+      AbraKod := 'ABRAKKK';
+      OJmeno := 'Pepa';
+      OUlice := 'Kratka';
+      OObec := '55523 Kulickov';
+      OICO := 'xxx';
+      ODIC := 'xxx';
+      ID := 'xxx';
+      DRC := false;
+      DatumDokladu := 43000;
+      DatumSplatnosti := 43000;
+      DatumPlneni := 43000;
+      Vystaveni := FormatDateTime('dd.mm.yyyy', 43000);
+      Plneni := FormatDateTime('dd.mm.yyyy', 43000);
+      Splatnost := FormatDateTime('dd.mm.yyyy', 43000);
+      VS := '123123123';
+      Celkem := 998;
+      Zaplaceno := 10;
+
+      SS := '555';
+      Mesic := MonthOf(DatumDokladu);
+      FStr := 'FO1';
+      Cislo := Format('%s-%5.5d/%d', ['yy', 5678, 2015]);
+
+
+
+      Saldo := 0;
+
+    end;  // with qrAbra
+
+
+    Saldo := Saldo + Zaplaceno;          // Saldo je po splatnosti (SaldoPo), je-li faktura už zaplacena, pøiète se platba
+    Zaplatit := Celkem - Saldo;          // Celkem k úhradì = Celkem za fakt. období - Zùstatek minulých období(saldo)
+
+
+    // text na fakturu
+    if Saldo > 0 then Platek := 'pøeplatek'
+    else if Saldo < 0 then Platek := 'nedoplatek'
+    else Platek := ' ';
+    if Zaplatit < 0 then Zaplatit := 0;
+
+    // údaje z tabulky Smlouvy do globálních promìnných
+
+      PJmeno := 'PJmeno';
+      PUlice := 'PUlice';
+      PObec := 'PObec';
+
+
+    // zasílací adresa
+    if (PJmeno = '') or (PObec = '') then begin
+      PJmeno := OJmeno;
+      PUlice := OUlice;
+      PObec := OObec;
+    end;
+
+    // adresáø pro ukládání faktur v PDF nemusí existovat
+    if not DirectoryExists(PDFDir) then CreateDir(PDFDir);           // PDFDir je v FI.ini
+    OutDir := PDFDir + Format('\%4d', [2017]);
+    if not DirectoryExists(OutDir) then CreateDir(OutDir);
+    OutDir := OutDir + Format('\%2.2d', [Mesic]);
+    if not DirectoryExists(OutDir) then CreateDir(OutDir);
+
+    // jméno souboru s fakturou
+    OutFileName := OutDir + Format('\%s-%5.5d.pdf', ['yy', 5678]);
+    // soubor už existuje
+    if FileExists(OutFileName) then
+
+        DeleteFile(OutFileName);
+    // vytvoøená faktura se zpracuje do vlastního formuláøe a pøevede se do PDF
+
+    if JePrint2PDF then begin        // uložení pomocí Print2PDF
+
+    end else begin                                         // uložení pomocí Synopse
+      frxReport.LoadFromFile(ExtractFilePath(ParamStr(0)) + 'fr3\FOsPDP.fr3');
+
+      frxReport.PrepareReport;
+//  frxReport.ShowPreparedReport;
+// uložení
+//  frxPDFExport.FileName := OutFileName;
+//  frxReport.Export(frxPDFExport);
+      frxSynPDFExport := TfrxSynPDFExport.Create(nil);
+      with frxSynPDFExport do try
+        FileName := OutFileName;
+        Title := 'Faktura za pøipojení k internetu';
+
+        Author := 'Družstvo Eurosignal';
+
+        EmbeddedFonts := False;
+        Compressed := True;
+        OpenAfterExport := False;
+        ShowDialog := False;
+        ShowProgress := False;
+        PDFA := True; // important
+        frxReport.Export(frxSynPDFExport);
+      finally
+        Free;
+      end;
+
+    end;      // if JePrint2PDF else
+
 // èekání na soubor - max. 5s
     for i := 1 to 50 do begin
       if FileExists(OutFileName) then Break;

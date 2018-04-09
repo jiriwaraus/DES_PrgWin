@@ -43,6 +43,8 @@ begin
     Screen.Cursor := crHourGlass;
     asgMain.Visible := False;
     lbxLog.Visible := True;
+
+    {
     try
       dmCommon.Zprava('Pøipojení k Abøe ...');
       AbraOLE := CreateOLEObject('AbraOLE.Application');
@@ -69,6 +71,8 @@ begin
         Exit;
       end;
     end;
+    }
+
     dmCommon.Zprava(Format('Poèet faktur k vygenerování: %d', [Trunc(ColumnSum(0, 1, RowCount-1))]));
     apbProgress.Position := 0;
     apbProgress.Visible := True;

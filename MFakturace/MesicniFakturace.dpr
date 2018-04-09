@@ -23,12 +23,12 @@ uses
 begin
   Application.Initialize;
   Application.Title := 'Mìsíèní fakturace s ÈTÚ';
+  Application.CreateForm(TfmMain, fmMain);
   Application.CreateForm(TDesU, DesU);
   Application.CreateForm(TdmCommon, dmCommon);
   Application.CreateForm(TdmFaktura, dmFaktura);
   Application.CreateForm(TfmLogin, fmLogin);
   Application.CreateForm(TdmMail, dmMail);
-  Application.CreateForm(TfmMain, fmMain);
   Application.CreateForm(TdmPrevod, dmPrevod);
   Application.CreateForm(TdmTisk, dmTisk);
   Application.Run;
