@@ -84,6 +84,7 @@ type
     rbPodleFaktury: TRadioButton;
     rbPodleSmlouvy: TRadioButton;
     Button1: TButton;
+    frxDBDataset1: TfrxDBDataset;
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure FormActivate(Sender: TObject);
@@ -817,7 +818,7 @@ begin
     Open;
   end;
 
-  { *HW*
+
   // QR kód
   if not rbSeSlozenkou.Checked then begin
 
@@ -831,7 +832,7 @@ begin
       QRCode.DrawTo(Canvas, 0, 0);
     end;
   end;
-  }
+
 
 end;
 
@@ -951,10 +952,13 @@ end;
 procedure TfmMain.btOdeslatClick(Sender: TObject);
 // odeslání faktur pøevedených do PDF na vzdálený server
 begin
-{ HW
-  WinExec(PChar(Format('WinSCP.com /command "option batch abort" "option confirm off" "open AbraPDF" "synchronize remote '
-   + '%s\%4d\%2.2d /home/abrapdf/%4d" "exit"', [PDFDir, aseRok.Value, aseMesic.Value, aseRok.Value])), SW_SHOWNORMAL);
-   }
+
+  //WinExec(PChar(Format('WinSCP.com /command "option batch abort" "option confirm off" "open AbraPDF" "synchronize remote '
+  // + '%s\%4d\%2.2d /home/abrapdf/%4d" "exit"', [PDFDir, aseRok.Value, aseMesic.Value, aseRok.Value])), SW_SHOWNORMAL);
+
+  RunCMD (Format('WinSCP.com /command "option batch abort" "option confirm off" "open AbraPDF" "synchronize remote '
+   + '%s\%4d\%2.2d /home/abrapdf/%4d" "exit"', [PDFDir, aseRok.Value, aseMesic.Value, aseRok.Value]), SW_SHOWNORMAL);
+
 end;
 
 // ------------------------------------------------------------------------------------------------
