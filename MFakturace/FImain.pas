@@ -799,25 +799,23 @@ begin
 // øádky faktury
   with qrRadky do begin
     Close;
-    SQLStr := 'SELECT Text, TAmountWithoutVAT AS BezDane, VATRate AS Sazba, TAmount - TAmountWithoutVAT AS DPH, TAmount AS SDani FROM IssuedInvoices2'
+    SQL.Text := 'SELECT Text, TAmountWithoutVAT AS BezDane, VATRate AS Sazba, TAmount - TAmountWithoutVAT AS DPH, TAmount AS SDani FROM IssuedInvoices2'
     + ' WHERE Parent_ID = ' + Ap + ID + Ap                                       // ID faktury
     + ' AND NOT (Text = ''Zaokrouhlení'' AND TAmount = 0)'
     + ' ORDER BY PosIndex';
-    SQL.Text := SQLStr;
     Open;
   end;
 // rekapitulace
   with qrDPH do begin
     Close;
-    SQLStr := 'SELECT VATRate AS Sazba, SUM(TAmountWithoutVAT) AS BezDane, SUM(TAmount - TAmountWithoutVAT) AS DPH, SUM(TAmount) AS SDani FROM IssuedInvoices2'
+    SQL.Text := 'SELECT VATRate AS Sazba, SUM(TAmountWithoutVAT) AS BezDane, SUM(TAmount - TAmountWithoutVAT) AS DPH, SUM(TAmount) AS SDani FROM IssuedInvoices2'
     + ' WHERE Parent_ID = ' + Ap + ID + Ap
     + ' AND VATIndex_ID IS NOT NULL'
     + ' GROUP BY Sazba';
-    SQL.Text := SQLStr;
     Open;
   end;
 
-  { *HW*
+
   // QR kód
   if not rbSeSlozenkou.Checked then begin
 
@@ -831,7 +829,7 @@ begin
       QRCode.DrawTo(Canvas, 0, 0);
     end;
   end;
-  }
+
 
 end;
 
@@ -951,10 +949,13 @@ end;
 procedure TfmMain.btOdeslatClick(Sender: TObject);
 // odeslání faktur pøevedených do PDF na vzdálený server
 begin
-{ HW
-  WinExec(PChar(Format('WinSCP.com /command "option batch abort" "option confirm off" "open AbraPDF" "synchronize remote '
-   + '%s\%4d\%2.2d /home/abrapdf/%4d" "exit"', [PDFDir, aseRok.Value, aseMesic.Value, aseRok.Value])), SW_SHOWNORMAL);
-   }
+
+  //WinExec(PChar(Format('WinSCP.com /command "option batch abort" "option confirm off" "open AbraPDF" "synchronize remote '
+  // + '%s\%4d\%2.2d /home/abrapdf/%4d" "exit"', [PDFDir, aseRok.Value, aseMesic.Value, aseRok.Value])), SW_SHOWNORMAL);
+
+  RunCMD (Format('WinSCP.com /command "option batch abort" "option confirm off" "open AbraPDF" "synchronize remote '
+   + '%s\%4d\%2.2d /home/abrapdf/%4d" "exit"', [PDFDir, aseRok.Value, aseMesic.Value, aseRok.Value]), SW_SHOWNORMAL);
+
 end;
 
 // ------------------------------------------------------------------------------------------------

@@ -46,60 +46,9 @@ var
   Reg: TRegistry;
 begin
   Screen.Cursor := crHourGlass;
-// k pøevodu se použije buï Print2PDF (pro DES), nebo FastReport se SynPDF
-{$IFNDEF ABAK}
-  JePrint2PDF := False;
-//  JePrint2PDF := not VarIsNull(FindWindow('Print2PDF_window_class', ''));
-// ještì musí být tiskárna Print2PDF
-  if JePrint2PDF then for i := 0 to Printer.Printers.Count do                  // cyklus pro všechny naistalované tiskárny
-    if i = Printer.Printers.Count then JePrint2PDF := False                    // nenašla se tiskárna Print2PDF, cyklus pøejel konec seznamu
-    else if Printer.Printers[i] = 'Print2PDF' then begin
-      Printer.PrinterIndex := i;                                               // Print2PDF se našla, tak se vybere
-      Break;                                                                   // a mùžeme ven z cyklu
-    end;
-{$ENDIF}
+
   with fmMain do try
-{$IFNDEF ABAK}
-    if JePrint2PDF then begin
-      if rbPodleSmlouvy.Checked then dmCommon.Zprava(Format('Pøevod faktur do PDF od VS %s do %s pomocí Print2PDF', [aedOd.Text, aedDo.Text]))
-      else dmCommon.Zprava(Format('Pøevod faktur do PDF od èísla %s do %s pomocí Print2PDF', [aedOd.Text, aedDo.Text]));
-// nastavení pro Print2PDF v registru
-      Reg := TRegistry.Create;
-      try
-        Reg.RootKey := HKEY_CURRENT_USER;
-//  pøípadné vytvoøení klíèe
-        if not Reg.KeyExists('\Software\Software602\Print2PDF\PDF\SDK') then
-          Reg.CreateKey('\Software\Software602\Print2PDF\PDF\SDK');
-// nastavení voleb pro ukládání a digitální podpis
-        if Reg.OpenKey('\Software\Software602\Print2PDF\PDF\SDK', True) then begin
-          Reg.WriteInteger('Save', 1);
-          Reg.WriteInteger('ShowDialog', 0);
-          Reg.WriteInteger('OutputFormatPDF', 0);
-          Reg.WriteInteger('Save', 1);
-          Reg.WriteInteger('UseDefaultName', 1);
-          Reg.WriteInteger('OpenAcrobat', 0);
-          Reg.WriteString('PDF_Title', Format('Faktura za pøipojení k internetu v %d. mìsíci %d', [aseMesic.Value, aseRok.Value]));
-          Reg.WriteString('PDF_Author', 'Družstvo Eurosignal');
-          Reg.WriteInteger('DownsizeImages', 0);
-          Reg.WriteInteger('FontEmbed', 2);
-          Reg.WriteInteger('PDF_Security', 0);
-          Reg.WriteInteger('PDF_Signature', 1);
-          Reg.WriteString('SignedPDF_Signer_Name', 'Družstvo Eurosignal');
-          PWDbuf := PWD;
-          Reg.WriteBinaryData('SignedPDF_Password', PWDbuf, 32);
-          Reg.WriteInteger('SignedPDF_ShowImage', 0);
-          Reg.WriteString('SignedPDF_Info_Location', 'Roháèova 23, Praha 3');
-          Reg.WriteString('SignedPDF_Info_Reason_00', 'Potvrzujeme správnost a úplnost této faktury');
-          Reg.WriteInteger('Send', 0);
-          Reg.WriteInteger('UseStamp', 0);
-          Reg.WriteInteger('UseWatermark', 0);
-        end else dmCommon.Zprava('Problém pøi nastavování registru pro Print2PDF (OpenKey \Software\Software602\Print2PDF\PDF\SDK).');
-      finally
-        Reg.CloseKey;
-        Reg.Free;
-      end;  // try
-    end else  // if JePrint2PDF
-{$ENDIF}
+
     if rbPodleSmlouvy.Checked then
       dmCommon.Zprava(Format('Pøevod faktur do PDF od VS %s do %s', [aedOd.Text, aedDo.Text]))
       else dmCommon.Zprava(Format('Pøevod faktur do PDF od èísla %s do %s', [aedOd.Text, aedDo.Text]));
@@ -109,7 +58,8 @@ begin
       apnPrevod.Visible := False;
       apbProgress.Position := 0;
       apbProgress.Visible := True;
-// hlavní smyèka
+
+      // hlavní smyèka
       for Radek := 1 to RowCount-1 do begin
         Row := Radek;
         apbProgress.Position := Round(100 * Radek / RowCount-1);
@@ -123,12 +73,14 @@ begin
           lbxLog.Visible := False;
           Break;
         end;
-        if Ints[0, Radek] = 1 then FakturaPrevod(Radek)
-      end;  // for
+
+        if Ints[0, Radek] = 1 then FakturaPrevod(Radek)  // pokud zaškrtnuto, pøevádíme fa do PDF
+
+      end; // konec hlavní smyèky
     end;  // with asgMain
-// konec hlavní smyèky
+
   finally
-    Printer.PrinterIndex := -1;                  // default
+    Printer.PrinterIndex := -1;  // default
     apbProgress.Position := 0;
     apbProgress.Visible := False;
     apnPrevod.Visible := True;
@@ -137,6 +89,7 @@ begin
     Screen.Cursor := crDefault;
     dmCommon.Zprava('Pøevod faktur do PDF ukonèen');
   end;
+
 end;
 
 // ------------------------------------------------------------------------------------------------
@@ -156,7 +109,9 @@ var
 begin
   with fmMain, fmMain.asgMain do begin
     with qrAbra do begin
-// údaje z faktury do globálních promìnných
+
+
+      // údaje z faktury do globálních promìnných
       Close;
       SQLStr := 'SELECT Code, Name, Street, City, PostCode, OrgIdentNumber, VATIdentNumber, II.ID, II.IsReverseChargeDeclared,'
        + ' DocDate$DATE, DueDate$DATE, VATDate$DATE, LocalAmount, LocalPaidAmount'
@@ -170,10 +125,7 @@ begin
       + ' AND II.DocQueue_ID = ';
 
 
-
-      SQLStr := SQLStr + Ap + IDocQueue_Id + Ap;
-
-      SQL.Text := SQLStr;
+      SQL.Text := SQLStr + Ap + IDocQueue_Id + Ap;
       Open;
 
       if RecordCount = 0 then begin
@@ -276,63 +228,40 @@ begin
     // jméno souboru s fakturou
     OutFileName := OutDir + Format('\%s-%5.5d.pdf', [FStr, Ints[2, Radek]]);
     // soubor už existuje
-    if FileExists(OutFileName) then
-      if cbNeprepisovat.Checked then begin
+    if FileExists(OutFileName) AND cbNeprepisovat.Checked then begin
         dmCommon.Zprava(Format('%s (%s): Soubor %s už existuje.', [Cells[4, Radek], Cells[1, Radek], OutFileName]));
         Exit;
       end else
         DeleteFile(OutFileName);
+
     // vytvoøená faktura se zpracuje do vlastního formuláøe a pøevede se do PDF
+    // uložení pomocí Synopse
+    frxReport.LoadFromFile(ExtractFilePath(ParamStr(0)) + 'FOsPDP.fr3');
 
-    if JePrint2PDF then begin        // uložení pomocí Print2PDF
-      // nastaví se jméno a cesta
-      Reg := TRegistry.Create;
-      try
-        Reg.RootKey := HKEY_CURRENT_USER;
-        if Reg.OpenKey('\Software\Software602\Print2PDF\PDF', True) then
-          Reg.WriteInteger('SDK_UseKey', 1)                // Print2PDF použije nastavení v ..\PDF\SDK
-        else dmCommon.Zprava(VS + ': problém pøi nastavování registru pro Print2PDF (OpenKey \Software\Software602\Print2PDF\PDF).');
-        Reg.CloseKey;
-        if Reg.OpenKey('\Software\Software602\Print2PDF\PDF\SDK', True) then begin
-          Reg.WriteString('DefaultName', Format('%s-%5.5d.pdf', [FStr, Ints[2, Radek]]));
-          Reg.WriteString('SavePath', OutDir + '\');
-        end else dmCommon.Zprava(VS + ': problém pøi nastavování registru pro Print2PDF (OpenKey \Software\Software602\Print2PDF\PDF\SDK.');
-        Reg.CloseKey;
-      finally
-        Reg.CloseKey;
-        Reg.Free;
-      end;
-//      frPrevod.LoadFromFile(ExtractFilePath(ParamStr(0)) + 'FOdoPDF.frf');
-//      frPrevod.PrepareReport;
-//      frPrevod.ShowPreparedReport;
-//      frPrevod.PrintPreparedReport('1', 1);
-    end else begin                                         // uložení pomocí Synopse
-      frxReport.LoadFromFile(ExtractFilePath(ParamStr(0)) + 'FOsPDP.fr3');
+    frxReport.PrepareReport;
+    //  frxReport.ShowPreparedReport;
+    //  uložení
+    //  frxPDFExport.FileName := OutFileName;
+    //  frxReport.Export(frxPDFExport);
 
-      frxReport.PrepareReport;
-//  frxReport.ShowPreparedReport;
-// uložení
-//  frxPDFExport.FileName := OutFileName;
-//  frxReport.Export(frxPDFExport);
-      frxSynPDFExport := TfrxSynPDFExport.Create(nil);
-      with frxSynPDFExport do try
-        FileName := OutFileName;
-        Title := 'Faktura za pøipojení k internetu';
+    frxSynPDFExport := TfrxSynPDFExport.Create(nil);
+    with frxSynPDFExport do try
+      FileName := OutFileName;
+      Title := 'Faktura za pøipojení k internetu';
 
-        Author := 'Družstvo Eurosignal';
+      Author := 'Družstvo Eurosignal';
 
-        EmbeddedFonts := False;
-        Compressed := True;
-        OpenAfterExport := False;
-        ShowDialog := False;
-        ShowProgress := False;
-        PDFA := True; // important
-        frxReport.Export(frxSynPDFExport);
-      finally
-        Free;
-      end;
+      EmbeddedFonts := False;
+      Compressed := True;
+      OpenAfterExport := False;
+      ShowDialog := False;
+      ShowProgress := False;
+      PDFA := True; // important
+      frxReport.Export(frxSynPDFExport);
+    finally
+      Free;
+    end;
 
-    end;      // if JePrint2PDF else
 
 // èekání na soubor - max. 5s
     for i := 1 to 50 do begin

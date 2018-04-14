@@ -13,10 +13,11 @@ uses
   FIfaktura in 'FIfaktura.pas' {dmFaktura: TDataModule},
   FIlogin in 'FIlogin.pas' {fmLogin},
   FImail in 'FImail.pas' {dmMail: TDataModule},
-  FImain in 'FImain.pas' {fmMain},
   FIprevod in 'FIprevod.pas' {dmPrevod: TDataModule},
   FItisk in 'FItisk.pas' {dmTisk: TDataModule},
-  frxExportSynPDF in 'frxExportSynPDF.pas' {frxExportSynPDF};
+  frxExportSynPDF in 'frxExportSynPDF.pas' {frxExportSynPDF},
+  FakturyUtils in 'FakturyUtils.pas' {FakturyU},
+  FImain in 'FImain.pas' {fmMain};
 
 {$R *.res}
 
