@@ -18,9 +18,6 @@ type
   end;
 
 const
-  Ap = chr(39);
-  ApC = Ap + ',';
-  ApZ = Ap + ')';
 
   MyAddress_Id: string[10] = '7000000101';
   MyUser_Id: string[10] = '2200000101';          // automatická fakturace
@@ -36,7 +33,7 @@ implementation
 
 {$R *.dfm}
 
-uses FIMain, FILogin;
+uses FIMain, FILogin, DesUtils;
 
 // ------------------------------------------------------------------------------------------------
 
@@ -107,163 +104,19 @@ begin
   end;
 end;
 
-// ------------------------------------------------------------------------------------------------
-
-{$IFDEF ABAK}
-procedure TdmCommon.AktualizaceView;
-// aktualizuje view pro fakturaci databázi zákazníkù
-var
-  SQLStr: AnsiString;
-begin
-  with fmMain, fmMain.qrMain do begin
-    Close;
-{$IFNDEF ABAK}
-// view s variabilními symboly smluv s EP-Home nebo EP-Profi
-    SQLStr := 'CREATE OR REPLACE VIEW ' + VoIP_customers
-    + ' AS SELECT DISTINCT Variable_symbol FROM customers Cu, contracts C'
-    + ' WHERE Cu.Id = C.Customer_Id'
-    + ' AND (C.Tariff_Id = 1 OR C.Tariff_Id = 3)'
-    + ' AND C.State = ''active'' '
-    + ' AND Variable_symbol IS NOT NULL';
-    SQL.Text := SQLStr;
-    ExecSQL;
-// pro testování
-    SQLStr := 'CREATE OR REPLACE VIEW VoIP_customers'
-    + ' AS SELECT DISTINCT Variable_symbol FROM customers Cu, contracts C'
-    + ' WHERE Cu.Id = C.Customer_Id'
-    + ' AND (C.Tariff_Id = 1 OR C.Tariff_Id = 3)'
-    + ' AND C.State = ''active'' '
-    + ' AND Variable_symbol IS NOT NULL';
-    SQL.Text := SQLStr;
-    ExecSQL;
-{$ENDIF}
-// aktuální data z billing_batches
-    SQLStr := 'CREATE OR REPLACE VIEW ' + BBmax
-    + ' AS SELECT Id, Contract_Id, From_date, Period FROM billing_batches B1'
-    + ' WHERE From_date = (SELECT MAX(From_date) FROM billing_batches B2'
-      + ' WHERE B2.From_date <= ' + Ap + FormatDateTime('yyyy-mm-dd', deDatumPlneni.Date) + Ap
-      + ' AND B1.Contract_Id = B2.Contract_Id)';
-    SQL.Text := SQLStr;
-    ExecSQL;
-// pro testování
-    SQLStr := 'CREATE OR REPLACE VIEW BBmax'
-    + ' AS SELECT Id, Contract_Id, From_date, Period FROM billing_batches B1'
-    + ' WHERE From_date = (SELECT MAX(From_date) FROM billing_batches B2'
-      + ' WHERE B2.From_date <= ' + Ap + FormatDateTime('yyyy-mm-dd', deDatumPlneni.Date) + Ap
-      + ' AND B1.Contract_Id = B2.Contract_Id)';
-    SQL.Text := SQLStr;
-    ExecSQL;
-// billing view k datu fakturace
-    SQLStr := 'CREATE OR REPLACE VIEW ' + BillingView
-{$IFDEF ABAK}
-    + ' AS SELECT C.Customer_Id, C.Number, C.Type, C.Tariff_Id, C.Activated_at, C.Canceled_at, C.Invoice_from,'
-{$ELSE}
-    + ' AS SELECT C.Customer_Id, C.Number, C.Type, C.Tariff_Id, C.Activated_at, C.Canceled_at, C.Invoice_from, C.CTU_category,'
-{$ENDIF}
-    + ' BB.Period, BI.Description, BI.Price, BI.VAT_Id, BI.Tariff'
-    + ' FROM ' + BBmax + ' BB, billing_items BI, contracts C'
-    + ' WHERE BB.Id = BI.Billing_batch_Id'
-    + ' AND C.Id = BB.Contract_Id'
-    + ' AND (C.Invoice = 1 OR (C.State = ''canceled'' AND C.Canceled_at IS NOT NULL'
-//    + ' AND C.Canceled_at >= ' + Ap + FormatDateTime('yyyy-mm-dd', deDatumPlneni.Date) + Ap + '))'   1.7.2016
-      + ' AND C.Canceled_at >= ' + Ap + FormatDateTime('yyyy-mm-dd', StartOfTheMonth(deDatumPlneni.Date)) + Ap + '))'
-    + ' AND (C.Invoice_from IS NULL OR C.Invoice_from <= ' + Ap + FormatDateTime('yyyy-mm-dd', deDatumPlneni.Date) + ApZ
-{$IFDEF ABAK}
-    + ' AND C.Activated_at <= ' + Ap + FormatDateTime('yyyy-mm-dd', IncMonth(deDatumPlneni.Date, 1)) + Ap;
-    if aseMesic.Value = 1 then SQLStr := SQLStr + ' AND (BB.Period = 1 OR BB.Period = 3 OR BB.Period = 6 OR BB.Period = 12)'
-    else if aseMesic.Value = 7 then SQLStr := SQLStr + ' AND (BB.Period = 1 OR BB.Period = 3 OR BB.Period = 6)'
-    else if aseMesic.Value in [4, 10] then SQLStr := SQLStr + ' AND (BB.Period = 1 OR BB.Period = 3)'
-    else
-{$ELSE}
-    + ' AND C.Activated_at <= ' + Ap + FormatDateTime('yyyy-mm-dd', deDatumPlneni.Date) + Ap;
-{$ENDIF}
-    SQLStr := SQLStr + ' AND BB.Period = 1';
-    SQL.Text := SQLStr;
-    ExecSQL;
-// pro testování
-    SQLStr := 'CREATE OR REPLACE VIEW BillingView'
-{$IFDEF ABAK}
-    + ' AS SELECT C.Customer_Id, C.Number, C.Type, C.Tariff_Id, C.Activated_at, C.Canceled_at, C.Invoice_from,'
-{$ELSE}
-    + ' AS SELECT C.Customer_Id, C.Number, C.Type, C.Tariff_Id, C.Activated_at, C.Canceled_at, C.Invoice_from, C.CTU_category,'
-{$ENDIF}
-    + ' BB.Period, BI.Description, BI.Price, BI.VAT_Id, BI.Tariff'
-    + ' FROM BBmax BB, billing_items BI, contracts C'
-    + ' WHERE BB.Id = BI.Billing_batch_Id'
-    + ' AND C.Id = BB.Contract_Id'
-    + ' AND (C.Invoice = 1 OR (C.State = ''canceled'' AND C.Canceled_at IS NOT NULL'
-//    + ' AND C.Canceled_at >= ' + Ap + FormatDateTime('yyyy-mm-dd', deDatumPlneni.Date) + Ap + '))'   1.7.2016
-      + ' AND C.Canceled_at >= ' + Ap + FormatDateTime('yyyy-mm-dd', StartOfTheMonth(deDatumPlneni.Date)) + Ap + '))'
-    + ' AND (C.Invoice_from IS NULL OR C.Invoice_from <= ' + Ap + FormatDateTime('yyyy-mm-dd', deDatumPlneni.Date) + ApZ
-{$IFDEF ABAK}
-    + ' AND C.Activated_at <= ' + Ap + FormatDateTime('yyyy-mm-dd', IncMonth(deDatumPlneni.Date, 1)) + Ap;
-    if aseMesic.Value = 1 then SQLStr := SQLStr + ' AND (BB.Period = 1 OR BB.Period = 3 OR BB.Period = 6 OR BB.Period = 12)'
-    else if aseMesic.Value = 7 then SQLStr := SQLStr + ' AND (BB.Period = 1 OR BB.Period = 3 OR BB.Period = 6)'
-    else if aseMesic.Value in [4, 10] then SQLStr := SQLStr + ' AND (BB.Period = 1 OR BB.Period = 3)'
-    else
-{$ELSE}
-    + ' AND C.Activated_at <= ' + Ap + FormatDateTime('yyyy-mm-dd', deDatumPlneni.Date) + Ap;
-{$ENDIF}
-    SQLStr := SQLStr + ' AND BB.Period = 1';
-    SQL.Text := SQLStr;
-    ExecSQL;
-// view k datu fakturace
-    SQLStr := 'CREATE OR REPLACE VIEW ' + InvoiceView
-{$IFDEF ABAK}
-    + ' (VS, Typ, Posilani, Mail, AbraKod, Smlouva, Tarif, AktivniOd, AktivniDo, FakturovatOd, Perioda, Text, Cena, DPH, Tarifni, Reklama)'
-{$ELSE}
-    + ' (VS, Typ, Posilani, Mail, AbraKod, Smlouva, Tarif, AktivniOd, AktivniDo, FakturovatOd, Perioda, Text, Cena, DPH, Tarifni, Reklama, CTU)'
-{$ENDIF}
-    + ' AS SELECT Variable_symbol, BV.Type, CB1.Name, Postal_mail, Abra_Code, Number, T.Name, Activated_at, Canceled_at, Invoice_from, Period,'
-{$IFDEF ABAK}
-    + ' BV.Description, BV.Price, CB2.Name, Tariff, Disable_mailings'
-{$ELSE}
-    + ' BV.Description, BV.Price, CB2.Name, Tariff, Disable_mailings, CTU_category'
-{$ENDIF}
-    + ' FROM customers Cu'
-    + ' JOIN ' + BillingView + ' BV ON Cu.Id = BV.Customer_Id'
-    + ' LEFT JOIN codebooks CB1 ON Cu.Invoice_sending_method_Id = CB1.Id'
-    + ' LEFT JOIN codebooks CB2 ON BV.VAT_Id = CB2.Id'
-    + ' LEFT JOIN tariffs T ON BV.Tariff_Id = T.Id';
-    SQL.Text := SQLStr;
-    ExecSQL;
-// pro testování
-    SQLStr := 'CREATE OR REPLACE VIEW InvoiceView'
-{$IFDEF ABAK}
-    + ' (VS, Typ, Posilani, Mail, AbraKod, Smlouva, Tarif, AktivniOd, AktivniDo, FakturovatOd, Perioda, Text, Cena, DPH, Tarifni, Reklama)'
-{$ELSE}
-    + ' (VS, Typ, Posilani, Mail, AbraKod, Smlouva, Tarif, AktivniOd, AktivniDo, FakturovatOd, Perioda, Text, Cena, DPH, Tarifni, Reklama, CTU)'
-{$ENDIF}
-    + ' AS SELECT Variable_symbol, BV.Type, CB1.Name, Postal_mail, Abra_Code, Number, T.Name, Activated_at, Canceled_at, Invoice_from, Period,'
-{$IFDEF ABAK}
-    + ' BV.Description, BV.Price, CB2.Name, Tariff, Disable_mailings'
-{$ELSE}
-    + ' BV.Description, BV.Price, CB2.Name, Tariff, Disable_mailings, CTU_category'
-{$ENDIF}
-    + ' FROM customers Cu'
-    + ' JOIN BillingView BV ON Cu.Id = BV.Customer_Id'
-    + ' LEFT JOIN codebooks CB1 ON Cu.Invoice_sending_method_Id = CB1.Id'
-    + ' LEFT JOIN codebooks CB2 ON BV.VAT_Id = CB2.Id'
-    + ' LEFT JOIN tariffs T ON BV.Tariff_Id = T.Id';
-    SQL.Text := SQLStr;
-    ExecSQL;
-  end;
-end;
-{$ENDIF}
 
 // ------------------------------------------------------------------------------------------------
 
-{$IFNDEF ABAK}
 procedure TdmCommon.AktualizaceView;
 // aktualizuje view pro fakturaci databázi zákazníkù
 // 27.1.17 celé pøehlednìji
 var
   SQLStr: AnsiString;
 begin
-  with fmMain, fmMain.qrMain do begin
+  with fmMain, DesU.qrZakos do begin
     Close;
 // view s variabilními symboly smluv s EP-Home nebo EP-Profi
-    SQLStr := 'CREATE OR REPLACE VIEW ' + VoIP_customers
+    SQLStr := 'CREATE OR REPLACE VIEW ' + fiVoipCustomersView
     + ' AS SELECT DISTINCT Variable_symbol FROM customers Cu, contracts C'
     + ' WHERE Cu.Id = C.Customer_Id'
     + ' AND (C.Tariff_Id = 1 OR C.Tariff_Id = 3)'
@@ -272,7 +125,7 @@ begin
     SQL.Text := SQLStr;
     ExecSQL;
 // pro testování
-    SQLStr := 'CREATE OR REPLACE VIEW VoIP_customers'
+    SQLStr := 'CREATE OR REPLACE VIEW fiVoipCustomersView'
     + ' AS SELECT DISTINCT Variable_symbol FROM customers Cu, contracts C'
     + ' WHERE Cu.Id = C.Customer_Id'
     + ' AND (C.Tariff_Id = 1 OR C.Tariff_Id = 3)'
@@ -281,7 +134,7 @@ begin
     SQL.Text := SQLStr;
     ExecSQL;
 // aktuální data z billing_batches
-    SQLStr := 'CREATE OR REPLACE VIEW ' + BBmax
+    SQLStr := 'CREATE OR REPLACE VIEW ' + fiBBmaxView
     + ' AS SELECT Id, Contract_Id, From_date, Period FROM billing_batches B1'
     + ' WHERE From_date = (SELECT MAX(From_date) FROM billing_batches B2'
       + ' WHERE B2.From_date <= ' + Ap + FormatDateTime('yyyy-mm-dd', deDatumPlneni.Date) + Ap
@@ -289,7 +142,7 @@ begin
     SQL.Text := SQLStr;
     ExecSQL;
 // pro testování
-    SQLStr := 'CREATE OR REPLACE VIEW BBmax'
+    SQLStr := 'CREATE OR REPLACE VIEW fiBBmaxView'
     + ' AS SELECT Id, Contract_Id, From_date, Period FROM billing_batches B1'
     + ' WHERE From_date = (SELECT MAX(From_date) FROM billing_batches B2'
       + ' WHERE B2.From_date <= ' + Ap + FormatDateTime('yyyy-mm-dd', deDatumPlneni.Date) + Ap
@@ -297,10 +150,10 @@ begin
     SQL.Text := SQLStr;
     ExecSQL;
 // billing view k datu fakturace
-    SQLStr := 'CREATE OR REPLACE VIEW ' + BillingView
+    SQLStr := 'CREATE OR REPLACE VIEW ' + fiBillingView
     + ' AS SELECT C.Customer_Id, C.Number, C.Type, C.Tariff_Id, C.Activated_at, C.Canceled_at, C.Invoice_from, C.CTU_category,'
     + ' BB.Period, BI.Description, BI.Price, BI.VAT_Id, BI.Tariff'
-    + ' FROM ' + BBmax + ' BB, billing_items BI, contracts C'
+    + ' FROM ' + fiBBmaxView + ' BB, billing_items BI, contracts C'
     + ' WHERE BB.Id = BI.Billing_batch_Id'
     + ' AND C.Id = BB.Contract_Id'
     + ' AND (C.Invoice = 1 OR (C.State = ''canceled'' AND C.Canceled_at IS NOT NULL'
@@ -311,10 +164,10 @@ begin
     SQL.Text := SQLStr;
     ExecSQL;
 // pro testování
-    SQLStr := 'CREATE OR REPLACE VIEW BillingView'
+    SQLStr := 'CREATE OR REPLACE VIEW fiBillingView'
     + ' AS SELECT C.Customer_Id, C.Number, C.Type, C.Tariff_Id, C.Activated_at, C.Canceled_at, C.Invoice_from, C.CTU_category,'
     + ' BB.Period, BI.Description, BI.Price, BI.VAT_Id, BI.Tariff'
-    + ' FROM BBmax BB, billing_items BI, contracts C'
+    + ' FROM fiBBmaxView BB, billing_items BI, contracts C'
     + ' WHERE BB.Id = BI.Billing_batch_Id'
     + ' AND C.Id = BB.Contract_Id'
     + ' AND (C.Invoice = 1 OR (C.State = ''canceled'' AND C.Canceled_at IS NOT NULL'
@@ -325,24 +178,24 @@ begin
     SQL.Text := SQLStr;
     ExecSQL;
 // view k datu fakturace
-    SQLStr := 'CREATE OR REPLACE VIEW ' + InvoiceView
+    SQLStr := 'CREATE OR REPLACE VIEW ' + fiInvoiceView
     + ' (VS, Typ, Posilani, Mail, AbraKod, Smlouva, Tarif, AktivniOd, AktivniDo, FakturovatOd, Perioda, Text, Cena, DPH, Tarifni, Reklama, CTU)'
     + ' AS SELECT Variable_symbol, BV.Type, CB1.Name, Postal_mail, Abra_Code, Number, T.Name, Activated_at, Canceled_at, Invoice_from, Period,'
     + ' BV.Description, BV.Price, CB2.Name, Tariff, Disable_mailings, CTU_category'
     + ' FROM customers Cu'
-    + ' JOIN ' + BillingView + ' BV ON Cu.Id = BV.Customer_Id'
+    + ' JOIN ' + fiBillingView + ' BV ON Cu.Id = BV.Customer_Id'
     + ' LEFT JOIN codebooks CB1 ON Cu.Invoice_sending_method_Id = CB1.Id'
     + ' LEFT JOIN codebooks CB2 ON BV.VAT_Id = CB2.Id'
     + ' LEFT JOIN tariffs T ON BV.Tariff_Id = T.Id';
     SQL.Text := SQLStr;
     ExecSQL;
 // pro testování
-    SQLStr := 'CREATE OR REPLACE VIEW InvoiceView'
+    SQLStr := 'CREATE OR REPLACE VIEW fiInvoiceView'
     + ' (VS, Typ, Posilani, Mail, AbraKod, Smlouva, Tarif, AktivniOd, AktivniDo, FakturovatOd, Perioda, Text, Cena, DPH, Tarifni, Reklama, CTU)'
     + ' AS SELECT Variable_symbol, BV.Type, CB1.Name, Postal_mail, Abra_Code, Number, T.Name, Activated_at, Canceled_at, Invoice_from, Period,'
     + ' BV.Description, BV.Price, CB2.Name, Tariff, Disable_mailings, CTU_category'
     + ' FROM customers Cu'
-    + ' JOIN BillingView BV ON Cu.Id = BV.Customer_Id'
+    + ' JOIN fiBillingView BV ON Cu.Id = BV.Customer_Id'
     + ' LEFT JOIN codebooks CB1 ON Cu.Invoice_sending_method_Id = CB1.Id'
     + ' LEFT JOIN codebooks CB2 ON BV.VAT_Id = CB2.Id'
     + ' LEFT JOIN tariffs T ON BV.Tariff_Id = T.Id';
@@ -350,7 +203,7 @@ begin
     ExecSQL;
   end;
 end;
-{$ENDIF}
+
 // ------------------------------------------------------------------------------------------------
 
 procedure TdmCommon.Plneni_asgMain;
@@ -410,7 +263,7 @@ begin
           if cbSVoIP.Checked then dmCommon.Zprava('      - zákazníci s VoIP');
 {$ENDIF}
         end;      // if rbFakturace.Checked else ...
-        SQLStr := 'SELECT DISTINCT VS, Abrakod, Mail, Reklama FROM ' + InvoiceView
+        SQLStr := 'SELECT DISTINCT VS, Abrakod, Mail, Reklama FROM ' + fiInvoiceView
         + ' WHERE VS >= ' + Ap + aedOd.Text + Ap
         + ' AND VS <= ' + Ap + aedDo.Text + Ap;
 {$IFDEF ABAK}
@@ -418,11 +271,11 @@ begin
         else SQLStr := SQLStr + ' AND Typ = ''VoipContract''';
 {$ELSE}
         if cbBezVoIP.Checked and not cbSVoIP.Checked then
-          SQLStr := SQLStr + ' AND NOT EXISTS (SELECT Variable_symbol FROM ' + VoIP_customers
-          + ' WHERE Variable_symbol = ' + InvoiceView + '.VS)';
+          SQLStr := SQLStr + ' AND NOT EXISTS (SELECT Variable_symbol FROM ' + fiVoipCustomersView
+          + ' WHERE Variable_symbol = ' + fiInvoiceView + '.VS)';
         if cbSVoIP.Checked and not cbBezVoIP.Checked then
-          SQLStr := SQLStr + ' AND EXISTS (SELECT Variable_symbol FROM ' + VoIP_customers
-          + ' WHERE Variable_symbol = ' + InvoiceView + '.VS)';
+          SQLStr := SQLStr + ' AND EXISTS (SELECT Variable_symbol FROM ' + fiVoipCustomersView
+          + ' WHERE Variable_symbol = ' + fiInvoiceView + '.VS)';
         if rbMail.Checked then SQLStr := SQLStr + ' AND Posilani LIKE ''M%''';
         if rbTisk.Checked then begin
           if rbBezSlozenky.Checked then SQLStr := SQLStr + ' AND Posilani LIKE ''P%'''
@@ -579,17 +432,17 @@ begin
           end;
           with qrMain do begin
             Close;
-// nekontroluje se v InvoiceView
-//            SQLStr := 'SELECT DISTINCT Mail, Reklama FROM ' + InvoiceView
+// nekontroluje se v fiInvoiceView
+//            SQLStr := 'SELECT DISTINCT Mail, Reklama FROM ' + fiInvoiceView
 //            + ' WHERE VS = ' + VarSymbol;
             SQLStr := 'SELECT DISTINCT Postal_mail AS Mail, Disable_mailings AS Reklama FROM customers Cu'
             + ' WHERE Variable_symbol = ' + VarSymbol;
 {$IFNDEF ABAK}
             if cbBezVoIP.Checked and not cbSVoIP.Checked then
-              SQLStr := SQLStr + ' AND NOT EXISTS (SELECT Variable_symbol FROM ' + VoIP_customers
+              SQLStr := SQLStr + ' AND NOT EXISTS (SELECT Variable_symbol FROM ' + fiVoipCustomersView
               + ' WHERE Variable_symbol = ' + Ap + VarSymbol + ApZ;
             if cbSVoIP.Checked and not cbBezVoIP.Checked then
-              SQLStr := SQLStr + ' AND EXISTS (SELECT Variable_symbol FROM ' + VoIP_customers
+              SQLStr := SQLStr + ' AND EXISTS (SELECT Variable_symbol FROM ' + fiVoipCustomersView
               + ' WHERE Variable_symbol = ' + Ap + VarSymbol + ApZ;
             if rbMail.Checked then SQLStr := SQLStr + ' AND Invoice_sending_method_id = 9';
             if rbTisk.Checked then begin

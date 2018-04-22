@@ -246,6 +246,9 @@ var
 begin
   self.DokladyList := TList.Create;
 
+  //if self.VS = '' then Exit; //pro platby bez VS konèíme. kdyby náhodou existoval doklad s prázným VS, aby se nepároval
+  
+
   with qrAbra do begin
 
     // cteni z IssuedInvoices

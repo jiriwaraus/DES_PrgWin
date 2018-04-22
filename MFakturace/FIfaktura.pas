@@ -94,10 +94,7 @@ begin
     end;  // for
 // konec hlavní smyèky
   finally
-    try
-      AbraOLE.Logout;
-    except
-    end;
+
     apbProgress.Position := 0;
     apbProgress.Visible := False;
     asgMain.Visible := False;
@@ -148,7 +145,7 @@ begin
   with fmMain, qrSmlouva, asgMain do begin
 // faktura se nebude vytváøet, je-li ve smlouvách také fakturovaný VoIP a VoIPy se nefakturují, nebo se VoIPy fakturují a smlouva není
     Close;
-    SQLStr := 'SELECT COUNT(*) FROM ' + InvoiceView
+    SQLStr := 'SELECT COUNT(*) FROM ' + fiInvoiceView
     + ' WHERE (Tarif = ''EP-Home'' OR Tarif = ''EP-Profi'')'
     + ' AND VS = ' + Ap + Cells[1, Radek] + Ap;
     SQL.Text := SQLStr;
@@ -183,7 +180,7 @@ begin
 // vyhledání údajù o smlouvách
     Close;
     SQLStr := 'SELECT VS, AbraKod, Typ, Smlouva, AktivniOd, AktivniDo, FakturovatOd, Tarif, Posilani, Perioda, Text, Cena, DPH, Tarifni, CTU'
-    + ' FROM ' + InvoiceView
+    + ' FROM ' + fiInvoiceView
     + ' WHERE VS = ' + Ap + Cells[1, Radek] + Ap
     + ' ORDER BY Smlouva, Tarifni DESC';
     SQL.Text := SQLStr;

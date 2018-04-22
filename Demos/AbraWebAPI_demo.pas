@@ -185,7 +185,7 @@ begin
   boRowAA['rowtype'] := 1;
   boRowAA['text'] := 'Za naše svìlé Služby';
   boRowAA['totalprice'] := 246;
-  boRowAA['vatrate_id'] := DesU.getAbraVatrateId('Výst21');;
+  boRowAA['vatrate_id'] := DesU.getAbraVatrateId('Výst21');
   boRowAA['incometype_id'] := DesU.getAbraIncometypeId('SL');
   boRowAA['division_id'] := '1000000101';
 

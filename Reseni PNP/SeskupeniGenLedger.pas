@@ -213,8 +213,6 @@ begin
       Cells[10, radek] := FieldByName('ID').AsString;
       Cells[11, radek] := FieldByName('Suma').AsString;
 
-
-      //FontColors[7, radek] := $999999;
       //FontColors[8, radek] := $999999;
 
       Inc(radek);
@@ -230,85 +228,6 @@ begin
   end;
   Screen.Cursor := crDefault;
 end;
-
-{procedure TfmSeskupeniVDeniku.nactiDataPoSkupinach;
-var
-  SQLStr1, SQLStr2, accountId, oldLastFirmId: string;
-  radek, pocetVeSkupine: integer;
-begin
-
-  DesU.dbAbra.Reconnect;
-  Screen.Cursor := crHourGlass;
-  asgSeskupeniVDeniku.ClearNormalCells;
-  asgSeskupeniVDeniku.RowCount := 2;
-  asgSeskupeniAllRowsChecked := true;
-  radek := 1;
-  pocetVeSkupine := 0;
-  oldLastFirmId := '';
-
-
-  with DesU.qrAbra2, asgSeskupeniVDeniku do begin
-
-    //pro danou firmu najdu v GeneralLedger všechny samostatné (neseskupené) øádky
-    SQLStr2 := 'SELECT p.DATUM, p.DOKLAD, p.TEXT, p.CASTKA, p.MD as DACode, p.D as CACode, p.FIRMNAME, p.FIRMCODE, p.ID, p.FIRM_ID, p.ACCGROUP_ID, p.AUDITED, p.SUMA'
-      + ' FROM DE$_UCET_PO_SKUPINACH(''' + trim(editKodUctu.Text) + ''') p'
-      + ' WHERE lower (p.FIRMNAME) like lower(''' + trim(editFirmName.Text) + ''') '
-      + ' AND p.DATUM >= ' + IntToStr(Trunc(dtpDatumOd.Date))
-      + ' AND p.DATUM <= ' + IntToStr(Trunc(dtpDatumDo.Date));
-
-
-    if chb1.Checked then
-      SQLStr2 := SQLStr2 +' AND p.Audited = ''N''';
-
-    if not chb3.Checked then
-      SQLStr2 := SQLStr2 +' AND p.SUMA <> 0';
-
-
-    SQL.Text := SQLStr2;
-    Open;
-
-    while not EOF do begin
-      if radek > StrToInt(editLimit.Text) then Break;
-
-      if oldLastFirmId <> FieldByName('FirmCode').AsString then begin //další firma
-        if (pocetVeSkupine = 1) and (not chb2.Checked) then begin
-           radek := radek - 2;
-        end;
-        oldLastFirmId := FieldByName('FirmCode').AsString;
-        Inc(radek);
-        pocetVeSkupine := 0;
-      end;
-
-      RowCount := radek + 1;
-      AddCheckBox(0, radek, True, True);
-      Cells[1, radek] := FieldByName('FirmName').AsString + '  (' + FieldByName('FirmCode').AsString + ')' ;
-      Cells[2, radek] := FieldByName('Text').AsString;
-      Cells[3, radek] := format('%m', [FieldByName('Castka').AsCurrency]);
-      Cells[4, radek] := DateToStr(FieldByName('Datum').AsFloat);
-      Cells[5, radek] := FieldByName('DACode').AsString;
-      Cells[6, radek] := FieldByName('CACode').AsString;
-      Cells[7, radek] := FieldByName('ACCGROUP_ID').AsString;
-      Cells[8, radek] := FieldByName('ID').AsString;
-      Cells[9, radek] := FieldByName('Suma').AsString;
-
-
-      //FontColors[7, radek] := $999999;
-      //FontColors[8, radek] := $999999;
-
-      Inc(radek);
-      Inc(pocetVeSkupine);
-      Application.ProcessMessages;
-      Next;
-    end;
-      if (pocetVeSkupine = 1) and (not chb2.Checked) then begin
-        radek := radek - 2;
-        RowCount := radek + 1;
-      end;
-    Close;
-  end;
-  Screen.Cursor := crDefault;
-end;
-*}
 
 
 procedure TfmSeskupeniVDeniku.provedSeskupeni;

@@ -125,9 +125,6 @@ begin
 
   self.odparujPlatbu(Platba); //není vlastnì už potøeba, protože vždy párujeme nanovo všechny Platby od zaèátku do konce
 
-  if Platba.VS = '' then exit;
-
-
   if Platba.DokladyList.Count > 0 then
     iDoklad := TDoklad(Platba.DokladyList[0]); //pokud je alespon 1 doklad, priradime si ho pro debety a kredity bez nezaplacenych dokladu
 

@@ -20,6 +20,8 @@ type
     qrZakos: TZQuery;
     qrAbra2: TZQuery;
     qrAbra3: TZQuery;
+    dbVoip: TZConnection;
+    qrVoip: TZQuery;
 
 
     procedure FormCreate(Sender: TObject);
@@ -44,6 +46,8 @@ type
       appMode: integer;
       AbraOLE: variant;
       adpIniFile: TIniFile;
+
+      abraValues : TAArray;
 
 
       function getAbraOLE() : variant;
@@ -87,10 +91,12 @@ type
       function getZustatekByAccountId (accountId : string; datum : double) : double;
       function isVoipKreditContract(cnumber : string) : boolean;
       function isCreditContract(cnumber : string) : boolean;
+      function existujeVAbreDokladSPrazdnymVs() : boolean;
 
       function sendGodsSms(telCislo, smsText : string) : string;
 
       function getIniValue(iniGroup, iniItem : string) : string;
+      function getQrVoip() : TZQuery;
 
 
     private
@@ -127,7 +133,8 @@ const
 
 
 var
-  DesU: TDesU;
+  DesU : TDesU;
+  globalAA : TAArray;
 
 
 
@@ -150,6 +157,8 @@ end;
 procedure TDesU.desUtilsInit(createOptions : string);
 
 begin
+  globalAA := TAArray.Create;
+  abraValues := TAArray.Create;
 
   PROGRAM_PATH := ExtractFilePath(ParamStr(0));
 
@@ -184,6 +193,11 @@ begin
     dbZakos.Database := ReadString('Preferences', 'ZakDB', '');
     dbZakos.User := ReadString('Preferences', 'ZakUN', '');
     dbZakos.Password := ReadString('Preferences', 'ZakPW', '');
+
+    dbVoIP.HostName := DesU.getIniValue('Preferences', 'VoIPHN');
+    dbVoIP.Database := DesU.getIniValue('Preferences', 'VoIPDB');
+    dbVoIP.User := DesU.getIniValue('Preferences', 'VoIPUN');
+    dbVoIP.Password := DesU.getIniValue('Preferences', 'VoIPPW');
   finally
     //adpIniFile.Free; //
   end;
@@ -194,16 +208,19 @@ begin
     dbAbra.Connect;
   except on E: exception do
     begin
-      Application.MessageBox(PChar('Nedá se pøipojit k databázi Abry, program ukonèen.' + ^M + E.Message), 'Abra', MB_ICONERROR + MB_OK);
+      Application.MessageBox(PChar('Nedá se pøipojit k databázi Abry, program ukonèen.' + ^M + E.Message), 'DesU DB Abra', MB_ICONERROR + MB_OK);
       Application.Terminate;
     end;
   end;
 
-  if (not dbZakos.Connected) AND (dbZakos.Database <> '') then try
+  if (not dbZakos.Connected) AND (dbZakos.Database <> '') then try begin
     dbZakos.Connect;
+    //qrZakos.SQL.Text := 'SET CHARACTER SET cp1250'; // *hw* je potøeba?
+    //qrZakos.ExecSQL;
+  end;
   except on E: exception do
     begin
-      Application.MessageBox(PChar('Nedá se pøipojit k databázi smluv, program ukonèen.' + ^M + E.Message), 'Abra', MB_ICONERROR + MB_OK);
+      Application.MessageBox(PChar('Nedá se pøipojit k databázi smluv, program ukonèen.' + ^M + E.Message), 'DesU DB smluv', MB_ICONERROR + MB_OK);
       Application.Terminate;
     end;
   end;
@@ -222,7 +239,6 @@ begin
     end;
     //Zprava('Pøipojeno k Abøe (connect DES).');
     if not AbraOLE.Login(abraUserUN, abraUserPW) then begin
-//    if not AbraOLE.Login(abraUserUN, abraUserPW) then begin
       ShowMessage('Problém s Abrou (login ' + abraUserUN +').');
       Exit;
     end;
@@ -248,14 +264,20 @@ begin
 end;
 
 
-{
-function TDesU.getQrAbra() : variant;
+
+function TDesU.getQrVoip() : TZQuery;
 begin
-
+  Result := nil;
+  if (not dbZakos.Connected) AND (dbZakos.Database <> '') then try
+    dbZakos.Connect;
+  except on E: exception do
+    begin
+      Application.MessageBox(PChar('Nedá se pøipojit k databázi VoIP, program ukonèen.' + ^M + E.Message), 'DesU DB VoIP', MB_ICONERROR + MB_OK);
+      Application.Terminate;
+    end;
+  end;
+  Result := qrVoip;
 end;
-}
-
-
 
 
 
@@ -827,7 +849,6 @@ begin
 end;
 
 
-
 procedure TDesU.opravRadekVypisuPomociVS(Vypis_ID, RadekVypisu_ID, VS : string);
 var
   boAA: TAArray;
@@ -842,18 +863,6 @@ begin
   sResponse := self.abraBoUpdate(boAA, 'bankstatement', Vypis_ID, 'row', RadekVypisu_ID);
 end;
 
-{ takhle to bylo jednoduchý bez zkoumání, jestli
-procedure TDesU.opravRadekVypisuPomociPDocument_ID(Vypis_ID, RadekVypisu_ID, PDocument_ID, PDocumentType : string);
-var
-  boAA: TAArray;
-  sResponse: string;
-begin
-  boAA := TAArray.Create;
-  boAA['PDocumentType'] := PDocumentType;
-  boAA['PDocument_ID'] := PDocument_ID;
-  sResponse := self.abraBoUpdate(boAA, 'bankstatement', Vypis_ID, 'row', RadekVypisu_ID);
-end;
-}
 
 function TDesU.opravRadekVypisuPomociPDocument_ID(Vypis_ID, RadekVypisu_ID, PDocument_ID, PDocumentType : string) : string;
 var
@@ -864,10 +873,10 @@ var
 begin
   //pozor, funguje jen pro faktury, tedy PDocumentType "03"
 
-  DesU.dbAbra.Reconnect;
+  dbAbra.Reconnect;
   with qrAbra do begin
 
-      // naètu èástku z øádky výpisu
+      // naètu dluh na faktuøe. když není kladný, konèíme
       SQL.Text := 'SELECT'
       + ' (ii.LOCALAMOUNT - ii.LOCALPAIDAMOUNT - ii.LOCALCREDITAMOUNT + ii.LOCALPAIDCREDITAMOUNT) as Dluh'
       + ' from ISSUEDINVOICES ii'
@@ -878,11 +887,10 @@ begin
           Result := 'no_unpaid_amount';
           Exit;
         end;
-
       end;
   end;
 
-  {* spárovat fakturu Vypis_ID s øádkem výpisu RadekVypisu_ID *}
+  //spárovat fakturu Vypis_ID s øádkem výpisu RadekVypisu_ID
   boAA := TAArray.Create;
   boAA['PDocumentType'] := PDocumentType;
   boAA['PDocument_ID'] := PDocument_ID;
@@ -890,17 +898,18 @@ begin
   Result := 'ok';
 
 
-  {* podívat se, jestli není po spárování pøeplacená (ii.LOCALAMOUNT - ii.LOCALPAIDAMOUNT - ii.LOCALCREDITAMOUNT + ii.LOCALPAIDCREDITAMOUNT)
-     bude záporné. Pokud je pøeplacená,
-     1) vložíme nový øádek s pøeplatkem - vyplníme Firm_ID, ale nevyplòujeme VS
-     2) amount spárovaného øádku RadekVypisu_ID ponížíme o velikost pøeplatku
-  *}
-  DesU.dbAbra.Reconnect;
+  {* podívám se, jestli není po spárování pøeplacená (ii.LOCALAMOUNT - ii.LOCALPAIDAMOUNT - ii.LOCALCREDITAMOUNT + ii.LOCALPAIDCREDITAMOUNT)
+   *  bude záporné. Pokud je pøeplacená,
+   *    1) vložíme nový øádek s pøeplatkem - vyplníme Firm_ID, ale nevyplòujeme VS
+   *    2) amount spárovaného øádku RadekVypisu_ID ponížíme o velikost pøeplatku
+   }
+
+  dbAbra.Reconnect;
   faktura := TDoklad.create(PDocument_ID, PDocumentType);
 
   if faktura.castkaNezaplaceno < 0 then //faktura je pøeplacená
   begin
-    preplatek := -faktura.castkaNezaplaceno;
+    preplatek := - faktura.castkaNezaplaceno;
 
     with qrAbra do begin
 
@@ -938,8 +947,6 @@ begin
     end;
     Result := 'new_bsline_added';
   end;
-
-
 
 end;
 
@@ -1101,7 +1108,6 @@ end;
 
 function TDesU.getAbraDocqueueId(code, documentType : string) : string;
 begin
-
   with DesU.qrAbra do begin
     SQL.Text := 'SELECT Id FROM DocQueues'
               + ' WHERE Hidden = ''N'' AND Code = ''' + code  + ''' AND DocumentType = ''' + documentType + '''';
@@ -1113,9 +1119,9 @@ begin
   end;
 end;
 
+{ takhle bylo napøímo
 function TDesU.getAbraVatrateId(code : string) : string;
 begin
-
   with DesU.qrAbra do begin
     SQL.Text := 'SELECT VatRate_Id FROM VatIndexes'
               + ' WHERE Hidden = ''N'' AND Code = ''' + code + '''';
@@ -1126,10 +1132,19 @@ begin
     Close;
   end;
 end;
+}
 
+function TDesU.getAbraVatrateId(code : string) : string;
+var
+    abraVatIndex : TAbraVatIndex;
+begin
+  abraVatIndex := TAbraVatIndex.create(code);
+  Result := abraVatIndex.vatrateId;
+end;
+
+{ takhle bylo napøímo
 function TDesU.getAbraVatindexId(code : string) : string;
 begin
-
   with DesU.qrAbra do begin
     SQL.Text := 'SELECT Id FROM VatIndexes'
               + ' WHERE Hidden = ''N'' AND Code = ''' + code  + '''';
@@ -1140,10 +1155,18 @@ begin
     Close;
   end;
 end;
+}
+
+function TDesU.getAbraVatindexId(code : string) : string;
+var
+    abraVatIndex : TAbraVatIndex;
+begin
+  abraVatIndex := TAbraVatIndex.create(code);
+  Result := abraVatIndex.id;
+end;
 
 function TDesU.getAbraIncometypeId(code : string) : string;
 begin
-
   with DesU.qrAbra do begin
     SQL.Text := 'SELECT Id FROM IncomeTypes'
               + ' WHERE Code = ''' + code + '''';
@@ -1157,7 +1180,6 @@ end;
 
 function TDesU.getAbraBusorderId(name : string) : string;
 begin
-
   with DesU.qrAbra do begin
     SQL.Text := 'SELECT Id FROM BusOrders'
               + ' WHERE Name = ''' + name + '''';
@@ -1181,7 +1203,6 @@ end;
 
 function TDesU.getAbracodeByVs(vs : string) : string;
 begin
-
   with DesU.qrZakos do begin
     SQL.Text := 'SELECT abra_code FROM customers'
               + ' WHERE variable_symbol = ''' + vs + '''';
@@ -1195,7 +1216,6 @@ end;
 
 function TDesU.getAbracodeByContractNumber(cnumber : string) : string;
 begin
-
   with DesU.qrZakos do begin
     SQL.Text := 'SELECT cu.abra_code FROM customers cu, contracts co '
               + ' WHERE co.number = ''' + cnumber + ''''
@@ -1210,7 +1230,6 @@ end;
 
 function TDesU.getFirmIdByCode(code : string) : string;
 begin
-
   with DesU.qrAbra do begin
     SQL.Text := 'SELECT Id FROM Firms'
               + ' WHERE Code = ''' + code + '''';
@@ -1222,31 +1241,6 @@ begin
   end;
 end;
 
-{*
-function TDesU.getZustatekByAccountId (accountId : string; datum : double) : double;
-var
-sqlstring : string;
-
-begin
-
-  with DesU.qrAbra do begin
-
-    sqlstring := 'SELECT (DEBITBEGINNING - CREDITBEGINNING + DEBITBEGINNIGTURNOVER'
-      + ' - CREDITBEGINNIGTURNOVER + DEBITTURNOVER - CREDITTURNOVER) as zustatek'
-      + ' FROM ACCOUNTCALCULUS'
-      + ' (''%'',''' + accountId + ''',null,null,'
-      + FloatToStrFD(datum) + ',' + FloatToStrFD(datum) + ','
-      + ' '''',''0'','''',''0'','''',''0'','''',''0'','
-      + ' null,null,null,0)';
-    SQL.Text := sqlstring;
-    Open;
-    if not Eof then begin
-      Result := FieldByName('zustatek').AsCurrency;
-    end;
-    Close;
-  end;
-end;
-   *}
 
 function TDesU.getZustatekByAccountId (accountId : string; datum : double) : double;
 var
@@ -1313,7 +1307,6 @@ end;
 
 function TDesU.isCreditContract(cnumber : string) : boolean;
 begin
-
   with DesU.qrZakos do begin
     SQL.Text := 'SELECT co.id FROM contracts co  '
               + ' WHERE co.number = ''' + cnumber + ''''
@@ -1323,6 +1316,72 @@ begin
       Result := true
     else
       Result := false;
+    Close;
+  end;
+end;
+
+function TDesU.existujeVAbreDokladSPrazdnymVs() : boolean;
+var
+  messagestr: string;
+begin
+  Result := false;
+  messagestr := '';
+  dbAbra.Reconnect;
+
+  //nutné rozdìlit do dvou èástí: pøetypování (CAST) padá, pokud existuje VS jako prázný øetìzec
+  with DesU.qrAbra do begin
+
+    // existuje fa s prázným VS?
+    SQL.Text := 'SELECT Id, DE$_CISLO_DOKLADU(DOCQUEUE_ID, ORDNUMBER, PERIOD_ID) as DOKLAD '
+              + ' FROM IssuedInvoices WHERE VarSymbol = ''''';
+    Open;
+    if not Eof then begin
+      Result := true;
+      ShowMessage('POZOR! V Abøe existuje faktura ' + FieldByName('DOKLAD').AsString + ' s prázným VS. Je potøeba ji opravit pøed pokraèováním práce s programem.');
+      Close;
+      Exit;
+    end;
+    Close;
+
+    // existuje zálohový list s prázným VS?
+    SQL.Text := 'SELECT Id, DE$_CISLO_DOKLADU(DOCQUEUE_ID, ORDNUMBER, PERIOD_ID) as DOKLAD '
+              + ' FROM IssuedDInvoices WHERE VarSymbol = ''''';
+    Open;
+    if not Eof then begin
+      Result := true;
+      ShowMessage('POZOR! V Abøe existuje zál. list ' + FieldByName('DOKLAD').AsString + ' s prázným VS. Je potøeba ho opravit pøed pokraèováním práce s programem.');
+      Close;
+      Exit;
+    end;
+    Close;
+
+    // existuje fa s VS, který obahuje pouze nuly?
+    SQL.Text := 'SELECT ID, VARSYMBOL, DOKLAD'
+          + ' FROM (SELECT ID, VARSYMBOL, CAST(VARSYMBOL AS INTEGER) as VS_INT, DE$_CISLO_DOKLADU(DOCQUEUE_ID, ORDNUMBER, PERIOD_ID) as DOKLAD'
+          + ' FROM IssuedInvoices where VARSYMBOL < ''1'')'
+          + ' WHERE VS_INT = 0';
+    Open;
+    while not Eof do begin
+      Result := true;
+      messagestr := messagestr + 'POZOR! V Abøe existuje faktura ' + FieldByName('DOKLAD').AsString + ' s VS "' + FieldByName('VARSYMBOL').AsString + '"' + sLineBreak;
+      Next;
+    end;
+
+    // existuje zálohový list s VS, který obahuje pouze nuly?
+    SQL.Text := 'SELECT ID, VARSYMBOL, DOKLAD'
+          + ' FROM (SELECT ID, VARSYMBOL, CAST(VARSYMBOL AS INTEGER) as VS_INT, DE$_CISLO_DOKLADU(DOCQUEUE_ID, ORDNUMBER, PERIOD_ID) as DOKLAD'
+          + ' FROM IssuedDInvoices where VARSYMBOL < ''1'')'
+          + ' WHERE VS_INT = 0';
+    Open;
+    while not Eof do begin
+      Result := true;
+      messagestr := messagestr + 'POZOR! V Abøe existuje zál. list ' + FieldByName('DOKLAD').AsString + ' s VS "' + FieldByName('VARSYMBOL').AsString + '"' + sLineBreak;
+      Next;
+    end;
+
+
+    if messagestr <> '' then ShowMessage(messagestr);
+
     Close;
   end;
 end;

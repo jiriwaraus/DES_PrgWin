@@ -373,7 +373,7 @@ begin
     MessageDlg('Konfiguce v ini je na použití OLE, Pøiøazení PNP ale používá pouze WebApi.' + sLineBreak
                 + 'Komunikace se serverem bude tedy pøes WebApi.', mtInformation, [mbOk], 0);
 
-  fmSeskupeniVDeniku.Show; //pøi programování kvùli zrychlení práce (DEVEL)
+  //fmSeskupeniVDeniku.Show; //pøi programování kvùli zrychlení práce (DEVEL)
 
 end;
 

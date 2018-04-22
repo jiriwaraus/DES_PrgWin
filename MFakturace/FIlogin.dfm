@@ -7,10 +7,10 @@ object fmLogin: TfmLogin
   ClientHeight = 93
   ClientWidth = 292
   Color = 16772326
-  Constraints.MaxHeight = 120
+  Constraints.MaxHeight = 121
   Constraints.MaxWidth = 300
   Constraints.MinHeight = 120
-  Constraints.MinWidth = 300
+  Constraints.MinWidth = 298
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clBlack
   Font.Height = -11
@@ -41,7 +41,6 @@ object fmLogin: TfmLogin
     Font.Name = 'MS Sans Serif'
     Font.Style = [fsBold]
     ItemIndex = -1
-    ItemHeight = 13
     LabelCaption = 'Jm'#233'no'
     LabelPosition = lpLeftCenter
     LabelMargin = 16
@@ -83,6 +82,7 @@ object fmLogin: TfmLogin
     ParentFont = False
     PasswordChar = '*'
     TabOrder = 1
+    Text = ''
     Visible = True
     OnKeyUp = aedHesloKeyUp
     Version = '3.3.2.3'

@@ -1,4 +1,4 @@
-unit FakturyUtils;
+unit DesFrxUtils;
 
 interface
 
@@ -22,12 +22,12 @@ uses
 
 
 type
-  TFakturyU = class(TForm)
+  TDesFrxU = class(TForm)
     dbAbra: TZConnection;
     qrAbra: TZQuery;
     qrAdresa: TZQuery;
-    qrDPH: TZQuery;
-    qrRadky: TZQuery;
+    qrAbraDPH: TZQuery;
+    qrAbraRadky: TZQuery;
     frxReport: TfrxReport;
     fdsDPH: TfrxDBDataset;
     fdsRadky: TfrxDBDataset;
@@ -45,49 +45,9 @@ type
     procedure frxReportEndDoc(Sender: TObject);
     procedure frxReportGetValue(const ParName: string; var ParValue: Variant);
 
-{
-    procedure glbFakturaceClick(Sender: TObject);
-    procedure glbPrevodClick(Sender: TObject);
-    procedure glbTiskClick(Sender: TObject);
-    procedure glbMailClick(Sender: TObject);
-    procedure aseMesicChange(Sender: TObject);
-    procedure aseRokChange(Sender: TObject);
-    procedure aedOdChange(Sender: TObject);
-    procedure aedDoChange(Sender: TObject);
-    procedure aedOdKeyUp(Sender: TObject; var Key: Word; Shift: TShiftState);
-    procedure aedOdExit(Sender: TObject);
-    procedure aedDoKeyUp(Sender: TObject; var Key: Word; Shift: TShiftState);
-    procedure aedDoExit(Sender: TObject);
-    procedure cbSVoIPClick(Sender: TObject);
-    procedure cbBezVoIPClick(Sender: TObject);
-    procedure rbInternetClick(Sender: TObject);
-    procedure rbVoIPClick(Sender: TObject);
-    procedure rbBezSlozenkyClick(Sender: TObject);
-    procedure rbSeSlozenkouClick(Sender: TObject);
-    procedure rbKuryrClick(Sender: TObject);
-    procedure asgMainCanEditCell(Sender: TObject; ARow, ACol: Integer; var CanEdit: Boolean);
-    procedure asgMainClickCell(Sender: TObject; ARow, ACol: Integer);
-    procedure asgMainCanSort(Sender: TObject; ACol: Integer; var DoSort: Boolean);
-    procedure asgMainGetAlignment(Sender: TObject; ARow, ACol: Integer; var HAlign: TAlignment; var VAlign: TVAlignment);
-    procedure asgMainDblClick(Sender: TObject);
-    procedure lbxLogDblClick(Sender: TObject);
 
-
-    procedure btVytvoritClick(Sender: TObject);
-    procedure btOdeslatClick(Sender: TObject);
-    procedure btSablonaClick(Sender: TObject);
-    procedure btKonecClick(Sender: TObject);
-    procedure FormClose(Sender: TObject; var Action: TCloseAction);
-    procedure rbPodleSmlouvyClick(Sender: TObject);
-    procedure rbPodleFakturyClick(Sender: TObject);
-    procedure rbFakturaceClick(Sender: TObject);
-    procedure rbPrevodClick(Sender: TObject);
-    procedure rbTiskClick(Sender: TObject);
-    procedure rbMailClick(Sender: TObject);
-    procedure Button1Click(Sender: TObject);
-    }
   public
-    PDFDir: string;
+    PdfDir: string;
 
     F: TextFile;
     DRC,
@@ -106,19 +66,9 @@ type
     ID,
     User_Id,
     Firm_Id,
-    Period_Id,
-    IDocQueue_Id,
-    VDocQueue_Id,
-    DRCArticle_Id,
-    DRCVATIndex_Id,
-    VATRate_Id,
-    VATIndex_Id: string[10];
-    FStr,                              // prefix faktury
+    Period_Id: ShortString;
+        // prefix faktury
 
-    VoIP_customers,
-    BBmax,
-    BillingView,
-    InvoiceView: ShortString;
     Cislo,
     VS,
     SS,
@@ -134,19 +84,33 @@ type
     Plneni,
     Splatnost,
     Platek: AnsiString;
+  private
+    IDocQueue_Id,
+    VATIndex_Id,
+    VATRate_Id,
+    DRCVATIndex_Id,
+    DRCArticle_Id,
+
+    VDocQueue_Id: string[10];
+
+
   end;
 
 var
-  FakturyU: TFakturyU;
+  DesFrxU: TDesFrxU;
 
 implementation
 
-uses DesUtils;
+uses DesUtils, AbraEntities;
 
 {$R *.dfm}
 
-procedure TFakturyU.FormCreate(Sender: TObject);
-
+procedure TDesFrxU.FormCreate(Sender: TObject);
+{
+var
+    abraVatIndex : TAbraVatIndex;
+    abraDrcArticle : TAbraDrcArticle;
+    }
 begin
 
   dbAbra.HostName := DesU.getIniValue('Preferences', 'AbraHN');
@@ -154,26 +118,43 @@ begin
   dbAbra.User := DesU.getIniValue('Preferences', 'AbraUN');
   dbAbra.Password := DesU.getIniValue('Preferences', 'AbraPW');
 
-  PDFDir := DesU.getIniValue('Preferences', 'PDFDir');
-
   // pøipojení databáze
   if not dbAbra.Connected then try
     dbAbra.Connect;
   except on E: exception do
     begin
-      Application.MessageBox(PChar('FakturyUtils - nedá se pøipojit k databázi Abry.' + ^M + E.Message), 'Abra', MB_ICONERROR + MB_OK);
+      Application.MessageBox(PChar('DesFrxUtils - nedá se pøipojit k databázi Abry.' + ^M + E.Message), 'Abra', MB_ICONERROR + MB_OK);
       Application.Terminate;
-      FakturyU.Close;
+      DesFrxU.Close;
     end;
   end;
+
+  { dám to do mainu
+
+  PDFDir := DesU.getIniValue('Preferences', 'PDFDir');
+
+  IDocQueue_Id := DesU.getAbraDocqueueId('FO1', '03');
+
+
+  abraVatIndex := TAbraVatIndex.create('Výst21');
+  VatIndex_Id := abraVatIndex.id;
+  VatRate_Id := abraVatIndex.vatrateId;
+  VatRate := abraVatIndex.tariff;
+
+  abraVatIndex := TAbraVatIndex.create('VýstR21');
+  DrcVatIndex_Id := abraVatIndex.id;
+
+  abraDrcArticle := TAbraDrcArticle.create('21');
+  DrcArticle_Id := abraDrcArticle.id;
+  }
 
 
 end;
 
 
-procedure TFakturyU.dbAbraAfterConnect(Sender: TObject);
+procedure TDesFrxU.dbAbraAfterConnect(Sender: TObject);
 begin
-
+{
   // Id øady dokladù FO1
   IDocQueue_Id := DesU.getAbraDocqueueId('FO1', '03');
 
@@ -196,12 +177,12 @@ begin
     DRCArticle_Id := FieldByName('Id').AsString;
     Close;
   end;
-
+}
 end;
 
 // ------------------------------------------------------------------------------------------------
 
-procedure TFakturyU.frxReportBeginDoc(Sender: TObject);
+procedure TDesFrxU.frxReportBeginDoc(Sender: TObject);
 var
   SQLStr: AnsiString;
   ASymbolWidth,
@@ -210,7 +191,7 @@ var
   AHeight: Integer;
 begin
 // øádky faktury
-  with qrRadky do begin
+  with qrAbraRadky do begin
     Close;
     SQL.Text := 'SELECT Text, TAmountWithoutVAT AS BezDane, VATRate AS Sazba, TAmount - TAmountWithoutVAT AS DPH, TAmount AS SDani FROM IssuedInvoices2'
     + ' WHERE Parent_ID = ' + Ap + ID + Ap                                       // ID faktury
@@ -219,7 +200,7 @@ begin
     Open;
   end;
 // rekapitulace
-  with qrDPH do begin
+  with qrAbraDPH do begin
     Close;
     SQL.Text := 'SELECT VATRate AS Sazba, SUM(TAmountWithoutVAT) AS BezDane, SUM(TAmount - TAmountWithoutVAT) AS DPH, SUM(TAmount) AS SDani FROM IssuedInvoices2'
     + ' WHERE Parent_ID = ' + Ap + ID + Ap
@@ -230,7 +211,8 @@ begin
 
 
   // QR kód
-  if not rbSeSlozenkou.Checked then begin
+  //if not rbSeSlozenkou.Checked then begin
+    if TRUE then begin  //*HW* TODO
 
     QRCode.Barcode := Format('SPD*1.0*ACC:CZ6020100000002100098382*AM:%d*CC:CZK*DT:%s*X-VS:%s*X-SS:%s*MSG:QR PLATBA EUROSIGNAL',
      [Round(Zaplatit), FormatDateTime('yyyymmdd', DatumSplatnosti), VS, SS]);
@@ -248,7 +230,7 @@ end;
 
 // ------------------------------------------------------------------------------------------------
 
-procedure TFakturyU.frxReportGetValue(const ParName: string; var ParValue: Variant);
+procedure TDesFrxU.frxReportGetValue(const ParName: string; var ParValue: Variant);
 // dosadí se promìné do formuláøe
 begin
   if ParName = 'Cislo' then ParValue := Cislo
@@ -276,7 +258,9 @@ begin
    [Zaplatit, Splatnost, VS])
   else if ParName = 'DRCText' then
     if DRC then ParValue := 'Podle §92a zákona è. 235/2004 Sb. o DPH daò odvede zákazník.  ' else ParValue := ' ';
-  if FakturyU.rbSeSlozenkou.Checked then begin
+
+  //if FakturyU.rbSeSlozenkou.Checked then begin
+  if TRUE then begin //*HW* TODO
     if ParName = 'C1' then ParValue := C[1]
     else if ParName = 'C2' then ParValue := C[2]
     else if ParName = 'C3' then ParValue := C[3]
@@ -309,18 +293,11 @@ begin
   end;
 end;
 
-// ------------------------------------------------------------------------------------------------
 
-procedure TFakturyU.btOdeslatClick(Sender: TObject);
-// odeslání faktur pøevedených do PDF na vzdálený server
+procedure TDesFrxU.frxReportEndDoc(Sender: TObject);
 begin
-
-  //WinExec(PChar(Format('WinSCP.com /command "option batch abort" "option confirm off" "open AbraPDF" "synchronize remote '
-  // + '%s\%4d\%2.2d /home/abrapdf/%4d" "exit"', [PDFDir, aseRok.Value, aseMesic.Value, aseRok.Value])), SW_SHOWNORMAL);
-
-  RunCMD (Format('WinSCP.com /command "option batch abort" "option confirm off" "open AbraPDF" "synchronize remote '
-   + '%s\%4d\%2.2d /home/abrapdf/%4d" "exit"', [PDFDir, aseRok.Value, aseMesic.Value, aseRok.Value]), SW_SHOWNORMAL);
-
+  qrAbraRadky.Close;
+  qrAbraDPH.Close;
 end;
 
 

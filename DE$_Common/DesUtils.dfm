@@ -2,8 +2,8 @@ object DesU: TDesU
   Left = 0
   Top = 0
   Caption = 'DesU'
-  ClientHeight = 140
-  ClientWidth = 224
+  ClientHeight = 260
+  ClientWidth = 246
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -67,5 +67,27 @@ object DesU: TDesU
     Params = <>
     Left = 144
     Top = 8
+  end
+  object dbVoip: TZConnection
+    ControlsCodePage = cGET_ACP
+    Catalog = ''
+    Properties.Strings = (
+      'controls_cp=GET_ACP')
+    ReadOnly = True
+    HostName = ''
+    Port = 0
+    Database = ''
+    User = ''
+    Password = ''
+    Protocol = 'postgresql-7'
+    Left = 8
+    Top = 152
+  end
+  object qrVoip: TZQuery
+    Connection = dbVoip
+    ReadOnly = True
+    Params = <>
+    Left = 56
+    Top = 152
   end
 end

@@ -135,7 +135,8 @@ begin
     btnSparujPlatby.Visible := true;
   end;
 
-  fmPrirazeniPnp.Show;  //pøi programování kvùli zrychlení práce (DEVEL)
+  //fmPrirazeniPnp.Show;  //pøi programování kvùli zrychlení práce (DEVEL)
+  DesU.existujeVAbreDokladSPrazdnymVs();
 
 end;
 
@@ -852,7 +853,9 @@ end;
 
 procedure TfmMain.btnNactiClick(Sender: TObject);
 begin
-  // *** naètení GPC na základì dialogu
+  //if DesU.existujeVAbreDokladSPrazdnymVs() then exit;
+
+  // naètení GPC na základì dialogu
   NactiGpcDialog.InitialDir := 'J:\Eurosignal\HB\';
   NactiGpcDialog.Filter := 'Bankovní výpisy (*.gpc)|*.gpc';
 	if NactiGpcDialog.Execute then

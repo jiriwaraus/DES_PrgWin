@@ -129,8 +129,8 @@
             <Form>frxExportSynPDF</Form>
             <FormType>dfm</FormType>
         </DCCReference>
-        <DCCReference Include="FakturyUtils.pas">
-            <Form>FakturyU</Form>
+        <DCCReference Include="DesFrxUtils.pas">
+            <Form>DesFrxU</Form>
             <FormType>dfm</FormType>
         </DCCReference>
         <DCCReference Include="FImain.pas">

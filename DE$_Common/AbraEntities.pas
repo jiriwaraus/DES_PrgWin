@@ -9,8 +9,6 @@ uses
 type
 
   TDoklad = class
-  private
-    qrAbra: TZQuery;
   public
     ID : string[10];
     docQueue_ID : string[10];
@@ -28,13 +26,11 @@ type
     castkaNezaplaceno  : Currency;
     cisloDokladu : string[20];
   //published
-    constructor create(qrAbra : TZQuery); overload;
-    constructor create(Document_ID : string; Document_Type : string = '03'); overload;
+    //constructor create(qrAbra : TZQuery); overload;
+    constructor create(Document_ID : string; Document_Type : string = '03'); //overload;
   end;
 
   TAbraBankAccount = class
-  private
-    qrAbra: TZQuery;
   public
     id : string[10];
     name : string[50];
@@ -53,8 +49,6 @@ type
   end;
 
   TAbraPeriod = class
-  private
-    qrAbra: TZQuery;
   public
     id : string[10];
     code : string[4];
@@ -65,6 +59,23 @@ type
     constructor create(pDate : double); overload;
   end;
 
+  TAbraVatIndex = class
+  public
+    id : string[10];
+    code : string[10];
+    tariff : integer;
+    vatRateId : string[10];
+    constructor create(iCode : string);
+  end;
+
+  TAbraDrcArticle = class
+  public
+    id : string[10];
+    code : string[20];
+    name : string;
+    constructor create(iCode : string);
+  end;
+
 implementation
 
 uses
@@ -72,28 +83,19 @@ uses
 
 {** class TDoklad **}
 
+
+{
 constructor TDoklad.create(qrAbra : TZQuery);
 begin
- with qrAbra do begin //do qrAbra je naètený øádek z DB
-  self.ID := FieldByName('ID').AsString;
-  self.Firm_ID := FieldByName('Firm_ID').AsString;
-  self.FirmName := FieldByName('FirmName').AsString;
-  self.DatumDokladu := FieldByName('DocDate$Date').asFloat;
-  self.Castka := FieldByName('LocalAmount').AsCurrency;
-  self.CastkaZaplaceno := FieldByName('LocalPaidAmount').AsCurrency
-                                - FieldByName('LocalPaidCreditAmount').AsCurrency;
-  self.CastkaDobropisovano := FieldByName('LocalCreditAmount').AsCurrency;
-  self.CastkaNezaplaceno := self.Castka - self.CastkaZaplaceno - self.CastkaDobropisovano;
-  self.CisloDokladu := FieldByName('CisloDokladu').AsString;
-  self.DocumentType := FieldByName('DocumentType').AsString;
- end; 
+  with DesU.qrAbra do begin //do qrAbra je naètený øádek z DB
+
+  end;
 end;
+}
 
 constructor TDoklad.create(Document_ID : string; Document_Type : string = '03');
 begin
-  self.qrAbra := DesU.qrAbra;
-  with qrAbra do begin
-
+  with DesU.qrAbra do begin
     // cteni z IssuedInvoices
     SQL.Text :=
         'SELECT ii.ID, ii.DOCQUEUE_ID, ii.DOCDATE$DATE, ii.FIRM_ID, ii.DESCRIPTION, D.DOCUMENTTYPE,'
@@ -109,7 +111,17 @@ begin
 
     Open;
     if not Eof then begin
-      self.create(qrAbra);
+      self.ID := FieldByName('ID').AsString;
+      self.Firm_ID := FieldByName('Firm_ID').AsString;
+      self.FirmName := FieldByName('FirmName').AsString;
+      self.DatumDokladu := FieldByName('DocDate$Date').asFloat;
+      self.Castka := FieldByName('LocalAmount').AsCurrency;
+      self.CastkaZaplaceno := FieldByName('LocalPaidAmount').AsCurrency
+                                    - FieldByName('LocalPaidCreditAmount').AsCurrency;
+      self.CastkaDobropisovano := FieldByName('LocalCreditAmount').AsCurrency;
+      self.CastkaNezaplaceno := self.Castka - self.CastkaZaplaceno - self.CastkaDobropisovano;
+      self.CisloDokladu := FieldByName('CisloDokladu').AsString;
+      self.DocumentType := FieldByName('DocumentType').AsString;
     end;
     Close;
   end;
@@ -119,7 +131,7 @@ end;
 
 constructor TAbraBankAccount.create();
 begin
-  self.qrAbra := DesU.qrAbra;
+  //self.qrAbra := DesU.qrAbra;
 end;
 
 procedure TAbraBankAccount.loadByNumber(baNumber : string);
@@ -145,7 +157,7 @@ end;
 
 function TAbraBankAccount.getPoradoveCisloMaxVypisu(pYear : string) : integer;
 begin
-  with qrAbra do begin
+  with DesU.qrAbra do begin
     SQL.Text := 'SELECT MAX(bs.OrdNumber) as MaxOrdNumber '  //nemìlo by být max externalnumber?
               + ' FROM BANKSTATEMENTS bs, PERIODS p '
               + 'WHERE bs.DOCQUEUE_ID = ''' + self.bankStatementDocqueueId  + ''''
@@ -162,7 +174,7 @@ end;
 
 function TAbraBankAccount.getExtPoradoveCisloMaxVypisu(pYear : string) : integer;
 begin
-  with qrAbra do begin
+  with DesU.qrAbra do begin
     SQL.Text := 'SELECT bs1.OrdNumber as MaxOrdNumber, bs1.EXTERNALNUMBER as MaxExtOrdNumber'
               + ' FROM BANKSTATEMENTS bs1'
               + ' WHERE bs1.DOCQUEUE_ID = ''' + self.bankStatementDocqueueId  + ''''
@@ -180,7 +192,7 @@ end;
 
 function TAbraBankAccount.getDatumMaxVypisu(pYear : string) : double;
 begin
-  with qrAbra do begin
+  with DesU.qrAbra do begin
     SQL.Text := 'SELECT MAX(bs.DOCDATE$DATE) as PosledniDatum'
               + ' FROM BANKSTATEMENTS bs, PERIODS p '
               + 'WHERE bs.DOCQUEUE_ID = ''' + self.bankStatementDocqueueId  + ''''
@@ -198,7 +210,7 @@ end;
 
 function TAbraBankAccount.getPosledniDatumVypisu(pYear : string) : double;
 begin
-  with qrAbra do begin
+  with DesU.qrAbra do begin
     SQL.Text := 'SELECT bs1.DOCDATE$DATE'
               + ' FROM BANKSTATEMENTS bs1'
               + ' WHERE bs1.DOCQUEUE_ID = ''' + self.bankStatementDocqueueId  + ''''
@@ -216,7 +228,7 @@ end;
 
 function TAbraBankAccount.getPocetVypisu(pYear : string) : integer;
 begin
-  with qrAbra do begin
+  with DesU.qrAbra do begin
     SQL.Text := 'SELECT count(*) as PocetVypisu '
               + ' FROM BANKSTATEMENTS bs, PERIODS p '
               + 'WHERE bs.DOCQUEUE_ID = ''' + self.bankStatementDocqueueId  + ''''
@@ -239,7 +251,6 @@ end;
 
 
 {** class TAbraPeriod **}
-
 
 constructor TAbraPeriod.create(pYear : string);
 begin
@@ -279,6 +290,46 @@ begin
       self.name := FieldByName('NAME').AsString;
       self.dateFrom := FieldByName('DATEFROM$DATE').AsFloat;
       self.dateTo := FieldByName('DATETO$DATE').AsFloat;
+    end;
+    Close;
+  end;
+end;
+
+
+{** class TAbraVatIndexes **}
+
+constructor TAbraVatIndex.create(iCode : string);
+begin
+  with DesU.qrAbra do begin
+    SQL.Text := 'SELECT Id, Code, Tariff, Vatrate_Id'
+              + ' FROM VatIndexes'
+              + ' WHERE Hidden = ''N'' AND Code = ''' + iCode  + '''';
+    Open;
+    if not Eof then begin
+      self.id := FieldByName('Id').AsString;
+      self.code := FieldByName('Code').AsString;
+      self.tariff := FieldByName('Tariff').AsInteger;
+      self.vatrateId := FieldByName('Vatrate_Id').AsString;
+    end;
+    Close;
+  end;
+end;
+
+
+
+{** class TAbraDrcArticle **}
+
+constructor TAbraDrcArticle.create(iCode : string);
+begin
+  with DesU.qrAbra do begin
+    SQL.Text := 'SELECT Id, Code, Name'
+              + ' FROM DrcArticles'
+              + ' WHERE Hidden = ''N'' AND Code = ''' + iCode  + '''';
+    Open;
+    if not Eof then begin
+      self.id := FieldByName('Id').AsString;
+      self.code := FieldByName('Code').AsString;
+      self.name := FieldByName('Name').AsString;
     end;
     Close;
   end;

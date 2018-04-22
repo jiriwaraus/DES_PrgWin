@@ -35,7 +35,7 @@ implementation
 
 {$R *.dfm}
 
-uses FIcommon, frxExportSynPDF;
+uses DesUtils, FIcommon, frxExportSynPDF;
 
 // ------------------------------------------------------------------------------------------------
 

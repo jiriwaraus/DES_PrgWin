@@ -240,7 +240,6 @@ object fmSeskupeniVDeniku: TfmSeskupeniVDeniku
     SearchFooter.MatchCaseCaption = 'Match case'
     SortSettings.DefaultFormat = ssAutomatic
     Version = '7.4.2.0'
-    ExplicitHeight = 698
     ColWidths = (
       20
       278

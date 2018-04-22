@@ -23,7 +23,7 @@ implementation
 
 {$R *.dfm}
 
-uses FIcommon;
+uses DesUtils, FIcommon;
 
 procedure TfmLogin.FormShow(Sender: TObject);
 var
@@ -31,7 +31,7 @@ var
 begin
   acbJmeno.Clear;
   aedHeslo.Clear;
-  with fmMain, fmMain.qrAbra do begin
+  with fmMain, DesU.qrAbra do begin
     Close;
     SQLStr := 'SELECT LoginName FROM SecurityUsers'
     + ' WHERE Locked = ''N'' '
@@ -50,10 +50,10 @@ procedure TfmLogin.acbJmenoSelect(Sender: TObject);
 var
   SQLStr: AnsiString;
 begin
-  with fmMain, fmMain.qrAbra do begin
+  with fmMain, DesU.qrAbra do begin
     Close;
     SQLStr := 'SELECT ID FROM SecurityUsers'
-    + ' WHERE LoginName = ' + Ap + acbJmeno.Text + Ap;
+    + ' WHERE LoginName = ''' + acbJmeno.Text + '''';
     SQL.Text := SQLStr;
     Open;
     fmMain.User_Id := Fields[0].AsString;

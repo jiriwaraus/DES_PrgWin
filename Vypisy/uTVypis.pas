@@ -47,7 +47,7 @@ constructor TVypis.create(gpcLine : string);
 begin
   self.qrAbra := DesU.qrAbra;
   self.Platby := TList.create;
-  self.AbraBankAccount := TAbraBankaccount.Create;
+  self.AbraBankAccount := TAbraBankaccount.create;
 
   self.poradoveCislo := StrToInt(copy(gpcLine, 106, 3));
   self.cisloUctuVlastni := removeLeadingZeros(copy(gpcLine, 4, 16));
