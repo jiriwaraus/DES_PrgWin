@@ -35,8 +35,6 @@ type
     qrAdresa: TZQuery;
     qrDPH: TZQuery;
     qrRadky: TZQuery;
-    frxReport: TfrxReport;
-    // *HW* frxDesigner: TfrxDesigner;
     fdsDPH: TfrxDBDataset;
     fdsRadky: TfrxDBDataset;
     QRCode: TBarcode2D_QRCode;
@@ -85,9 +83,6 @@ type
     rbPodleSmlouvy: TRadioButton;
     Button1: TButton;
     procedure FormShow(Sender: TObject);
-    procedure FormActivate(Sender: TObject);
-    procedure dbAbraAfterConnect(Sender: TObject);
-    procedure dbVoIPAfterConnect(Sender: TObject);
     procedure glbFakturaceClick(Sender: TObject);
     procedure glbPrevodClick(Sender: TObject);
     procedure glbTiskClick(Sender: TObject);
@@ -113,9 +108,6 @@ type
     procedure asgMainGetAlignment(Sender: TObject; ARow, ACol: Integer; var HAlign: TAlignment; var VAlign: TVAlignment);
     procedure asgMainDblClick(Sender: TObject);
     procedure lbxLogDblClick(Sender: TObject);
-    procedure frxReportBeginDoc(Sender: TObject);
-    procedure frxReportEndDoc(Sender: TObject);
-    procedure frxReportGetValue(const ParName: string; var ParValue: Variant);
     procedure btVytvoritClick(Sender: TObject);
     procedure btOdeslatClick(Sender: TObject);
     procedure btSablonaClick(Sender: TObject);
@@ -133,14 +125,18 @@ type
     DRC,
     Check,
     Prerusit: boolean;
-    Mesic,
+    //Mesic,
     VATRate: integer;
+    Celkem,
+    Zaplaceno,
+    Saldo,
+    Zaplatit,
     DatumDokladu,
     DatumPlneni,
-    DatumSplatnosti,
-    Celkem,
-    Saldo,
-    Zaplatit: double;
+    DatumSplatnosti: double;
+
+    //pak smazat
+
     AbraOLE: variant;
 
     C, V, S: string[10];                           // pole èísel na složenku
@@ -148,9 +144,9 @@ type
 
     ID,
     Firm_Id,
-    Period_Id,
-    IDocQueue_Id,
-    VDocQueue_Id,
+    //Period_Id,
+    //IiDocQueue_Id,
+    //VDocQueue_Id,
     DRCArticle_Id,
     DRCVATIndex_Id,
     VATRate_Id,
@@ -195,14 +191,10 @@ var
   LogDir,
   LogFileName,
   FIFileName: AnsiString;
+  abraVatIndex : TAbraVatIndex;
+  abraDrcArticle : TAbraDrcArticle;
+
 begin
-  // jména pro viewjsou unikátní, aby program nebyl omezen na jednu instanci
-  fiVoipCustomersView := FormatDateTime('VoIPyymmddhhnnss', Now);
-  fiBBmaxView := FormatDateTime('BByymmddhhnnss', Now);
-  fiBillingView := FormatDateTime('BVyymmddhhnnss', Now);
-  fiInvoiceView := FormatDateTime('IVyymmddhhnnss', Now);
-
-
   //adresáø pro logy
   LogDir := DesU.PROGRAM_PATH + '\logy\Mìsíèní fakturace\';
   if not DirectoryExists(LogDir) then Forcedirectories(LogDir);
@@ -221,139 +213,38 @@ begin
   CloseFile(F);
   dmCommon.Zprava('Start programu "Mìsíèní fakturace".');
 
-  {
-  if FileExists(FIFileName) then begin                     // existuje FI.ini ?
-    FIIni := TIniFile.Create(FIFileName);
 
-// pøihlašovací údaje z FI.ini
-    with FIIni do try
-      dbAbra.HostName := ReadString('Preferences', 'AbraHN', '');
-      dbAbra.Database := ReadString('Preferences', 'AbraDB', '');
-      dbAbra.User := ReadString('Preferences', 'AbraUN', '');
-      dbAbra.Password := ReadString('Preferences', 'AbraPW', '');
-      dbMain.HostName := ReadString('Preferences', 'ZakHN', '');
-      dbMain.Database := ReadString('Preferences', 'ZakDB', '');
-      dbMain.User := ReadString('Preferences', 'ZakUN', '');
-      dbMain.Password := ReadString('Preferences', 'ZakPW', '');
-      dbVoIP.HostName := ReadString('Preferences', 'VoIPHN', '');
-      dbVoIP.Database := ReadString('Preferences', 'VoIPDB', '');
-      dbVoIP.User := ReadString('Preferences', 'VoIPUN', '');
-      dbVoIP.Password := ReadString('Preferences', 'VoIPPW', '');
-      dmMail.idSMTP.Host := ReadString('Mail', 'SMTPServer', 'mail.eurosignal.cz');
-      dmMail.idSMTP.Username := ReadString('Mail', 'SMTPLogin', '');
-      dmMail.idSMTP.Password := ReadString('Mail', 'SMTPPW', '');
-      AbraConnection := ReadString('Preferences', 'AbraConn', '');
-      PDFDir := ReadString('Preferences', 'PDFDir', '');
-      Check := ReadBool('Preferences', 'Check', False);
-    finally
-      FIIni.Free;
-    end;
+  // jména pro viewjsou unikátní, aby program nebyl omezen na jednu instanci
+  fiVoipCustomersView := FormatDateTime('VoIPyymmddhhnnss', Now);
+  fiBBmaxView := FormatDateTime('BByymmddhhnnss', Now);
+  fiBillingView := FormatDateTime('BVyymmddhhnnss', Now);
+  fiInvoiceView := FormatDateTime('IVyymmddhhnnss', Now);
+
+  // do 25. se oèekává fakturace za minulý mìsíc, pak už za aktuální
+  if DayOf(Date) > 25 then begin
+    aseMesic.Value := MonthOf(Date);
+    aseRok.Value := YearOf(Date);
   end else begin
-    Application.MessageBox(PAnsiChar(Format('Neexistuje soubor %s, program ukonèen.', [FIFileName])), PAnsiChar(FIFileName),
-     MB_ICONERROR + MB_OK);
-    dmCommon.Zprava(Format('Neexistuje soubor %s, program ukonèen.', [FIFileName]));
-    Application.Terminate;
-    fmMain.Close;
-    Exit;
+    aseMesic.Value := MonthOf(IncMonth(Date, -1));
+    aseRok.Value := YearOf(IncMonth(Date, -1));
   end;
-  }
-  {
-  dbAbra.HostName := DesU.getIniValue('Preferences', 'AbraHN');
-  dbAbra.Database := DesU.getIniValue('Preferences', 'AbraDB');
-  dbAbra.User := DesU.getIniValue('Preferences', 'AbraUN');
-  dbAbra.Password := DesU.getIniValue('Preferences', 'AbraPW');
-
-  dbMain.HostName := DesU.getIniValue('Preferences', 'ZakHN');
-  dbMain.Database := DesU.getIniValue('Preferences', 'ZakDB');
-  dbMain.User := DesU.getIniValue('Preferences', 'ZakUN');
-  dbMain.Password := DesU.getIniValue('Preferences', 'ZakPW');
 
 
-  dbVoIP.HostName := DesU.getIniValue('Preferences', 'VoIPHN');
-  dbVoIP.Database := DesU.getIniValue('Preferences', 'VoIPDB');
-  dbVoIP.User := DesU.getIniValue('Preferences', 'VoIPUN');
-  dbVoIP.Password := DesU.getIniValue('Preferences', 'VoIPPW');
-  }
-
-  PDFDir := DesU.getIniValue('Preferences', 'PDFDir');
-  //Check := ReadBool('Preferences', 'Check', False);
-  Check := false; //TODO k èemu to je? už není potøeba
-
-
-  Prerusit := True; // pøíznak startu
   // fajfky v asgMain
   asgMain.CheckFalse := '0';
   asgMain.CheckTrue := '1';
-
-// do 25. se oèekává fakturace za minulý mìsíc, pak už za aktuální
-  if DayOf(Date)> 25 then aseMesic.Value := MonthOf(Date) else aseMesic.Value := MonthOf(IncMonth(Date, -1));
-  if DayOf(Date)> 25 then aseRok.Value := YearOf(Date) else aseRok.Value := YearOf(IncMonth(Date, -1));
   apnFakturyZa.Visible := False;
 
-  aseRok.Value := 2017; // *HW*  TODO zmenit na aktualni rok
+  aseRok.Value := 2017; // *HW*  TODO smazat
 
-end;
-
-// ------------------------------------------------------------------------------------------------
-
-procedure TfmMain.FormActivate(Sender: TObject);
-var
-    abraVatIndex : TAbraVatIndex;
-    abraDrcArticle : TAbraDrcArticle;
-begin
-
-{
-  if not Prerusit then Exit;             // to by mìlo ohlídat volání jen pøi startu
-
-  // pøipojení databází
-  if not dbAbra.Connected then try
-    dmCommon.Zprava('Pøipojení databáze Abry ...');
-    dbAbra.Connect;
-  except on E: exception do
-    begin
-      Application.MessageBox(PChar('Nedá se pøipojit k databázi Abry, program ukonèen.' + ^M + E.Message), 'Abra', MB_ICONERROR + MB_OK);
-      dmCommon.Zprava('Nedá se pøipojit k databázi Abry, program ukonèen. ' + #13#10 + 'Chyba: ' + E.Message);
-      Application.Terminate;
-      fmMain.Close;
-    end;
-  end;
-
-  if not dbMain.Connected then try
-    dmCommon.Zprava('Pøipojení databáze smluv ...');
-    dbMain.Connect;
-  except on E: exception do
-    begin
-      Application.MessageBox(PChar('Nedá se pøipojit k databázi smluv, program ukonèen.' + ^M + E.Message), 'Abra', MB_ICONERROR + MB_OK);
-      dmCommon.Zprava('Nedá se pøipojit k databázi smluv, program ukonèen. ' + #13#10 + 'Chyba: ' + E.Message);
-      Application.Terminate;
-      fmMain.Close;
-    end;
-  end;
- }
-  { *HW* TODO vyøešit databázi VoIP
-  if not dbVoIP.Connected and cbSVoIP.Enabled then try
-    dmCommon.Zprava('Pøipojení databáze VoIP ...');
-    dbVoIP.Connect;
-  except on E: exception do
-    begin
-      Application.MessageBox(PChar('Nedá se pøipojit k databázi VoIP.' + ^M + E.Message), 'Abra', MB_ICONERROR + MB_OK);
-      dmCommon.Zprava('Nedá se pøipojit k databázi VoIP. ' + #13#10 + 'Chyba: ' + E.Message);
-
-      cbSVoIP.Checked := False;
-      cbSVoIP.Enabled := False;
-
-    end;
-  end;  // try .. except
-  }
-
-  //Prerusit := False;
   aseRokChange(nil);
   rbFakturaceClick(nil);
 
+
+  //nastavení globálních promìnných pøi startu programu
   PDFDir := DesU.getIniValue('Preferences', 'PDFDir');
 
-  globalAA['abraIDocQueue_Id'] := DesU.getAbraDocqueueId('FO1', '03');
-
+  globalAA['abraIiDocQueue_Id'] := DesU.getAbraDocqueueId('FO1', '03');
 
   abraVatIndex := TAbraVatIndex.create('Výst21');
   globalAA['abraVatIndex_Id'] := abraVatIndex.id;
@@ -365,55 +256,27 @@ begin
 
   abraDrcArticle := TAbraDrcArticle.create('21');
   globalAA['abraDrcArticle_Id'] := abraDrcArticle.id;
+
 end;
 
 
-
-// ------------------------------------------------------------------------------------------------
-
-procedure TfmMain.dbAbraAfterConnect(Sender: TObject);
+procedure TfmMain.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
-{
-
-  with qrAbra do begin
-    Close;
-{
-// Id øady dokladù FO1
-    SQL.Text := 'SELECT Id FROM DocQueues WHERE Code = ''FO1'' AND DocumentType = ''03''';
-
-    Open;
-    IDocQueue_Id := FieldByName('Id').AsString;
-    Close;
-// Id DPH
-    SQL.Text := 'SELECT Id, VATRate_Id, Tariff FROM VATIndexes WHERE Code = ''Výst21''';
-    Open;
-    VATIndex_Id := FieldByName('Id').AsString;
-    VATRate_Id := FieldByName('VATRate_Id').AsString;
-    VATRate := FieldByName('Tariff').AsInteger;
-    Close;
-    SQL.Text := 'SELECT Id FROM VATIndexes WHERE Code = ''VýstR21''';
-    Open;
-    DRCVATIndex_Id := FieldByName('Id').AsString;
-    Close;
-// DRC
-    SQL.Text := 'SELECT Id FROM DRCArticles WHERE Code = ''21''';
-    Open;
-    DRCArticle_Id := FieldByName('Id').AsString;
-    Close;
+  with DesU.qrZakos do try
+    SQL.Text := 'DROP VIEW ' + fiVoipCustomersView;
+    ExecSQL;
+    SQL.Text := 'DROP VIEW ' + fiInvoiceView;
+    ExecSQL;
+    SQL.Text := 'DROP VIEW ' + fiBillingView;
+    ExecSQL;
+    SQL.Text := 'DROP VIEW ' + fiBBmaxView;
+    ExecSQL;
+  except
   end;
-  dmCommon.Zprava('OK');
-  }
-
 end;
 
 // ------------------------------------------------------------------------------------------------
 
-procedure TfmMain.dbVoIPAfterConnect(Sender: TObject);
-begin
-  dmCommon.Zprava('OK');
-end;
-
-// ------------------------------------------------------------------------------------------------
 
 procedure TfmMain.rbFakturaceClick(Sender: TObject);
 begin
@@ -572,18 +435,8 @@ begin
   asgMain.Visible := True;
   lbxLog.Visible := False;
 
-  {
-// Id období
-  with DesU.qrAbra do begin
-    Close;
-    SQL.Text := 'SELECT Id FROM Periods WHERE Code = ' + Ap + aseRok.Text + Ap;
-    Open;
-    Period_Id := FieldByName('Id').AsString;
-    Close;
-  end;  // with qrAbra
-  }
 
-  Period_Id := DesU.getAbraPeriodId(aseRok.Text); // tohle ale dát jinam
+  globalAA['abraIiPeriod_Id'] := DesU.getAbraPeriodId(aseRok.Text); // tohle ale dát jinam
 
 // datum fakturace i datum plnìní je poslední den v mìsíci
   deDatumDokladu.Date := EndOfAMonth(aseRok.Value, aseMesic.Value);
@@ -617,7 +470,7 @@ begin
       SQL.Text := 'SELECT MIN(OrdNumber), MAX(OrdNumber) FROM IssuedInvoices'
       + ' WHERE VATDate$DATE >= ' + FloatToStr(Trunc(StartOfAMonth(aseRok.Value, aseMesic.Value)))
       + ' AND VATDate$DATE <= ' + FloatToStr(Trunc(EndOfAMonth(aseRok.Value, aseMesic.Value)))
-      + ' AND DocQueue_ID = ' + Ap + IDocQueue_Id + Ap;
+      + ' AND DocQueue_ID = ' + Ap + globalAA['abraIiDocQueue_Id'] + Ap;
       Open;
       if RecordCount > 0 then begin
         aedOd.Text := Fields[0].AsString;
@@ -804,123 +657,6 @@ begin
   lbxLog.Visible := False;
 end;
 
-// ------------------------------------------------------------------------------------------------
-
-procedure TfmMain.frxReportBeginDoc(Sender: TObject);
-var
-  SQLStr: AnsiString;
-  ASymbolWidth,
-  ASymbolHeight,
-  AWidth,
-  AHeight: Integer;
-begin
-// øádky faktury
-  with qrRadky do begin
-    Close;
-    SQL.Text := 'SELECT Text, TAmountWithoutVAT AS BezDane, VATRate AS Sazba, TAmount - TAmountWithoutVAT AS DPH, TAmount AS SDani FROM IssuedInvoices2'
-    + ' WHERE Parent_ID = ' + Ap + ID + Ap                                       // ID faktury
-    + ' AND NOT (Text = ''Zaokrouhlení'' AND TAmount = 0)'
-    + ' ORDER BY PosIndex';
-    Open;
-  end;
-// rekapitulace
-  with qrDPH do begin
-    Close;
-    SQL.Text := 'SELECT VATRate AS Sazba, SUM(TAmountWithoutVAT) AS BezDane, SUM(TAmount - TAmountWithoutVAT) AS DPH, SUM(TAmount) AS SDani FROM IssuedInvoices2'
-    + ' WHERE Parent_ID = ' + Ap + ID + Ap
-    + ' AND VATIndex_ID IS NOT NULL'
-    + ' GROUP BY Sazba';
-    Open;
-  end;
-
-
-  // QR kód
-  if not rbSeSlozenkou.Checked then begin
-
-    QRCode.Barcode := Format('SPD*1.0*ACC:CZ6020100000002100098382*AM:%d*CC:CZK*DT:%s*X-VS:%s*X-SS:%s*MSG:QR PLATBA EUROSIGNAL',
-     [Round(Zaplatit), FormatDateTime('yyyymmdd', DatumSplatnosti), VS, SS]);
-
-    QRCode.DrawToSize(AWidth, AHeight, ASymbolWidth, ASymbolHeight);
-    with TfrxPictureView(frxReport.FindObject('pQR')).Picture.Bitmap do begin
-      Width := AWidth;
-      Height := AHeight;
-      QRCode.DrawTo(Canvas, 0, 0);
-    end;
-  end;
-
-
-end;
-
-// ------------------------------------------------------------------------------------------------
-
-procedure TfmMain.frxReportGetValue(const ParName: string; var ParValue: Variant);
-// dosadí se promìné do formuláøe
-begin
-  if ParName = 'Cislo' then ParValue := Cislo
-  else if ParName = 'VS' then ParValue := VS
-  else if ParName = 'SS' then ParValue := Trim(SS)
-  else if ParName = 'PJmeno' then ParValue := PJmeno
-  else if ParName = 'PUlice' then ParValue := PUlice
-  else if ParName = 'PObec' then ParValue := PObec
-  else if ParName = 'OJmeno' then ParValue := OJmeno
-  else if ParName = 'OUlice' then ParValue := OUlice
-  else if ParName = 'OObec' then ParValue := OObec
-  else if ParName = 'OICO' then begin
-    if Trim(OICO) <> '' then ParValue := 'IÈ: ' + OICO else ParValue := ' '
-  end else if ParName = 'ODIC' then begin
-    if Trim(ODIC) <> '' then ParValue := 'DIÈ: ' + ODIC else ParValue := ' '
-  end else if ParName = 'Vystaveni' then ParValue := Vystaveni
-  else if ParName = 'Plneni' then ParValue := Plneni
-  else if ParName = 'Splatnost' then ParValue := Splatnost
-  else if ParName = 'Platek' then ParValue := Platek
-  else if ParName = 'Celkem' then ParValue := Celkem
-  else if ParName = 'Saldo' then ParValue := Saldo
-  else if ParName = 'Zaplatit' then ParValue := Format('%.2f Kè', [Zaplatit])
-
-  else if ParName = 'Resume' then ParValue := Format('Èástku %.0f,- Kè uhraïte, prosím, do %s na úèet 2100098382/2010 s variabilním symbolem %s.',
-   [Zaplatit, Splatnost, VS])
-  else if ParName = 'DRCText' then
-    if DRC then ParValue := 'Podle §92a zákona è. 235/2004 Sb. o DPH daò odvede zákazník.  ' else ParValue := ' ';
-  if fmMain.rbSeSlozenkou.Checked then begin
-    if ParName = 'C1' then ParValue := C[1]
-    else if ParName = 'C2' then ParValue := C[2]
-    else if ParName = 'C3' then ParValue := C[3]
-    else if ParName = 'C4' then ParValue := C[4]
-    else if ParName = 'C5' then ParValue := C[5]
-    else if ParName = 'C6' then ParValue := C[6]
-    else if ParName = 'V01' then ParValue := V[1]
-    else if ParName = 'V02' then ParValue := V[2]
-    else if ParName = 'V03' then ParValue := V[3]
-    else if ParName = 'V04' then ParValue := V[4]
-    else if ParName = 'V05' then ParValue := V[5]
-    else if ParName = 'V06' then ParValue := V[6]
-    else if ParName = 'V07' then ParValue := V[7]
-    else if ParName = 'V08' then ParValue := V[8]
-    else if ParName = 'V09' then ParValue := V[9]
-    else if ParName = 'V10' then ParValue := V[10]
-    else if ParName = 'S01' then ParValue := S[1]
-    else if ParName = 'S02' then ParValue := S[2]
-    else if ParName = 'S03' then ParValue := S[3]
-    else if ParName = 'S04' then ParValue := S[4]
-    else if ParName = 'S05' then ParValue := S[5]
-    else if ParName = 'S06' then ParValue := S[6]
-    else if ParName = 'S07' then ParValue := S[7]
-    else if ParName = 'S08' then ParValue := S[8]
-    else if ParName = 'S09' then ParValue := S[9]
-    else if ParName = 'S10' then ParValue := S[10]
-    else if ParName = 'VS2' then ParValue := VS
-    else if ParName = 'SS2' then ParValue := SS
-    else if ParName = 'Castka' then ParValue := C + ',-';
-  end;
-end;
-
-// ------------------------------------------------------------------------------------------------
-
-procedure TfmMain.frxReportEndDoc(Sender: TObject);
-begin
-  qrRadky.Close;
-  qrDPH.Close;
-end;
 
 // ------------------------------------------------------------------------------------------------
 
@@ -932,59 +668,29 @@ begin
   Prerusit := False;
   Application.ProcessMessages;
   try
-// *** Naplnìní asgMain ***
+
+    // *** Naplnìní asgMain ***
     if btVytvorit.Caption = '&Naèíst' then dmCommon.Plneni_asgMain
     else begin
-// *** Fakturace ***
+
+      // *** Fakturace ***
       if rbFakturace.Checked then dmFaktura.VytvorFaktury;
-// *** Pøevod do PDF ***
+
+      // *** Pøevod do PDF ***
       if rbPrevod.Checked then dmPrevod.PrevedFaktury;
-// *** Tisk ***
+
+      // *** Tisk ***
       if rbTisk.Checked then dmTisk.TiskniFaktury;
-// *** Posílání mailem ***
+
+      // *** Posílání mailem ***
       if rbMail.Checked then dmMail.PosliFaktury;
+
     end;
   finally
     btKonec.Caption := '&Konec';
     btVytvorit.Enabled := True;
   end;
 end;
-
-procedure TfmMain.Button1Click(Sender: TObject);
-begin
-
-
-//ShowMessage('demooo_' +  BoolToStr(DesU.existujeVAbreDokladSPrazdnymVs(), true));
-
-ShowMessage('VRid_' +  DesU.getAbraVatrateId('Výst21'));
-ShowMessage('VRid_' +  DesU.getAbraVatindexId('Výst21'));
-
-
-  //dmPrevod.demoPrevod;
-end;
-
-// ------------------------------------------------------------------------------------------------
-
-procedure TfmMain.btSablonaClick(Sender: TObject);
-begin
-  frxReport.DesignReport(True, False);
-end;
-
-// ------------------------------------------------------------------------------------------------
-
-procedure TfmMain.btOdeslatClick(Sender: TObject);
-// odeslání faktur pøevedených do PDF na vzdálený server
-begin
-
-  //WinExec(PChar(Format('WinSCP.com /command "option batch abort" "option confirm off" "open AbraPDF" "synchronize remote '
-  // + '%s\%4d\%2.2d /home/abrapdf/%4d" "exit"', [PDFDir, aseRok.Value, aseMesic.Value, aseRok.Value])), SW_SHOWNORMAL);
-
-  RunCMD (Format('WinSCP.com /command "option batch abort" "option confirm off" "open AbraPDF" "synchronize remote '
-   + '%s\%4d\%2.2d /home/abrapdf/%4d" "exit"', [PDFDir, aseRok.Value, aseMesic.Value, aseRok.Value]), SW_SHOWNORMAL);
-
-end;
-
-// ------------------------------------------------------------------------------------------------
 
 procedure TfmMain.btKonecClick(Sender: TObject);
 begin
@@ -998,19 +704,35 @@ begin
   end;
 end;
 
-procedure TfmMain.FormClose(Sender: TObject; var Action: TCloseAction);
+procedure TfmMain.btSablonaClick(Sender: TObject);
 begin
-  with DesU.qrZakos do try
-    SQL.Text := 'DROP VIEW ' + fiVoipCustomersView;
-    ExecSQL;
-    SQL.Text := 'DROP VIEW ' + fiInvoiceView;
-    ExecSQL;
-    SQL.Text := 'DROP VIEW ' + fiBillingView;
-    ExecSQL;
-    SQL.Text := 'DROP VIEW ' + fiBBmaxView;
-    ExecSQL;
-  except
-  end;
+  // *hw* TODO frxReport.DesignReport(True, False);
 end;
+
+procedure TfmMain.btOdeslatClick(Sender: TObject);
+// odeslání faktur pøevedených do PDF na vzdálený server
+begin
+
+  //WinExec(PChar(Format('WinSCP.com /command "option batch abort" "option confirm off" "open AbraPDF" "synchronize remote '
+  // + '%s\%4d\%2.2d /home/abrapdf/%4d" "exit"', [PDFDir, aseRok.Value, aseMesic.Value, aseRok.Value])), SW_SHOWNORMAL);
+
+  RunCMD (Format('WinSCP.com /command "option batch abort" "option confirm off" "open AbraPDF" "synchronize remote '
+   + '%s\%4d\%2.2d /home/abrapdf/%4d" "exit"', [PDFDir, aseRok.Value, aseMesic.Value, aseRok.Value]), SW_SHOWNORMAL);
+
+end;
+
+
+// ------------------------------------------------------------------------------------------------
+
+procedure TfmMain.Button1Click(Sender: TObject);
+begin
+
+//ShowMessage('demooo_' +  BoolToStr(DesU.existujeVAbreDokladSPrazdnymVs(), true));
+
+ShowMessage('VRid_' +  DesU.getAbraVatrateId('Výst21'));
+ShowMessage('VRid_' +  DesU.getAbraVatindexId('Výst21'));
+
+end;
+
 
 end.

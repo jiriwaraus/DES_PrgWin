@@ -3,13 +3,6 @@ unit DesFrxUtils;
 interface
 
 uses
-{
-  Windows, Messages, Dialogs, SysUtils, Variants, Classes, Graphics, Controls, StdCtrls, ExtCtrls, Forms, Mask, ComObj, ComCtrls,
-  AdvObj, AdvPanel, AdvEdit, AdvSpin, AdvDateTimePicker, AdvEdBtn, AdvFileNameEdit, AdvProgressBar, GradientLabel,
-  Grids, BaseGrid, AdvGrid, pCore2D, pBarcode2D, pQRCode, IniFiles, DateUtils, Math,
-  DB, ZAbstractConnection, ZConnection, ZAbstractRODataset, ZAbstractDataset, ZDataset,
-}
-
   Winapi.Windows, Winapi.ShellApi, Winapi.Messages,
   System.SysUtils, System.Variants, System.Classes, System.RegularExpressions,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs,
@@ -34,20 +27,14 @@ type
     QRCode: TBarcode2D_QRCode;
 
 
-
     procedure FormCreate(Sender: TObject);
 
-    //procedure dbMainAfterConnect(Sender: TObject);
-    procedure dbAbraAfterConnect(Sender: TObject);
-    //procedure dbVoIPAfterConnect(Sender: TObject);
-
-    procedure frxReportBeginDoc(Sender: TObject);
-    procedure frxReportEndDoc(Sender: TObject);
     procedure frxReportGetValue(const ParName: string; var ParValue: Variant);
 
 
   public
     PdfDir: string;
+    reportData: TAArray;
 
     F: TextFile;
     DRC,
@@ -84,6 +71,9 @@ type
     Plneni,
     Splatnost,
     Platek: AnsiString;
+
+    function vytvorPfdFaktura(pdfFileName, fr3FileName : string; reportData: TAArray) : string;
+
   private
     IDocQueue_Id,
     VATIndex_Id,
@@ -101,7 +91,7 @@ var
 
 implementation
 
-uses DesUtils, AbraEntities;
+uses DesUtils, AbraEntities, frxExportSynPDF;
 
 {$R *.dfm}
 
@@ -129,68 +119,19 @@ begin
     end;
   end;
 
-  { dám to do mainu
-
-  PDFDir := DesU.getIniValue('Preferences', 'PDFDir');
-
-  IDocQueue_Id := DesU.getAbraDocqueueId('FO1', '03');
-
-
-  abraVatIndex := TAbraVatIndex.create('Výst21');
-  VatIndex_Id := abraVatIndex.id;
-  VatRate_Id := abraVatIndex.vatrateId;
-  VatRate := abraVatIndex.tariff;
-
-  abraVatIndex := TAbraVatIndex.create('VýstR21');
-  DrcVatIndex_Id := abraVatIndex.id;
-
-  abraDrcArticle := TAbraDrcArticle.create('21');
-  DrcArticle_Id := abraDrcArticle.id;
-  }
-
-
 end;
 
-
-procedure TDesFrxU.dbAbraAfterConnect(Sender: TObject);
-begin
-{
-  // Id øady dokladù FO1
-  IDocQueue_Id := DesU.getAbraDocqueueId('FO1', '03');
-
-  with qrAbra do begin
-    Close;
-    // Id DPH
-    SQL.Text := 'SELECT Id, VATRate_Id, Tariff FROM VATIndexes WHERE Code = ''Výst21''';
-    Open;
-    VATIndex_Id := FieldByName('Id').AsString;
-    VATRate_Id := FieldByName('VATRate_Id').AsString;
-    VATRate := FieldByName('Tariff').AsInteger;
-    Close;
-    SQL.Text := 'SELECT Id FROM VATIndexes WHERE Code = ''VýstR21''';
-    Open;
-    DRCVATIndex_Id := FieldByName('Id').AsString;
-    Close;
-    // DRC
-    SQL.Text := 'SELECT Id FROM DRCArticles WHERE Code = ''21''';
-    Open;
-    DRCArticle_Id := FieldByName('Id').AsString;
-    Close;
-  end;
-}
-end;
-
-// ------------------------------------------------------------------------------------------------
-
-procedure TDesFrxU.frxReportBeginDoc(Sender: TObject);
+function TDesFrxU.vytvorPfdFaktura(pdfFileName, fr3FileName : string; reportData: TAArray) : string;
 var
-  SQLStr: AnsiString;
   ASymbolWidth,
   ASymbolHeight,
   AWidth,
-  AHeight: Integer;
+  AHeight: integer;
+  frxSynPDFExport: TfrxSynPDFExport;
 begin
-// øádky faktury
+  self.reportData := reportData;
+
+  // øádky faktury
   with qrAbraRadky do begin
     Close;
     SQL.Text := 'SELECT Text, TAmountWithoutVAT AS BezDane, VATRate AS Sazba, TAmount - TAmountWithoutVAT AS DPH, TAmount AS SDani FROM IssuedInvoices2'
@@ -199,7 +140,8 @@ begin
     + ' ORDER BY PosIndex';
     Open;
   end;
-// rekapitulace
+
+  // rekapitulace
   with qrAbraDPH do begin
     Close;
     SQL.Text := 'SELECT VATRate AS Sazba, SUM(TAmountWithoutVAT) AS BezDane, SUM(TAmount - TAmountWithoutVAT) AS DPH, SUM(TAmount) AS SDani FROM IssuedInvoices2'
@@ -211,8 +153,8 @@ begin
 
 
   // QR kód
-  //if not rbSeSlozenkou.Checked then begin
-    if TRUE then begin  //*HW* TODO
+
+  if reportData['sQrKodem'] then begin
 
     QRCode.Barcode := Format('SPD*1.0*ACC:CZ6020100000002100098382*AM:%d*CC:CZK*DT:%s*X-VS:%s*X-SS:%s*MSG:QR PLATBA EUROSIGNAL',
      [Round(Zaplatit), FormatDateTime('yyyymmdd', DatumSplatnosti), VS, SS]);
@@ -225,14 +167,48 @@ begin
     end;
   end;
 
+  // vytvoøená faktura se zpracuje do vlastního formuláøe a pøevede se do PDF
+  // uložení pomocí Synopse
+  frxReport.LoadFromFile(DesU.PROGRAM_PATH + fr3FileName);
+
+  frxReport.PrepareReport;
+  //  frxReport.ShowPreparedReport;
+  //  uložení
+  //  frxPDFExport.FileName := OutFileName;
+  //  frxReport.Export(frxPDFExport);
+
+  frxSynPDFExport := TfrxSynPDFExport.Create(nil);
+  with frxSynPDFExport do try
+    FileName := pdfFileName;
+    Title := 'Faktura za pøipojení k internetu';
+
+    Author := 'Družstvo Eurosignal';
+
+    EmbeddedFonts := False;
+    Compressed := True;
+    OpenAfterExport := False;
+    ShowDialog := False;
+    ShowProgress := False;
+    PDFA := True; // important
+    frxReport.Export(frxSynPDFExport);
+  finally
+    Free;
+  end;
+
+
+  qrAbraRadky.Close;
+  qrAbraDPH.Close;
 
 end;
+
 
 // ------------------------------------------------------------------------------------------------
 
 procedure TDesFrxU.frxReportGetValue(const ParName: string; var ParValue: Variant);
 // dosadí se promìné do formuláøe
 begin
+
+{
   if ParName = 'Cislo' then ParValue := Cislo
   else if ParName = 'VS' then ParValue := VS
   else if ParName = 'SS' then ParValue := Trim(SS)
@@ -291,14 +267,12 @@ begin
     else if ParName = 'SS2' then ParValue := SS
     else if ParName = 'Castka' then ParValue := C + ',-';
   end;
+
+}
+
 end;
 
 
-procedure TDesFrxU.frxReportEndDoc(Sender: TObject);
-begin
-  qrAbraRadky.Close;
-  qrAbraDPH.Close;
-end;
 
 
 

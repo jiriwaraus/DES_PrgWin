@@ -45,7 +45,7 @@ begin
       dmCommon.Zprava(Format('Poèet faktur k tisku: %d', [Trunc(ColumnSum(0, 1, RowCount-1))]));
       if ColumnSum(0, 1, RowCount-1) >= 1 then
         if dlgTisk.Execute then
-          frxReport.PrintOptions.Printer := Printer.Printers[Printer.PrinterIndex];
+          //frxReport.PrintOptions.Printer := Printer.Printers[Printer.PrinterIndex];
       Screen.Cursor := crHourGlass;
       apnTisk.Visible := False;
       apbProgress.Position := 0;
@@ -100,14 +100,14 @@ begin
       + ' AND A.ID = F.ResidenceAddress_ID'
       + ' AND F.Hidden = ''N'''
       + ' AND F.Firm_ID IS NULL';                             // poslední, bez následovníka
-      SQLStr := SQLStr + ' AND II.Period_ID = ' + Ap + Period_Id + Ap
+      SQLStr := SQLStr + ' AND II.Period_ID = ' + Ap + globalAA['abraIiPeriod_Id'] + Ap
       + ' AND II.OrdNumber = ' + Cells[2, Radek]
       + ' AND II.DocQueue_ID = ';
 {$IFDEF ABAK}
-      if rbInternet.Checked then SQLStr := SQLStr + Ap + IDocQueue_Id + Ap
+      if rbInternet.Checked then SQLStr := SQLStr + Ap + globalAA['abraIiDocQueue_Id'] + Ap
       else SQLStr := SQLStr + Ap + VDocQueue_Id + Ap;
 {$ELSE}
-      SQLStr := SQLStr + Ap + IDocQueue_Id + Ap;
+      SQLStr := SQLStr + Ap + globalAA['abraIiDocQueue_Id'] + Ap;
 {$ENDIF}
       SQL.Text := SQLStr;
       Open;
@@ -216,18 +216,20 @@ begin
       PObec := OObec;
     end;
     try
-{$IFDEF ABAK}
-      frxReport.LoadFromFile(ExtractFilePath(ParamStr(0)) + 'FIsPDP.fr3');
-{$ELSE}
-      if rbSeSlozenkou.Checked then frxReport.LoadFromFile(ExtractFilePath(ParamStr(0)) + 'FOseSlozenkou.fr3')
-      else frxReport.LoadFromFile(ExtractFilePath(ParamStr(0)) + 'FOsPDP.fr3');
-{$ENDIF}
+
+    {*hw* TODO
+      if rbSeSlozenkou.Checked then
+        frxReport.LoadFromFile(ExtractFilePath(ParamStr(0)) + 'FOseSlozenkou.fr3')
+      else
+        frxReport.LoadFromFile(ExtractFilePath(ParamStr(0)) + 'FOsPDP.fr3');
+
       frxReport.PrepareReport;
 //      frxReport.ShowPreparedReport;
       frxReport.PrintOptions.ShowDialog := False;
       frxReport.Print;
       dmCommon.Zprava(Format('%s (%s): Faktura %s byla odeslána na tiskárnu.', [OJmeno, VS, Cislo]));
       Ints[0, Radek] := 0;
+      }
     except on E: exception do
       begin
         dmCommon.Zprava(Format('%s (%s): Fakturu %s se nepodaøilo vytisknout.' + #13#10 + 'Chyba: %s',

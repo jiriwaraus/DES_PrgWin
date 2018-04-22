@@ -213,7 +213,7 @@ var
   VarSymbol,
   FId: string[10];
   Zakaznik,
-  SQLStr: AnsiString;
+  SQLStr: string;
 begin
   with fmMain do try
     asgMain.Visible := True;
@@ -222,7 +222,8 @@ begin
     apnTisk.Visible := False;
     apnMail.Visible := False;
     Screen.Cursor := crHourGlass;
-    with qrMain, asgMain do try
+
+    with DesU.qrZakos, asgMain do try
       ClearNormalCells;
       RowCount := 2;
       Close;
@@ -301,7 +302,7 @@ begin
             btKonec.Caption := '&Konec';
             Break;
           end;
-          with qrAbra do begin
+          with DesU.qrAbra do begin
 // ne Fakturace
             if not rbFakturace.Checked then begin
               Close;
@@ -320,7 +321,7 @@ begin
                 [VarSymbol])), 'Pozor', MB_ICONQUESTION + MB_YESNO + MB_DEFBUTTON1);
                 if Dotaz = IDYES then begin
                   Zprava('Ruèní zásah - faktura pøeskoèena.');
-                  qrMain.Next;
+                  DesU.qrZakos.Next;
                   Continue;
                 end else if Dotaz = IDNO then begin
                   Zprava('Ruèní zásah - generování ukonèeno.');
@@ -336,10 +337,10 @@ begin
               + ' AND VATDate$DATE >= ' + FloatToStr(Trunc(StartOfAMonth(aseRok.Value, aseMesic.Value)))
               + ' AND VATDate$DATE <= ' + FloatToStr(Trunc(EndOfAMonth(aseRok.Value, aseMesic.Value)));
 {$IFDEF ABAK}
-              if rbInternet.Checked then SQLStr := SQLStr + ' AND DocQueue_ID = ' + Ap + IDocQueue_Id + Ap
+              if rbInternet.Checked then SQLStr := SQLStr + ' AND DocQueue_ID = ' + Ap + globalAA['abraIiDocQueue_Id'] + Ap
               else SQLStr := SQLStr + ' AND DocQueue_ID = ' + Ap + VDocQueue_Id + Ap;
 {$ELSE}
-              SQLStr := SQLStr + ' AND DocQueue_ID = ' + Ap + IDocQueue_Id + Ap;
+              SQLStr := SQLStr + ' AND DocQueue_ID = ' + Ap + globalAA['abraIiDocQueue_Id'] + Ap;
 {$ENDIF}
               SQL.Text := SQLStr;
               Open;
@@ -349,7 +350,7 @@ begin
                 [Zakaznik, aseMesic.Text, aseRok.Text])), 'Pozor', MB_ICONQUESTION + MB_YESNO + MB_DEFBUTTON1);
                 if Dotaz = IDYES then begin
                   Zprava('Ruèní zásah - faktura pøeskoèena.');
-                  qrMain.Next;
+                  DesU.qrZakos.Next;
                   Continue;
                 end else if Dotaz = IDNO then begin
                   Zprava('Ruèní zásah - generování ukonèeno.');
@@ -362,7 +363,7 @@ begin
                 [Zakaznik, aseMesic.Text, aseRok.Text])), 'Pozor', MB_ICONQUESTION + MB_YESNOCANCEL + MB_DEFBUTTON1);
                 if Dotaz = IDNO then begin
                   Zprava('Ruèní zásah - faktura pøeskoèena.');
-                  qrMain.Next;
+                  DesU.qrZakos.Next;
                  Continue;
                 end else if Dotaz = IDCANCEL then begin
                   Zprava('Ruèní zásah - generování ukonèeno.');
@@ -371,7 +372,8 @@ begin
                 end;
               end;  // if RecordCount
             end;  // if not rbFakturace.Checked
-// uložení do asgMain
+
+            // uložení do asgMain
             Inc(Radek);
             RowCount := Radek + 1;
             AddCheckBox(0, Radek, True, True);
@@ -380,22 +382,22 @@ begin
             if rbFakturace.Checked then begin
               Cells[2, Radek] := '';                                                 // faktura
               Cells[3, Radek] := '';                                                 // èástka
-              Cells[4, Radek] := qrMain.FieldByName('Abrakod').AsString;             // jméno
+              Cells[4, Radek] := DesU.qrZakos.FieldByName('Abrakod').AsString;             // jméno
             end else begin
               Cells[2, Radek] := Format('%5.5d', [FieldByName('OrdNumber').AsInteger]);     // faktura
-              Floats[3, Radek] := FieldByName('Amount').AsFloat;;                    // èástka
+              Floats[3, Radek] := FieldByName('Amount').AsFloat;                    // èástka
               Cells[4, Radek] := Zakaznik;                                           // jméno
             end;  // if rbFakturace.Checked else...
-            Cells[5, Radek] := qrMain.FieldByName('Mail').AsString;                // mail
-            Ints[6, Radek] := qrMain.FieldByName('Reklama').AsInteger;             // reklama
+            Cells[5, Radek] := DesU.qrZakos.FieldByName('Mail').AsString;                // mail
+            Ints[6, Radek] := DesU.qrZakos.FieldByName('Reklama').AsInteger;             // reklama
             Application.ProcessMessages;
-          end;  // with qrAbra
+          end;  // with DesU.qrAbra
           Next;
         end;  // while not EOF
 // ***
 // ***  výbìr zákazníkù podle faktury  ***
 // ***
-      end else if rbPodleFaktury.Checked then with qrAbra do begin
+      end else if rbPodleFaktury.Checked then with DesU.qrAbra do begin
         Close;
         dmCommon.Zprava(Format('Naètení faktur od %s do %s.', [aedOd.Text, aedDo.Text]));
 // faktura(y) v Abøe v mìsíci aseMesic
@@ -407,10 +409,10 @@ begin
         + ' AND VATDate$DATE <= ' + FloatToStr(Trunc(EndOfAMonth(aseRok.Value, aseMesic.Value)));
         if rbMail.Checked then SQLStr := SQLStr + ' AND F.Firm_ID IS NULL';
 {$IFDEF ABAK}
-        if rbInternet.Checked then SQLStr := SQLStr + ' AND DocQueue_ID = ' + Ap + IDocQueue_Id + Ap       // 1N00000101
+        if rbInternet.Checked then SQLStr := SQLStr + ' AND DocQueue_ID = ' + Ap + globalAA['abraIiDocQueue_Id'] + Ap       // 1N00000101
         else SQLStr := SQLStr + ' AND DocQueue_ID = ' + Ap + VDocQueue_Id + Ap;                            // 1P00000101
 {$ELSE}
-        SQLStr := SQLStr + ' AND DocQueue_ID = ' + Ap + IDocQueue_Id + Ap;
+        SQLStr := SQLStr + ' AND DocQueue_ID = ' + Ap + globalAA['abraIiDocQueue_Id'] + Ap;
 {$ENDIF}
         SQL.Text := SQLStr;
         Open;
@@ -430,7 +432,7 @@ begin
             btKonec.Caption := '&Konec';
             Break;
           end;
-          with qrMain do begin
+          with DesU.qrZakos do begin
             Close;
 // nekontroluje se v fiInvoiceView
 //            SQLStr := 'SELECT DISTINCT Mail, Reklama FROM ' + fiInvoiceView
@@ -459,19 +461,19 @@ begin
               AddCheckBox(0, Radek, True, True);
               Ints[0, Radek] := 1;                                                   // fajfka tisk - mail
               Cells[1, Radek] := VarSymbol;                                          // smlouva
-              Cells[2, Radek] := Format('%5.5d', [qrAbra.FieldByName('OrdNumber').AsInteger]);     // faktura
-              Floats[3, Radek] := qrAbra.FieldByName('Amount').AsFloat;;             // èástka
+              Cells[2, Radek] := Format('%5.5d', [DesU.qrAbra.FieldByName('OrdNumber').AsInteger]);     // faktura
+              Floats[3, Radek] := DesU.qrAbra.FieldByName('Amount').AsFloat;;             // èástka
               Cells[4, Radek] := Zakaznik;                                           // jméno
               Cells[5, Radek] := FieldByName('Mail').AsString;                       // mail
               Ints[6, Radek] := FieldByName('Reklama').AsInteger;                    // reklama
               Next;
             end;  // while not EOF
-          end; //with qrMain
+          end; //with DesU.qrZakos
           Application.ProcessMessages;
           Next;
         end;  // while not EOF
         if Check then dmCommon.Zprava('Vyhledány fakturované smlouvy');
-      end;  // if rbPodleFaktury.Checked with qrAbra
+      end;  // if rbPodleFaktury.Checked with DesU.qrAbra
 //      AutoSize := True;
       if not rbFakturace.Checked then begin
         SortSettings.Column := 2;
@@ -487,9 +489,9 @@ begin
       else if rbMail.Checked then btVytvorit.Caption := '&Odeslat';
     except on E: Exception do
       Zprava('Neošetøená chyba: ' + E.Message);
-    end;  // with qrMain
+    end;  // with DesU.qrZakos
   finally
-    qrMain.Close;
+    DesU.qrZakos.Close;
     apbProgress.Position := 0;
     apbProgress.Visible := False;
     if rbPrevod.Checked then apnPrevod.Visible := True;

@@ -238,7 +238,7 @@ begin
       + ' WHERE VarSymbol = ' + Ap + qrSmlouva.FieldByName('VS').AsString + Ap
       + ' AND VATDate$DATE >= ' + FloatToStr(Trunc(StartOfAMonth(aseRok.Value, aseMesic.Value)))
       + ' AND VATDate$DATE <= ' + FloatToStr(Trunc(EndOfAMonth(aseRok.Value, aseMesic.Value)));
-      SQLStr := SQLStr + ' AND DocQueue_ID = ' + Ap + IDocQueue_Id + Ap;
+      SQLStr := SQLStr + ' AND DocQueue_ID = ' + Ap + globalAA['abraIiDocQueue_Id'] + Ap;
       SQLStr := SQLStr + ' ORDER BY OrdNumber DESC';
       SQL.Text := SQLStr;
       Open;
@@ -264,8 +264,8 @@ begin
     FObject:= AbraOLE.CreateObject('@IssuedInvoice');
     FData:= AbraOLE.CreateValues('@IssuedInvoice');
     FObject.PrefillValues(FData);
-    FData.ValueByName('DocQueue_ID') := IDocQueue_Id;
-    FData.ValueByName('Period_ID') := Period_Id;
+    FData.ValueByName('DocQueue_ID') := globalAA['abraIiDocQueue_Id'];
+    FData.ValueByName('Period_ID') := globalAA['abraIiPeriod_Id'];
     FData.ValueByName('DocDate$DATE') := Floor(deDatumDokladu.Date);
     FData.ValueByName('AccDate$DATE') := Floor(deDatumDokladu.Date);
     FData.ValueByName('VATDate$DATE') := Floor(deDatumPlneni.Date);
@@ -313,7 +313,7 @@ begin
 // už je nìjaká faktura ?
         Close;
         SQLStr := 'SELECT COUNT(*) FROM IssuedInvoices'
-        + ' WHERE DocQueue_ID = ' + Ap + IDocQueue_Id + Ap
+        + ' WHERE DocQueue_ID = ' + Ap + globalAA['abraIiDocQueue_Id'] + Ap
         + ' AND VarSymbol = ' + Ap + Cells[1, Radek] + Ap;
         SQL.Text := SQLStr;
         Open;
