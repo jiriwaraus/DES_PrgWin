@@ -17,8 +17,6 @@ uses
 type
   TDesFrxU = class(TForm)
     dbAbra: TZConnection;
-    qrAbra: TZQuery;
-    qrAdresa: TZQuery;
     qrAbraDPH: TZQuery;
     qrAbraRadky: TZQuery;
     frxReport: TfrxReport;
@@ -30,6 +28,8 @@ type
     procedure FormCreate(Sender: TObject);
 
     procedure frxReportGetValue(const ParName: string; var ParValue: Variant);
+    function vytvorPfdFaktura(pdfFileName, fr3FileName : string; reportData: TAArray) : string;
+    procedure frxReportBeginDoc(Sender: TObject);
 
 
   public
@@ -56,23 +56,9 @@ type
     Period_Id: ShortString;
         // prefix faktury
 
-    Cislo,
-    VS,
-    SS,
-    PJmeno,
-    PUlice,
-    PObec,
-    OJmeno,
-    OUlice,
-    OObec,
-    OICO,
-    ODIC,
-    Vystaveni,
-    Plneni,
-    Splatnost,
-    Platek: AnsiString;
+    pokuss: string;
 
-    function vytvorPfdFaktura(pdfFileName, fr3FileName : string; reportData: TAArray) : string;
+
 
   private
     IDocQueue_Id,
@@ -129,13 +115,15 @@ var
   AHeight: integer;
   frxSynPDFExport: TfrxSynPDFExport;
 begin
-  self.reportData := reportData;
+
+
+ self.reportData := reportData;
 
   // øádky faktury
   with qrAbraRadky do begin
     Close;
     SQL.Text := 'SELECT Text, TAmountWithoutVAT AS BezDane, VATRate AS Sazba, TAmount - TAmountWithoutVAT AS DPH, TAmount AS SDani FROM IssuedInvoices2'
-    + ' WHERE Parent_ID = ' + Ap + ID + Ap                                       // ID faktury
+    + ' WHERE Parent_ID = ' + Ap + reportData['ID'] + Ap                                       // ID faktury
     + ' AND NOT (Text = ''Zaokrouhlení'' AND TAmount = 0)'
     + ' ORDER BY PosIndex';
     Open;
@@ -145,7 +133,7 @@ begin
   with qrAbraDPH do begin
     Close;
     SQL.Text := 'SELECT VATRate AS Sazba, SUM(TAmountWithoutVAT) AS BezDane, SUM(TAmount - TAmountWithoutVAT) AS DPH, SUM(TAmount) AS SDani FROM IssuedInvoices2'
-    + ' WHERE Parent_ID = ' + Ap + ID + Ap
+    + ' WHERE Parent_ID = ' + Ap + reportData['ID'] + Ap
     + ' AND VATIndex_ID IS NOT NULL'
     + ' GROUP BY Sazba';
     Open;
@@ -157,7 +145,7 @@ begin
   if reportData['sQrKodem'] then begin
 
     QRCode.Barcode := Format('SPD*1.0*ACC:CZ6020100000002100098382*AM:%d*CC:CZK*DT:%s*X-VS:%s*X-SS:%s*MSG:QR PLATBA EUROSIGNAL',
-     [Round(Zaplatit), FormatDateTime('yyyymmdd', DatumSplatnosti), VS, SS]);
+     [Round(Zaplatit), FormatDateTime('yyyymmdd', DatumSplatnosti), reportData['VS'], reportData['SS']]);
 
     QRCode.DrawToSize(AWidth, AHeight, ASymbolWidth, ASymbolHeight);
     with TfrxPictureView(frxReport.FindObject('pQR')).Picture.Bitmap do begin
@@ -207,6 +195,46 @@ end;
 procedure TDesFrxU.frxReportGetValue(const ParName: string; var ParValue: Variant);
 // dosadí se promìné do formuláøe
 begin
+
+if ParName = 'Value = 0' then Exit; //nevím proè se do ParName dostává 'Value = 0'. padá to pak na tom.
+
+
+try
+  try
+    ParValue := self.reportData[ParName];
+  except
+    ShowMessage('Lehlo to na ' + ParName);
+    //on E: Exception do
+    //  ShowMessage(ParName + ' Chyba frxReportGetValue: '#13#10 + e.Message);
+  end;  
+  finally
+    //ShowMessage('parametr je: ' + ParName); 
+  end;  
+
+  if ParName = 'Cislo' then ParValue := self.reportData[ParName]
+  else if ParName = 'VS' then ParValue := self.reportData[ParName]
+  else if ParName = 'SS' then ParValue := Trim(self.reportData[ParName])
+  else if ParName = 'PJmeno' then ParValue := self.reportData[ParName]
+  else if ParName = 'PUlice' then ParValue := self.reportData[ParName]
+  else if ParName = 'PObec' then ParValue := self.reportData[ParName]
+  else if ParName = 'OJmeno' then ParValue := self.reportData[ParName]
+  else if ParName = 'OUlice' then ParValue := self.reportData[ParName]
+  else if ParName = 'OObec' then ParValue := self.reportData[ParName]
+  else if ParName = 'OICO' then begin
+    if Trim(self.reportData[ParName]) <> '' then ParValue := 'IÈ: ' + self.reportData[ParName] else ParValue := ' '
+  end else if ParName = 'ODIC' then begin
+    if Trim(self.reportData[ParName]) <> '' then ParValue := 'DIÈ: ' + self.reportData[ParName] else ParValue := ' '
+  end else if ParName = 'Vystaveni' then ParValue := self.reportData[ParName]
+  else if ParName = 'Plneni' then ParValue := self.reportData[ParName]
+  else if ParName = 'Splatnost' then ParValue := self.reportData[ParName]
+  else if ParName = 'Platek' then ParValue := self.reportData[ParName]
+  else if ParName = 'Celkem' then ParValue := self.reportData[ParName]
+  else if ParName = 'Saldo' then ParValue := self.reportData[ParName]
+  else if ParName = 'Zaplatit' then ParValue := self.reportData[ParName]
+  else if ParName = 'DRCText' then ParValue := self.reportData[ParName];
+
+
+
 
 {
   if ParName = 'Cislo' then ParValue := Cislo
@@ -271,6 +299,32 @@ begin
 }
 
 end;
+
+procedure TDesFrxU.frxReportBeginDoc(Sender: TObject);
+begin
+
+{
+  with qrAbraRadky do begin
+    Close;
+    SQL.Text := 'SELECT Text, TAmountWithoutVAT AS BezDane, VATRate AS Sazba, TAmount - TAmountWithoutVAT AS DPH, TAmount AS SDani FROM IssuedInvoices2'
+    + ' WHERE Parent_ID = ' + Ap + ID + Ap                                       // ID faktury
+    + ' AND NOT (Text = ''Zaokrouhlení'' AND TAmount = 0)'
+    + ' ORDER BY PosIndex';
+    Open;
+  end;
+
+  // rekapitulace
+  with qrAbraDPH do begin
+    Close;
+    SQL.Text := 'SELECT VATRate AS Sazba, SUM(TAmountWithoutVAT) AS BezDane, SUM(TAmount - TAmountWithoutVAT) AS DPH, SUM(TAmount) AS SDani FROM IssuedInvoices2'
+    + ' WHERE Parent_ID = ' + Ap + ID + Ap
+    + ' AND VATIndex_ID IS NOT NULL'
+    + ' GROUP BY Sazba';
+    Open;
+  end;
+  }
+end;
+
 
 
 

@@ -306,7 +306,7 @@ begin
 // ne Fakturace
             if not rbFakturace.Checked then begin
               Close;
-              dbAbra.Reconnect;
+              DesU.dbAbra.Reconnect;
 // faktura(y) v Abøe v mìsíci aseMesic
               SQLStr := 'SELECT DISTINCT F.Id AS FId, Name FROM Firms F, IssuedInvoices II'
               + ' WHERE F.ID = II.Firm_ID'

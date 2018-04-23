@@ -105,7 +105,7 @@ var
   Saldo,
   Zaplatit,
   Zaplaceno: double;
-  i: integer;
+  Mesic, i: integer;
   Reg: TRegistry;
   frxSynPDFExport: TfrxSynPDFExport;
   reportData: TAArray;
@@ -114,7 +114,7 @@ begin
 
 
   with fmMain, fmMain.asgMain do begin
-    with qrAbra do begin
+    with DesU.qrAbra do begin
 
       // údaje z faktury do globálních promìnných
       Close;
@@ -150,13 +150,19 @@ begin
       reportData['OICO'] := FieldByName('OrgIdentNumber').AsString;
       reportData['ODIC'] := FieldByName('VATIdentNumber').AsString;
       reportData['ID'] := FieldByName('ID').AsString;
-      reportData['DRC'] := FieldByName('IsReverseChargeDeclared').AsString = 'A';
       reportData['DatumDokladu'] := FieldByName('DocDate$DATE').AsFloat;
       reportData['DatumPlneni'] := FieldByName('VATDate$DATE').AsFloat;
       reportData['DatumSplatnosti'] := FieldByName('DueDate$DATE').AsFloat;
       reportData['VS'] := Cells[1, Radek];
       reportData['Celkem'] := FieldByName('LocalAmount').AsFloat;
       reportData['Zaplaceno'] := FieldByName('LocalPaidAmount').AsFloat;
+      if FieldByName('IsReverseChargeDeclared').AsString = 'A' then
+        reportData['DRCText'] := 'Podle §92a zákona è. 235/2004 Sb. o DPH daò odvede zákazník.  '
+      else
+        reportData['DRCText'] := ' ';
+
+
+
       Close;
 
       reportData['Vystaveni'] := FormatDateTime('dd.mm.yyyy', reportData['DatumDokladu']);
@@ -164,7 +170,7 @@ begin
       reportData['Splatnost'] := FormatDateTime('dd.mm.yyyy', reportData['DatumSplatnosti']);
 
       reportData['SS'] := Format('%6.6d%2.2d', [Ints[2, Radek], aseRok.Value - 2000]);
-      reportData['Mesic'] := MonthOf(reportData['DatumDokladu']);
+      Mesic := MonthOf(reportData['DatumDokladu']);
       FStr := 'FO1';
       reportData['Cislo'] := Format('%s-%5.5d/%d', [FStr, Ints[2, Radek], aseRok.Value]);
 
@@ -180,14 +186,14 @@ begin
 
       Saldo := 0;
       // a saldo pro všechny Firm_Id (saldo je záporné, pokud zákazník dluží)
-      while not EOF do with qrAdresa do begin
+      while not EOF do with DesU.qrAbra2 do begin
         Close;
-        SQL.Text := 'SELECT SaldoPo + SaldoZLPo + Ucet325 FROM DE$_Firm_Totals (' + Ap + qrAbra.Fields[0].AsString + ApC + FloatToStr(reportData['DatumDokladu']) + ')';
+        SQL.Text := 'SELECT SaldoPo + SaldoZLPo + Ucet325 FROM DE$_Firm_Totals (' + Ap + DesU.qrAbra.Fields[0].AsString + ApC + FloatToStr(reportData['DatumDokladu']) + ')';
         Open;
         Saldo := Saldo + Fields[0].AsFloat;
-        qrAbra.Next;
-      end; // while not EOF do with qrAdresa
-    end;  // with qrAbra
+        DesU.qrAbra.Next;
+      end; // while not EOF do with DesU.qrAbra2
+    end;  // with DesU.qrAbra
 
     // právì pøevádìná faktura mùže být pøed splatností
     //    if Date <= DatumSplatnosti then begin
@@ -202,7 +208,7 @@ begin
     if Zaplatit < 0 then Zaplatit := 0;
 
     reportData['Saldo'] :=  Saldo;
-    reportData['Zaplatit'] := Zaplatit;
+    reportData['Zaplatit'] := Format('%.2f Kè', [Zaplatit]);
 
     // text na fakturu
     if Saldo > 0 then reportData['Platek'] := 'pøeplatek'
@@ -211,7 +217,7 @@ begin
 
 
     // údaje z tabulky Smlouvy do globálních promìnných
-    with qrMain do begin
+    with DesU.qrZakos do begin
       Close;
       SQLStr := 'SELECT Postal_name, Postal_street, Postal_PSC, Postal_city FROM customers'
       + ' WHERE Variable_symbol = ' + Ap + VS + Ap;
@@ -221,7 +227,7 @@ begin
       reportData['PUlice'] := FieldByName('Postal_street').AsString;
       reportData['PObec'] := FieldByName('Postal_PSC').AsString + ' ' + FieldByName('Postal_city').AsString;
       Close;
-    end;  // with qrMain
+    end;  // with DesU.qrZakos
 
     // zasílací adresa
     if (PJmeno = '') or (PObec = '') then begin
@@ -236,7 +242,7 @@ begin
     if not DirectoryExists(PDFDir) then CreateDir(PDFDir);           // PDFDir je v FI.ini
     OutDir := PDFDir + Format('\%4d', [aseRok.Value]);
     if not DirectoryExists(OutDir) then CreateDir(OutDir);
-    OutDir := OutDir + Format('\%2.2d', [reportData['Mesic']]);
+    OutDir := OutDir + Format('\%2.2d', [Mesic]);
     if not DirectoryExists(OutDir) then CreateDir(OutDir);
 
     // jméno souboru s fakturou

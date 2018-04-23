@@ -25,18 +25,12 @@ uses
 
 type
   TfmMain = class(TForm)
-    dbMain: TZConnection;
     qrMain: TZQuery;
     qrSmlouva: TZQuery;
     dbVoIP: TZConnection;
     qrVoIP: TZQuery;
-    dbAbra: TZConnection;
     qrAbra: TZQuery;
     qrAdresa: TZQuery;
-    qrDPH: TZQuery;
-    qrRadky: TZQuery;
-    fdsDPH: TfrxDBDataset;
-    fdsRadky: TfrxDBDataset;
     QRCode: TBarcode2D_QRCode;
     apnVyberCinnosti: TAdvPanel;
     rbFakturace: TRadioButton;

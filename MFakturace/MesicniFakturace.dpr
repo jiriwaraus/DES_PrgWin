@@ -32,5 +32,7 @@ begin
   Application.CreateForm(TdmMail, dmMail);
   Application.CreateForm(TdmPrevod, dmPrevod);
   Application.CreateForm(TdmTisk, dmTisk);
+  Application.CreateForm(TDesFrxU, DesFrxU);
+  //Application.CreateForm(TfrxExportSynPDF, frxExportSynPDF);
   Application.Run;
 end.
