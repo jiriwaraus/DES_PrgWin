@@ -248,7 +248,7 @@ begin
       reportData['PObec'] := reportData['OObec'];
     end;
 
-    //reportData['sQrKodem'] := true;
+    reportData['sQrKodem'] := true;
 
 
     slozenkaCastka := Format('%6.0f', [Zaplatit]);
@@ -318,8 +318,8 @@ begin
         DeleteFile(OutFileName);
 
     // !!! zde zavolání vytvoøení PDF
-    //DesFrxU.vytvorPfdFaktura(OutFileName, 'FOsPDP.fr3', reportData);
-    DesFrxU.vytvorPfdFaktura(OutFileName, 'FOseSlozenkou.fr3', reportData);
+    DesFrxU.vytvorPfdFaktura(OutFileName, 'FOsPDP.fr3', reportData);
+    //DesFrxU.vytvorPfdFaktura(OutFileName, 'FOseSlozenkou.fr3', reportData);
 
 
 

@@ -82,11 +82,6 @@ uses DesUtils, AbraEntities, frxExportSynPDF;
 {$R *.dfm}
 
 procedure TDesFrxU.FormCreate(Sender: TObject);
-{
-var
-    abraVatIndex : TAbraVatIndex;
-    abraDrcArticle : TAbraDrcArticle;
-    }
 begin
 
   dbAbra.HostName := DesU.getIniValue('Preferences', 'AbraHN');
@@ -144,8 +139,6 @@ begin
   frxReport.PrepareReport; 
   
 
-
-
   frxSynPDFExport := TfrxSynPDFExport.Create(nil);
   with frxSynPDFExport do try
     FileName := pdfFileName;
@@ -174,85 +167,15 @@ procedure TDesFrxU.frxReportGetValue(const ParName: string; var ParValue: Varian
 // dosadí se promìné do formuláøe
 begin
 
-//if ParName = 'Value = 0' then Exit; //nevím proè se do ParName dostává 'Value = 0'. padá to pak na tom.
+if ParName = 'Value = 0' then Exit; //pro jistotu, ve fr3 souboru toto bylo v highlight.condition
 
-
-try
   try
     ParValue := self.reportData[ParName];
   except
-    ShowMessage('Lehlo to na ' + ParName);
+    ShowMessage('Lehlo to na ' + ParName); //nefunguje mi
     //on E: Exception do
     //  ShowMessage(ParName + ' Chyba frxReportGetValue: '#13#10 + e.Message);
   end;  
-  finally
-    //ShowMessage('parametr je: ' + ParName); 
-  end;  
-
-
-
-
-{
-  if ParName = 'Cislo' then ParValue := Cislo
-  else if ParName = 'VS' then ParValue := VS
-  else if ParName = 'SS' then ParValue := Trim(SS)
-  else if ParName = 'PJmeno' then ParValue := PJmeno
-  else if ParName = 'PUlice' then ParValue := PUlice
-  else if ParName = 'PObec' then ParValue := PObec
-  else if ParName = 'OJmeno' then ParValue := OJmeno
-  else if ParName = 'OUlice' then ParValue := OUlice
-  else if ParName = 'OObec' then ParValue := OObec
-  else if ParName = 'OICO' then begin
-    if Trim(OICO) <> '' then ParValue := 'IÈ: ' + OICO else ParValue := ' '
-  end else if ParName = 'ODIC' then begin
-    if Trim(ODIC) <> '' then ParValue := 'DIÈ: ' + ODIC else ParValue := ' '
-  end else if ParName = 'Vystaveni' then ParValue := Vystaveni
-  else if ParName = 'Plneni' then ParValue := Plneni
-  else if ParName = 'Splatnost' then ParValue := Splatnost
-  else if ParName = 'Platek' then ParValue := Platek
-  else if ParName = 'Celkem' then ParValue := Celkem
-  else if ParName = 'Saldo' then ParValue := Saldo
-  else if ParName = 'Zaplatit' then ParValue := Format('%.2f Kè', [Zaplatit])
-
-  else if ParName = 'Resume' then ParValue := Format('Èástku %.0f,- Kè uhraïte, prosím, do %s na úèet 2100098382/2010 s variabilním symbolem %s.',
-   [Zaplatit, Splatnost, VS])
-  else if ParName = 'DRCText' then
-    if DRC then ParValue := 'Podle §92a zákona è. 235/2004 Sb. o DPH daò odvede zákazník.  ' else ParValue := ' ';
-
-  //if FakturyU.rbSeSlozenkou.Checked then begin
-  if TRUE then begin //*HW* TODO
-    if ParName = 'C1' then ParValue := C[1]
-    else if ParName = 'C2' then ParValue := C[2]
-    else if ParName = 'C3' then ParValue := C[3]
-    else if ParName = 'C4' then ParValue := C[4]
-    else if ParName = 'C5' then ParValue := C[5]
-    else if ParName = 'C6' then ParValue := C[6]
-    else if ParName = 'V01' then ParValue := V[1]
-    else if ParName = 'V02' then ParValue := V[2]
-    else if ParName = 'V03' then ParValue := V[3]
-    else if ParName = 'V04' then ParValue := V[4]
-    else if ParName = 'V05' then ParValue := V[5]
-    else if ParName = 'V06' then ParValue := V[6]
-    else if ParName = 'V07' then ParValue := V[7]
-    else if ParName = 'V08' then ParValue := V[8]
-    else if ParName = 'V09' then ParValue := V[9]
-    else if ParName = 'V10' then ParValue := V[10]
-    else if ParName = 'S01' then ParValue := S[1]
-    else if ParName = 'S02' then ParValue := S[2]
-    else if ParName = 'S03' then ParValue := S[3]
-    else if ParName = 'S04' then ParValue := S[4]
-    else if ParName = 'S05' then ParValue := S[5]
-    else if ParName = 'S06' then ParValue := S[6]
-    else if ParName = 'S07' then ParValue := S[7]
-    else if ParName = 'S08' then ParValue := S[8]
-    else if ParName = 'S09' then ParValue := S[9]
-    else if ParName = 'S10' then ParValue := S[10]
-    else if ParName = 'VS2' then ParValue := VS
-    else if ParName = 'SS2' then ParValue := SS
-    else if ParName = 'Castka' then ParValue := C + ',-';
-  end;
-
-}
 
 end;
 
@@ -264,28 +187,8 @@ var
   AHeight: integer;
 begin
 
-{
-  with qrAbraRadky do begin
-    Close;
-    SQL.Text := 'SELECT Text, TAmountWithoutVAT AS BezDane, VATRate AS Sazba, TAmount - TAmountWithoutVAT AS DPH, TAmount AS SDani FROM IssuedInvoices2'
-    + ' WHERE Parent_ID = ' + Ap + ID + Ap                                       // ID faktury
-    + ' AND NOT (Text = ''Zaokrouhlení'' AND TAmount = 0)'
-    + ' ORDER BY PosIndex';
-    Open;
-  end;
-
-  // rekapitulace
-  with qrAbraDPH do begin
-    Close;
-    SQL.Text := 'SELECT VATRate AS Sazba, SUM(TAmountWithoutVAT) AS BezDane, SUM(TAmount - TAmountWithoutVAT) AS DPH, SUM(TAmount) AS SDani FROM IssuedInvoices2'
-    + ' WHERE Parent_ID = ' + Ap + ID + Ap
-    + ' AND VATIndex_ID IS NOT NULL'
-    + ' GROUP BY Sazba';
-    Open;
-  end;
-  }
-
   // QR kód
+  // nejdøíve ovìøení, že je reportData['sQrKodem'] typu boolean
   if varIsType(reportData['sQrKodem'], varBoolean) AND reportData['sQrKodem'] then begin
     QRCode.Barcode := Format('SPD*1.0*ACC:CZ6020100000002100098382*AM:%d*CC:CZK*DT:%s*X-VS:%s*X-SS:%s*MSG:QR PLATBA EUROSIGNAL',
      [Round(reportData['ZaplatitCislo']), FormatDateTime('yyyymmdd', reportData['DatumSplatnosti']), reportData['VS'], reportData['SS']]);

@@ -18,7 +18,7 @@ interface
 uses
   Windows, Messages, Dialogs, SysUtils, Variants, Classes, Graphics, Controls, StdCtrls, ExtCtrls, Forms, Mask, ComObj, ComCtrls,
   AdvObj, AdvPanel, AdvEdit, AdvSpin, AdvDateTimePicker, AdvEdBtn, AdvFileNameEdit, AdvProgressBar, GradientLabel,
-  Grids, BaseGrid, AdvGrid, pCore2D, pBarcode2D, pQRCode, IniFiles, DateUtils, Math,
+  Grids, BaseGrid, AdvGrid, pCore2D, pBarcode2D, IniFiles, DateUtils, Math,
   DB, ZAbstractConnection, ZConnection, ZAbstractRODataset, ZAbstractDataset, ZDataset,
 
   frxClass, frxDBSet, frxDesgn;
@@ -31,7 +31,6 @@ type
     qrVoIP: TZQuery;
     qrAbra: TZQuery;
     qrAdresa: TZQuery;
-    QRCode: TBarcode2D_QRCode;
     apnVyberCinnosti: TAdvPanel;
     rbFakturace: TRadioButton;
     rbPrevod: TRadioButton;
