@@ -163,7 +163,7 @@ begin
         Close;
 {$IFDEF ABAK}
         if rbInternet.Checked then
-          SQLStr := 'SELECT SaldoPo FROM AB$_Saldo_FiI (' + Ap + qrAbra.Fields[0].AsString + ApC + FloatToStr(DatumDokladu) + ')'
+             SQLStr := 'SELECT SaldoPo FROM AB$_Saldo_FiI (' + Ap + qrAbra.Fields[0].AsString + ApC + FloatToStr(DatumDokladu) + ')'
         else SQLStr := 'SELECT SaldoPo FROM AB$_Saldo_FtI (' + Ap + qrAbra.Fields[0].AsString + ApC + FloatToStr(DatumDokladu) + ')';
 {$ELSE}
         SQLStr := 'SELECT SaldoPo + SaldoZLPo + Ucet325 FROM DE$_Firm_Totals (' + Ap + qrAbra.Fields[0].AsString + ApC + FloatToStr(DatumDokladu) + ')';

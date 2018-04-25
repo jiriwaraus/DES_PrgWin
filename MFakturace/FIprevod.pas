@@ -96,11 +96,14 @@ end;
 procedure TdmPrevod.FakturaPrevod(Radek: integer);
 // podle faktury v Abøe a stavu pohledávek vytvoøí formuláø v PDF
 var
+  slozenkaCastka,
+  slozenkaVS,
+  slozenkaSS,
   FrfFileName,
   OutFileName,
   OutDir,
   AbraKod,
-  SQLStr: AnsiString;
+  SQLStr: string;
   Celkem,
   Saldo,
   Zaplatit,
@@ -109,8 +112,11 @@ var
   Reg: TRegistry;
   frxSynPDFExport: TfrxSynPDFExport;
   reportData: TAArray;
+
 begin
   reportData := TAArray.Create;
+  reportData['Title'] := 'Faktura za pøipojení k internetu';
+  reportData['Author'] := 'Družstvo Eurosignal';
 
 
   with fmMain, fmMain.asgMain do begin
@@ -143,6 +149,7 @@ begin
         Close;
         Exit;
       end;
+
       reportData['AbraKod'] := FieldByName('Code').AsString;
       reportData['OJmeno'] := FieldByName('Name').AsString;
       reportData['OUlice'] := FieldByName('Street').AsString;
@@ -165,14 +172,7 @@ begin
 
       Close;
 
-      reportData['Vystaveni'] := FormatDateTime('dd.mm.yyyy', reportData['DatumDokladu']);
-      reportData['Plneni'] := FormatDateTime('dd.mm.yyyy', reportData['DatumPlneni']);
-      reportData['Splatnost'] := FormatDateTime('dd.mm.yyyy', reportData['DatumSplatnosti']);
 
-      reportData['SS'] := Format('%6.6d%2.2d', [Ints[2, Radek], aseRok.Value - 2000]);
-      Mesic := MonthOf(reportData['DatumDokladu']);
-      FStr := 'FO1';
-      reportData['Cislo'] := Format('%s-%5.5d/%d', [FStr, Ints[2, Radek], aseRok.Value]);
 
       // všechny Firm_Id pro Abrakód firmy
       SQLStr := 'SELECT * FROM DE$_Code_To_Firm_Id (' + Ap + reportData['AbraKod'] + ApZ;
@@ -208,6 +208,7 @@ begin
     if Zaplatit < 0 then Zaplatit := 0;
 
     reportData['Saldo'] :=  Saldo;
+    reportData['ZaplatitCislo'] := Zaplatit;
     reportData['Zaplatit'] := Format('%.2f Kè', [Zaplatit]);
 
     // text na fakturu
@@ -215,6 +216,17 @@ begin
     else if Saldo < 0 then reportData['Platek'] := 'nedoplatek'
     else reportData['Platek'] := ' ';
 
+    reportData['Vystaveni'] := FormatDateTime('dd.mm.yyyy', reportData['DatumDokladu']);
+    reportData['Plneni'] := FormatDateTime('dd.mm.yyyy', reportData['DatumPlneni']);
+    reportData['Splatnost'] := FormatDateTime('dd.mm.yyyy', reportData['DatumSplatnosti']);
+
+    reportData['SS'] := Format('%6.6d%2.2d', [Ints[2, Radek], aseRok.Value - 2000]);
+    Mesic := MonthOf(reportData['DatumDokladu']);
+    FStr := 'FO1';
+    reportData['Cislo'] := Format('%s-%5.5d/%d', [FStr, Ints[2, Radek], aseRok.Value]);
+
+    reportData['Resume'] := Format('Èástku %.0f,- Kè uhraïte, prosím, do %s na úèet 2100098382/2010 s variabilním symbolem %s.',
+                                    [Zaplatit, reportData['Splatnost'], reportData['VS']]);
 
     // údaje z tabulky Smlouvy do globálních promìnných
     with DesU.qrZakos do begin
@@ -236,7 +248,58 @@ begin
       reportData['PObec'] := reportData['OObec'];
     end;
 
-    reportData['sQrKodem'] := false;
+    //reportData['sQrKodem'] := true;
+
+
+    slozenkaCastka := Format('%6.0f', [Zaplatit]);
+    //nahradíme vlnovkou poslední mezeru, tedy dáme vlnovku pøed první èíslici
+    for i := 2 to 6 do
+      if slozenkaCastka[i] <> ' ' then begin
+        slozenkaCastka[i-1] := '~';
+        Break;
+      end;
+
+    //pro starší osmimístná èísla smluv se pøidají dvì nuly na zaèátek
+    if Length(reportData['VS']) = 8 then
+      slozenkaVS := '00' + reportData['VS']
+    else
+      slozenkaVS := reportData['VS'];
+
+
+    slozenkaSS := Format('%8.8d%2.2d', [Ints[2, Radek], aseRok.Value - 2000]);
+
+    reportData['C1'] := slozenkaCastka[1];
+    reportData['C2'] := slozenkaCastka[2];
+    reportData['C3'] := slozenkaCastka[3];
+    reportData['C4'] := slozenkaCastka[4];
+    reportData['C5'] := slozenkaCastka[5];
+    reportData['C6'] := slozenkaCastka[6];
+    reportData['V01'] := slozenkaVS[1];
+    reportData['V02'] := slozenkaVS[2];
+    reportData['V03'] := slozenkaVS[3];
+    reportData['V04'] := slozenkaVS[4];
+    reportData['V05'] := slozenkaVS[5];
+    reportData['V06'] := slozenkaVS[6];
+    reportData['V07'] := slozenkaVS[7];
+    reportData['V08'] := slozenkaVS[8];
+    reportData['V09'] := slozenkaVS[9];
+    reportData['V10'] := slozenkaVS[10];
+    reportData['S01'] := slozenkaSS[1];
+    reportData['S02'] := slozenkaSS[2];
+    reportData['S03'] := slozenkaSS[3];
+    reportData['S04'] := slozenkaSS[4];
+    reportData['S05'] := slozenkaSS[5];
+    reportData['S06'] := slozenkaSS[6];
+    reportData['S07'] := slozenkaSS[7];
+    reportData['S08'] := slozenkaSS[8];
+    reportData['S09'] := slozenkaSS[9];
+    reportData['S10'] := slozenkaSS[10];
+
+    reportData['VS2'] := reportData['VS']; //*hw* TODO je toto dobøe? nestaèil by jeden VS?
+    reportData['SS2'] := slozenkaSS; // SS2 se liší od SS tak, že má 8 míst. SS má 6 míst (zleva jsou vždy pøidané nuly)
+
+    reportData['Castka'] := slozenkaCastka + ',-';
+
 
     // adresáø pro ukládání faktur v PDF nemusí existovat
     if not DirectoryExists(PDFDir) then CreateDir(PDFDir);           // PDFDir je v FI.ini
@@ -255,51 +318,24 @@ begin
         DeleteFile(OutFileName);
 
     // !!! zde zavolání vytvoøení PDF
-    DesFrxU.vytvorPfdFaktura(OutFileName, 'FOsPDP.fr3', reportData);
+    //DesFrxU.vytvorPfdFaktura(OutFileName, 'FOsPDP.fr3', reportData);
+    DesFrxU.vytvorPfdFaktura(OutFileName, 'FOseSlozenkou.fr3', reportData);
 
 
 
-    { *hw* TODO
 
-    // vytvoøená faktura se zpracuje do vlastního formuláøe a pøevede se do PDF
-    // uložení pomocí Synopse
-    frxReport.LoadFromFile(DesU.PROGRAM_PATH + 'FOsPDP.fr3');
 
-    frxReport.PrepareReport;
-    //  frxReport.ShowPreparedReport;
-    //  uložení
-    //  frxPDFExport.FileName := OutFileName;
-    //  frxReport.Export(frxPDFExport);
-
-    frxSynPDFExport := TfrxSynPDFExport.Create(nil);
-    with frxSynPDFExport do try
-      FileName := OutFileName;
-      Title := 'Faktura za pøipojení k internetu';
-
-      Author := 'Družstvo Eurosignal';
-
-      EmbeddedFonts := False;
-      Compressed := True;
-      OpenAfterExport := False;
-      ShowDialog := False;
-      ShowProgress := False;
-      PDFA := True; // important
-      frxReport.Export(frxSynPDFExport);
-    finally
-      Free;
-    end;
-
-   }
-// èekání na soubor - max. 5s
+    // èekání na soubor - max. 5s
     for i := 1 to 50 do begin
       if FileExists(OutFileName) then Break;
       Sleep(100);
     end;
-// hotovo
+
+    // hotovo
     if not FileExists(OutFileName) then
-      dmCommon.Zprava(Format('%s (%s): Nepodaøilo se vytvoøit soubor %s.', [OJmeno, VS, OutFileName]))
+      dmCommon.Zprava(Format('%s (%s): Nepodaøilo se vytvoøit soubor %s.', [reportData['OJmeno'], reportData['VS'], OutFileName]))
     else begin
-      dmCommon.Zprava(Format('%s (%s): Vytvoøen soubor %s.', [OJmeno, VS, OutFileName]));
+      dmCommon.Zprava(Format('%s (%s): Vytvoøen soubor %s.', [reportData['OJmeno'], reportData['VS'], OutFileName]));
       Ints[0, Radek] := 0;
       Row := Radek;
     end;

@@ -115,9 +115,7 @@ var
   AHeight: integer;
   frxSynPDFExport: TfrxSynPDFExport;
 begin
-
-
- self.reportData := reportData;
+  self.reportData := reportData;
 
   // øádky faktury
   with qrAbraRadky do begin
@@ -140,38 +138,19 @@ begin
   end;
 
 
-  // QR kód
-
-  if reportData['sQrKodem'] then begin
-
-    QRCode.Barcode := Format('SPD*1.0*ACC:CZ6020100000002100098382*AM:%d*CC:CZK*DT:%s*X-VS:%s*X-SS:%s*MSG:QR PLATBA EUROSIGNAL',
-     [Round(Zaplatit), FormatDateTime('yyyymmdd', DatumSplatnosti), reportData['VS'], reportData['SS']]);
-
-    QRCode.DrawToSize(AWidth, AHeight, ASymbolWidth, ASymbolHeight);
-    with TfrxPictureView(frxReport.FindObject('pQR')).Picture.Bitmap do begin
-      Width := AWidth;
-      Height := AHeight;
-      QRCode.DrawTo(Canvas, 0, 0);
-    end;
-  end;
-
   // vytvoøená faktura se zpracuje do vlastního formuláøe a pøevede se do PDF
   // uložení pomocí Synopse
   frxReport.LoadFromFile(DesU.PROGRAM_PATH + fr3FileName);
+  frxReport.PrepareReport; 
+  
 
-  frxReport.PrepareReport;
-  //  frxReport.ShowPreparedReport;
-  //  uložení
-  //  frxPDFExport.FileName := OutFileName;
-  //  frxReport.Export(frxPDFExport);
+
 
   frxSynPDFExport := TfrxSynPDFExport.Create(nil);
   with frxSynPDFExport do try
     FileName := pdfFileName;
-    Title := 'Faktura za pøipojení k internetu';
-
-    Author := 'Družstvo Eurosignal';
-
+    Title := reportData['Title'];
+    Author := reportData['Author'];
     EmbeddedFonts := False;
     Compressed := True;
     OpenAfterExport := False;
@@ -182,7 +161,6 @@ begin
   finally
     Free;
   end;
-
 
   qrAbraRadky.Close;
   qrAbraDPH.Close;
@@ -196,7 +174,7 @@ procedure TDesFrxU.frxReportGetValue(const ParName: string; var ParValue: Varian
 // dosadí se promìné do formuláøe
 begin
 
-if ParName = 'Value = 0' then Exit; //nevím proè se do ParName dostává 'Value = 0'. padá to pak na tom.
+//if ParName = 'Value = 0' then Exit; //nevím proè se do ParName dostává 'Value = 0'. padá to pak na tom.
 
 
 try
@@ -210,28 +188,6 @@ try
   finally
     //ShowMessage('parametr je: ' + ParName); 
   end;  
-
-  if ParName = 'Cislo' then ParValue := self.reportData[ParName]
-  else if ParName = 'VS' then ParValue := self.reportData[ParName]
-  else if ParName = 'SS' then ParValue := Trim(self.reportData[ParName])
-  else if ParName = 'PJmeno' then ParValue := self.reportData[ParName]
-  else if ParName = 'PUlice' then ParValue := self.reportData[ParName]
-  else if ParName = 'PObec' then ParValue := self.reportData[ParName]
-  else if ParName = 'OJmeno' then ParValue := self.reportData[ParName]
-  else if ParName = 'OUlice' then ParValue := self.reportData[ParName]
-  else if ParName = 'OObec' then ParValue := self.reportData[ParName]
-  else if ParName = 'OICO' then begin
-    if Trim(self.reportData[ParName]) <> '' then ParValue := 'IÈ: ' + self.reportData[ParName] else ParValue := ' '
-  end else if ParName = 'ODIC' then begin
-    if Trim(self.reportData[ParName]) <> '' then ParValue := 'DIÈ: ' + self.reportData[ParName] else ParValue := ' '
-  end else if ParName = 'Vystaveni' then ParValue := self.reportData[ParName]
-  else if ParName = 'Plneni' then ParValue := self.reportData[ParName]
-  else if ParName = 'Splatnost' then ParValue := self.reportData[ParName]
-  else if ParName = 'Platek' then ParValue := self.reportData[ParName]
-  else if ParName = 'Celkem' then ParValue := self.reportData[ParName]
-  else if ParName = 'Saldo' then ParValue := self.reportData[ParName]
-  else if ParName = 'Zaplatit' then ParValue := self.reportData[ParName]
-  else if ParName = 'DRCText' then ParValue := self.reportData[ParName];
 
 
 
@@ -301,6 +257,11 @@ try
 end;
 
 procedure TDesFrxU.frxReportBeginDoc(Sender: TObject);
+var
+  ASymbolWidth,
+  ASymbolHeight,
+  AWidth,
+  AHeight: integer;
 begin
 
 {
@@ -323,6 +284,19 @@ begin
     Open;
   end;
   }
+
+  // QR kód
+  if varIsType(reportData['sQrKodem'], varBoolean) AND reportData['sQrKodem'] then begin
+    QRCode.Barcode := Format('SPD*1.0*ACC:CZ6020100000002100098382*AM:%d*CC:CZK*DT:%s*X-VS:%s*X-SS:%s*MSG:QR PLATBA EUROSIGNAL',
+     [Round(reportData['ZaplatitCislo']), FormatDateTime('yyyymmdd', reportData['DatumSplatnosti']), reportData['VS'], reportData['SS']]);
+    QRCode.DrawToSize(AWidth, AHeight, ASymbolWidth, ASymbolHeight);
+    with TfrxPictureView(frxReport.FindObject('pQR')).Picture.Bitmap do begin
+      Width := AWidth;
+      Height := AHeight;
+      QRCode.DrawTo(Canvas, 0, 0);
+    end;
+  end;  
+  
 end;
 
 

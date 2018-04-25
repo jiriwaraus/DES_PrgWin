@@ -173,7 +173,9 @@ var
 
 implementation
 
-uses DesUtils, AbraEntities, FICommon, FIfaktura, FIPrevod, FITisk, FIMail;
+uses DesUtils, AbraEntities, FICommon, FIfaktura, FIPrevod, FITisk, FIMail,
+AArray
+;
 
 {$R *.dfm}
 
@@ -229,7 +231,6 @@ begin
   asgMain.CheckTrue := '1';
   apnFakturyZa.Visible := False;
 
-  aseRok.Value := 2017; // *HW*  TODO smazat
 
   aseRokChange(nil);
   rbFakturaceClick(nil);
@@ -719,12 +720,54 @@ end;
 // ------------------------------------------------------------------------------------------------
 
 procedure TfmMain.Button1Click(Sender: TObject);
+var
+  source : string;
+  i: integer;
+  rData: TAArray;
 begin
 
 //ShowMessage('demooo_' +  BoolToStr(DesU.existujeVAbreDokladSPrazdnymVs(), true));
+//ShowMessage('VRid_' +  DesU.getAbraVatrateId('Výst21'));
+//ShowMessage('VRid_' +  DesU.getAbraVatindexId('Výst21'));
 
-ShowMessage('VRid_' +  DesU.getAbraVatrateId('Výst21'));
-ShowMessage('VRid_' +  DesU.getAbraVatindexId('Výst21'));
+Source := 'pakachar:ukulelee';
+
+Copy(Source, 8, MaxInt);
+
+//ShowMessage('1_' +  Copy(Source, Pos(':', Source)+1, MaxInt) + '_');
+//ShowMessage('1_' +  Copy(Source, 1, Pos(':', Source)-1) + '_');
+//ShowMessage(inttostr(Pos('-', Source)) );
+
+
+{
+Zaplatit := 152.61;
+
+    C := Format('%6.0f', [Zaplatit]);
+    //nahradíme vlnovkou poslední mezeru, tedy dáme vlnovku pøed první èíslici
+    for i := 2 to 6 do
+      if C[i] <> ' ' then begin
+        C[i-1] := '~';
+        Break;
+      end;
+
+ShowMessage('-' + C + '-' );
+
+ShowMessage (
+  '- -'
+  + Format('%8.8d%2.2d', [213456, 18]) + '- -'
+  + Format('%10.10d', [91234567]) + '- -'
+  + Format('%10.10d', [9123456789]) + '- -'
+  + Format('%8.0d%2.0d', [213456, 213456]) + '- -'
+  + Format('%3.3d%3.3d', [213456, 18]) + '- -'
+  + Format('%3.0d%3.0d', [213456, 18]) + '- -'
+
+  );
+
+}
+  rData := TAArray.Create;
+  rData['Title'] := 'Faktura za pøipojení k internetu';
+  rData['Author'] := 'Družstvo Eurosignal';
+  ShowMessage ('-'+rData['kuku']+'-');
 
 end;
 
