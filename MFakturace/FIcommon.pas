@@ -227,13 +227,14 @@ begin
       ClearNormalCells;
       RowCount := 2;
       Close;
-// ***
-// ***  výbìr zákazníkù/smluv podle VS/smlouvy  ***
-// ***
+
+      // ***
+      // ***  výbìr zákazníkù/smluv podle VS/smlouvy  ***
+      // ***
       if rbPodleSmlouvy.Checked then begin
-// Fakturace
+        // Fakturace
         if rbFakturace.Checked then begin          // 7.10.14 výbìr zákazníkù/smluv k fakturaci
-// kontrola mìsíce a roku fakturace
+          // kontrola mìsíce a roku fakturace
           if (aseRok.Value * 12 + aseMesic.Value > YearOf(Date) * 12 + MonthOf(Date) + 1)     // vìtší než pøíští mìsíc, èi menší
            or (aseRok.Value * 12 + aseMesic.Value < YearOf(Date) * 12 + MonthOf(Date) - 1) then begin       // než minulý mìsíc
             SQLStr := Format('Opravdu fakturovat %d. mìsíc roku %d ?', [aseMesic.Value, aseRok.Value]);
@@ -243,34 +244,27 @@ begin
               Exit;
             end;
           end;
-// view pro fakturaci
+          // view pro fakturaci
           dmCommon.AktualizaceView;
           dmCommon.Zprava(Format('Naètení zákazníkù k fakturaci na období %s.%s od VS %s do %s.', [aseMesic.Text, aseRok.Text, aedOd.Text, aedDo.Text]));
-{$IFDEF ABAK}
-          if rbInternet.Checked then dmCommon.Zprava('      - internetové smlouvy')
-          else dmCommon.Zprava('      - smlouvy VoIP');
-{$ELSE}
+
           if cbBezVoIP.Checked then dmCommon.Zprava('      - zákazníci bez VoIP');
           if cbSVoIP.Checked then dmCommon.Zprava('      - zákazníci s VoIP');
-{$ENDIF}
-// ne Fakturace
+
+
         end else begin              // if rbFakturace.Checked
+          // ne Fakturace
           dmCommon.Zprava(Format('Naètení faktur na období %s.%s od VS %s do %s.', [aseMesic.Text, aseRok.Text, aedOd.Text, aedDo.Text]));
-{$IFDEF ABAK}
-          if rbInternet.Checked then dmCommon.Zprava('      - internetové smlouvy')
-          else dmCommon.Zprava('      - smlouvy VoIP');
-{$ELSE}
+
           if cbBezVoIP.Checked then dmCommon.Zprava('      - zákazníci bez VoIP');
           if cbSVoIP.Checked then dmCommon.Zprava('      - zákazníci s VoIP');
-{$ENDIF}
+
         end;      // if rbFakturace.Checked else ...
+
         SQLStr := 'SELECT DISTINCT VS, Abrakod, Mail, Reklama FROM ' + fiInvoiceView
         + ' WHERE VS >= ' + Ap + aedOd.Text + Ap
         + ' AND VS <= ' + Ap + aedDo.Text + Ap;
-{$IFDEF ABAK}
-        if rbInternet.Checked then SQLStr := SQLStr + ' AND (Typ = ''InternetContract'' OR Typ = ''StoryContract'')'
-        else SQLStr := SQLStr + ' AND Typ = ''VoipContract''';
-{$ELSE}
+
         if cbBezVoIP.Checked and not cbSVoIP.Checked then
           SQLStr := SQLStr + ' AND NOT EXISTS (SELECT Variable_symbol FROM ' + fiVoipCustomersView
           + ' WHERE Variable_symbol = ' + fiInvoiceView + '.VS)';
@@ -283,7 +277,7 @@ begin
           else if rbSeSlozenkou.Checked then SQLStr := SQLStr + ' AND Posilani LIKE ''S%'''
           else if rbKuryr.Checked then SQLStr := SQLStr + ' AND Posilani LIKE ''K%''';
         end;
-{$ENDIF}
+
         Close;
         SQL.Text := SQLStr;
         Open;
@@ -303,11 +297,11 @@ begin
             Break;
           end;
           with DesU.qrAbra do begin
-// ne Fakturace
+            // ne Fakturace
             if not rbFakturace.Checked then begin
               Close;
               DesU.dbAbra.Reconnect;
-// faktura(y) v Abøe v mìsíci aseMesic
+              // faktura(y) v Abøe v mìsíci aseMesic
               SQLStr := 'SELECT DISTINCT F.Id AS FId, Name FROM Firms F, IssuedInvoices II'
               + ' WHERE F.ID = II.Firm_ID'
               + ' AND F.Firm_ID IS NULL'
@@ -336,12 +330,9 @@ begin
               + ' WHERE Firm_ID = ' + Ap + FId + Ap
               + ' AND VATDate$DATE >= ' + FloatToStr(Trunc(StartOfAMonth(aseRok.Value, aseMesic.Value)))
               + ' AND VATDate$DATE <= ' + FloatToStr(Trunc(EndOfAMonth(aseRok.Value, aseMesic.Value)));
-{$IFDEF ABAK}
-              if rbInternet.Checked then SQLStr := SQLStr + ' AND DocQueue_ID = ' + Ap + globalAA['abraIiDocQueue_Id'] + Ap
-              else SQLStr := SQLStr + ' AND DocQueue_ID = ' + Ap + VDocQueue_Id + Ap;
-{$ELSE}
+
               SQLStr := SQLStr + ' AND DocQueue_ID = ' + Ap + globalAA['abraIiDocQueue_Id'] + Ap;
-{$ENDIF}
+
               SQL.Text := SQLStr;
               Open;
               if RecordCount = 0 then begin       // faktura v Abøe neexistuje
@@ -394,9 +385,10 @@ begin
           end;  // with DesU.qrAbra
           Next;
         end;  // while not EOF
-// ***
-// ***  výbìr zákazníkù podle faktury  ***
-// ***
+
+      // ***
+      // ***  výbìr zákazníkù podle faktury  ***
+      // ***
       end else if rbPodleFaktury.Checked then with DesU.qrAbra do begin
         Close;
         dmCommon.Zprava(Format('Naètení faktur od %s do %s.', [aedOd.Text, aedDo.Text]));
@@ -408,12 +400,9 @@ begin
         + ' AND VATDate$DATE >= ' + FloatToStr(Trunc(StartOfAMonth(aseRok.Value, aseMesic.Value)))
         + ' AND VATDate$DATE <= ' + FloatToStr(Trunc(EndOfAMonth(aseRok.Value, aseMesic.Value)));
         if rbMail.Checked then SQLStr := SQLStr + ' AND F.Firm_ID IS NULL';
-{$IFDEF ABAK}
-        if rbInternet.Checked then SQLStr := SQLStr + ' AND DocQueue_ID = ' + Ap + globalAA['abraIiDocQueue_Id'] + Ap       // 1N00000101
-        else SQLStr := SQLStr + ' AND DocQueue_ID = ' + Ap + VDocQueue_Id + Ap;                            // 1P00000101
-{$ELSE}
+
         SQLStr := SQLStr + ' AND DocQueue_ID = ' + Ap + globalAA['abraIiDocQueue_Id'] + Ap;
-{$ENDIF}
+
         SQL.Text := SQLStr;
         Open;
         Radek := 0;
@@ -434,12 +423,12 @@ begin
           end;
           with DesU.qrZakos do begin
             Close;
-// nekontroluje se v fiInvoiceView
+            // nekontroluje se v fiInvoiceView
 //            SQLStr := 'SELECT DISTINCT Mail, Reklama FROM ' + fiInvoiceView
 //            + ' WHERE VS = ' + VarSymbol;
             SQLStr := 'SELECT DISTINCT Postal_mail AS Mail, Disable_mailings AS Reklama FROM customers Cu'
             + ' WHERE Variable_symbol = ' + VarSymbol;
-{$IFNDEF ABAK}
+
             if cbBezVoIP.Checked and not cbSVoIP.Checked then
               SQLStr := SQLStr + ' AND NOT EXISTS (SELECT Variable_symbol FROM ' + fiVoipCustomersView
               + ' WHERE Variable_symbol = ' + Ap + VarSymbol + ApZ;
@@ -452,7 +441,7 @@ begin
               else if rbSeSlozenkou.Checked then SQLStr := SQLStr + ' AND Invoice_sending_method_id = 11'
               else if rbKuryr.Checked then SQLStr := SQLStr + ' AND Invoice_sending_method_id = 12';
             end;
-{$ENDIF}
+
             SQL.Text := SQLStr;
             Open;
             while not EOF do begin
@@ -474,11 +463,11 @@ begin
         end;  // while not EOF
         if Check then dmCommon.Zprava('Vyhledány fakturované smlouvy');
       end;  // if rbPodleFaktury.Checked with DesU.qrAbra
-//      AutoSize := True;
+      //      AutoSize := True;
       if not rbFakturace.Checked then begin
         SortSettings.Column := 2;
         SortSettings.Full := True;
-//      SortSettings.AutoFormat := False;
+        //SortSettings.AutoFormat := False;
         SortSettings.Direction := sdAscending;
         QSort;
       end;

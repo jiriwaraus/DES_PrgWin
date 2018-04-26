@@ -21,7 +21,7 @@ implementation
 
 {$R *.dfm}
 
-uses DesUtils, FIcommon;
+uses DesUtils, DesFrxUtils, AArray, FIcommon;
 
 // ------------------------------------------------------------------------------------------------
 
@@ -32,13 +32,11 @@ var
   Radek: integer;
 begin
   with fmMain do try
-{$IFDEF ABAK}
-    Posilani := '';
-{$ELSE}
+
     if rbBezSlozenky.Checked then Posilani := 'bez složenky';
     if rbSeSlozenkou.Checked then Posilani := 'se složenkou';
     if rbKuryr.Checked then Posilani := 'roznášených kurýrem';
-{$ENDIF}
+
     if rbPodleSmlouvy.Checked then dmCommon.Zprava(Format('Tisk faktur %s od VS %s do %s', [Posilani, aedOd.Text, aedDo.Text]))
     else dmCommon.Zprava(Format('Tisk faktur %s od èísla %s do %s', [Posilani, aedOd.Text, aedDo.Text]));
     with asgMain do begin
@@ -88,7 +86,12 @@ var
   SQLStr: AnsiString;
   Zaplaceno: double;
   i: integer;
+  reportData: TAArray;
 begin
+  reportData := TAArray.Create;
+  reportData['Title'] := 'Faktura za pøipojení k internetu';
+  reportData['Author'] := 'Družstvo Eurosignal';
+
   with fmMain, asgMain do begin
     with qrAbra do begin
 // údaje z faktury do privátních promìnných
@@ -103,12 +106,9 @@ begin
       SQLStr := SQLStr + ' AND II.Period_ID = ' + Ap + globalAA['abraIiPeriod_Id'] + Ap
       + ' AND II.OrdNumber = ' + Cells[2, Radek]
       + ' AND II.DocQueue_ID = ';
-{$IFDEF ABAK}
-      if rbInternet.Checked then SQLStr := SQLStr + Ap + globalAA['abraIiDocQueue_Id'] + Ap
-      else SQLStr := SQLStr + Ap + VDocQueue_Id + Ap;
-{$ELSE}
+
       SQLStr := SQLStr + Ap + globalAA['abraIiDocQueue_Id'] + Ap;
-{$ENDIF}
+
       SQL.Text := SQLStr;
       Open;
       if RecordCount = 0 then begin
@@ -139,14 +139,10 @@ begin
       Zaplaceno := FieldByName('LocalPaidAmount').AsFloat;
       Close;
       SS := Format('%6.6d%2.2d', [Ints[2, Radek], aseRok.Value - 2000]);
-{$IFDEF ABAK}
-      if rbInternet.Checked then FStr := 'FiI'
-      else FStr := 'FtI';
-{$ELSE}
+
       FStr := 'FO1';
       if Length(VS) = 8 then V := '00' + VS else V := VS;                      // na složenku
       S := Format('%8.8d%2.2d', [Ints[2, Radek], aseRok.Value - 2000]);
-{$ENDIF}
       Cislo := Format('%s-%5.5d/%d', [FStr, Ints[2, Radek], aseRok.Value]);
 // všechny Firm_Id pro Abrakód firmy
       SQLStr := 'SELECT * FROM DE$_CODE_TO_FIRM_ID (' + Ap + AbraKod + ApZ;
@@ -161,14 +157,10 @@ begin
   // a saldo pro všechny Firm_Id
       while not EOF do with qrAdresa do begin
         Close;
-{$IFDEF ABAK}
-        if rbInternet.Checked then
-             SQLStr := 'SELECT SaldoPo FROM AB$_Saldo_FiI (' + Ap + qrAbra.Fields[0].AsString + ApC + FloatToStr(DatumDokladu) + ')'
-        else SQLStr := 'SELECT SaldoPo FROM AB$_Saldo_FtI (' + Ap + qrAbra.Fields[0].AsString + ApC + FloatToStr(DatumDokladu) + ')';
-{$ELSE}
+
         SQLStr := 'SELECT SaldoPo + SaldoZLPo + Ucet325 FROM DE$_Firm_Totals (' + Ap + qrAbra.Fields[0].AsString + ApC + FloatToStr(DatumDokladu) + ')';
 //        SQLStr := 'SELECT SaldoPo + Ucet325 FROM DE$_Firm_Totals (' + Ap + qrAbra.Fields[0].AsString + ApC + FloatToStr(Date) + ')';
-{$ENDIF}
+
         SQL.Text := SQLStr;
         Open;
         Saldo := Saldo + Fields[0].AsFloat;
@@ -189,14 +181,14 @@ begin
     else if Saldo < 0 then Platek := 'nedoplatek'
     else Platek := ' ';
     if Zaplatit < 0 then Zaplatit := 0;
-{$IFNDEF ABAK}
+
     C := Format('%6.0f', [Zaplatit]);
     for i := 2 to 6 do
       if C[i] <> ' ' then begin
         C[i-1] := '~';
         Break;
       end;
-{$ENDIF}
+
 // údaje z tabulky Smlouvy do globálních promìnných
     with qrMain do begin
       Close;
@@ -217,19 +209,19 @@ begin
     end;
     try
 
-    {*hw* TODO
-      if rbSeSlozenkou.Checked then
-        frxReport.LoadFromFile(ExtractFilePath(ParamStr(0)) + 'FOseSlozenkou.fr3')
-      else
-        frxReport.LoadFromFile(ExtractFilePath(ParamStr(0)) + 'FOsPDP.fr3');
 
-      frxReport.PrepareReport;
-//      frxReport.ShowPreparedReport;
-      frxReport.PrintOptions.ShowDialog := False;
-      frxReport.Print;
+
+      if rbSeSlozenkou.Checked then
+        DesFrxU.fakturaTisk('FOseSlozenkou.fr3', reportData)
+      else begin
+        reportData['sQrKodem'] := true;
+        DesFrxU.fakturaTisk('FOsPDP.fr3', reportData);
+      end;
+
+
       dmCommon.Zprava(Format('%s (%s): Faktura %s byla odeslána na tiskárnu.', [OJmeno, VS, Cislo]));
       Ints[0, Radek] := 0;
-      }
+
     except on E: exception do
       begin
         dmCommon.Zprava(Format('%s (%s): Fakturu %s se nepodaøilo vytisknout.' + #13#10 + 'Chyba: %s',

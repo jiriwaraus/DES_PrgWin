@@ -34,7 +34,7 @@ implementation
 
 {$R *.dfm}
 
-uses DesUtils, DesFrxUtils, AArray, FImain, FIcommon,  frxExportSynPDF;
+uses DesUtils, DesFrxUtils, AArray, FImain, FIcommon;  //frxExportSynPDF;
 
 // ------------------------------------------------------------------------------------------------
 
@@ -109,8 +109,8 @@ var
   Zaplatit,
   Zaplaceno: double;
   Mesic, i: integer;
-  Reg: TRegistry;
-  frxSynPDFExport: TfrxSynPDFExport;
+
+
   reportData: TAArray;
 
 begin
@@ -248,7 +248,6 @@ begin
       reportData['PObec'] := reportData['OObec'];
     end;
 
-    reportData['sQrKodem'] := true;
 
 
     slozenkaCastka := Format('%6.0f', [Zaplatit]);
@@ -317,9 +316,12 @@ begin
       end else
         DeleteFile(OutFileName);
 
+
     // !!! zde zavolání vytvoøení PDF
-    DesFrxU.vytvorPfdFaktura(OutFileName, 'FOsPDP.fr3', reportData);
-    //DesFrxU.vytvorPfdFaktura(OutFileName, 'FOseSlozenkou.fr3', reportData);
+    reportData['sQrKodem'] := true;
+    //DesFrxU.fakturaVytvorPfd(OutFileName, 'FOsPDP.fr3', reportData);
+    reportData['sQrKodem'] := false;
+    DesFrxU.fakturaTisk('FOseSlozenkou.fr3', reportData);
 
 
 

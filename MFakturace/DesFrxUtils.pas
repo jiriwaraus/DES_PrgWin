@@ -16,7 +16,6 @@ uses
 
 type
   TDesFrxU = class(TForm)
-    dbAbra: TZConnection;
     qrAbraDPH: TZQuery;
     qrAbraRadky: TZQuery;
     frxReport: TfrxReport;
@@ -24,51 +23,20 @@ type
     fdsRadky: TfrxDBDataset;
     QRCode: TBarcode2D_QRCode;
 
-
-    procedure FormCreate(Sender: TObject);
-
     procedure frxReportGetValue(const ParName: string; var ParValue: Variant);
-    function vytvorPfdFaktura(pdfFileName, fr3FileName : string; reportData: TAArray) : string;
     procedure frxReportBeginDoc(Sender: TObject);
 
 
   public
-    PdfDir: string;
+    //pdfFileName, fr3FileName : string;
     reportData: TAArray;
 
-    F: TextFile;
-    DRC,
-    Check,
-    Prerusit: boolean;
-    Mesic,
-    VATRate: integer;
-    DatumDokladu,
-    DatumPlneni,
-    DatumSplatnosti,
-    Celkem,
-    Saldo,
-    Zaplatit: double;
-    AbraOLE: variant;
-    C, V, S,                           // pole èísel na složenku
-    ID,
-    User_Id,
-    Firm_Id,
-    Period_Id: ShortString;
-        // prefix faktury
+    function fakturaVytvorPfd(pdfFileName, fr3FileName : string; reportData: TAArray) : string;
+    function fakturaTisk(fr3FileName : string; reportData: TAArray) : string;
+    function faktura(action, fr3FileName : string; reportData: TAArray) : string;
 
-    pokuss: string;
-
-
-
-  private
-    IDocQueue_Id,
-    VATIndex_Id,
-    VATRate_Id,
-    DRCVATIndex_Id,
-    DRCArticle_Id,
-
-    VDocQueue_Id: string[10];
-
+    function vytvorPdf(fr3FileName : string; reportData: TAArray) : string;
+    function tisk(fr3FileName : string; reportData: TAArray) : string;
 
   end;
 
@@ -81,34 +49,23 @@ uses DesUtils, AbraEntities, frxExportSynPDF;
 
 {$R *.dfm}
 
-procedure TDesFrxU.FormCreate(Sender: TObject);
+function TDesFrxU.fakturaVytvorPfd(pdfFileName, fr3FileName : string; reportData: TAArray) : string;
 begin
-
-  dbAbra.HostName := DesU.getIniValue('Preferences', 'AbraHN');
-  dbAbra.Database := DesU.getIniValue('Preferences', 'AbraDB');
-  dbAbra.User := DesU.getIniValue('Preferences', 'AbraUN');
-  dbAbra.Password := DesU.getIniValue('Preferences', 'AbraPW');
-
-  // pøipojení databáze
-  if not dbAbra.Connected then try
-    dbAbra.Connect;
-  except on E: exception do
-    begin
-      Application.MessageBox(PChar('DesFrxUtils - nedá se pøipojit k databázi Abry.' + ^M + E.Message), 'Abra', MB_ICONERROR + MB_OK);
-      Application.Terminate;
-      DesFrxU.Close;
-    end;
-  end;
-
+  reportData['pdfFileName'] := pdfFileName;
+  faktura('vytvoreniPdf', fr3FileName, reportData);
 end;
 
-function TDesFrxU.vytvorPfdFaktura(pdfFileName, fr3FileName : string; reportData: TAArray) : string;
+function TDesFrxU.fakturaTisk(fr3FileName : string; reportData: TAArray) : string;
+begin
+  faktura('tisk', fr3FileName, reportData);
+end;
+
+function TDesFrxU.faktura(action, fr3FileName : string; reportData: TAArray) : string;
 var
   ASymbolWidth,
   ASymbolHeight,
   AWidth,
   AHeight: integer;
-  frxSynPDFExport: TfrxSynPDFExport;
 begin
   self.reportData := reportData;
 
@@ -132,16 +89,30 @@ begin
     Open;
   end;
 
+  if action = 'vytvoreniPdf' then begin
+    tisk(fr3FileName, reportData);
+  end;
+
+  if action = 'tisk' then begin
+    tisk(fr3FileName, reportData);
+  end;
+
+  qrAbraRadky.Close;
+  qrAbraDPH.Close;
+end;
+
+function TDesFrxU.vytvorPdf(fr3FileName : string; reportData: TAArray) : string;
+var
+    frxSynPDFExport: TfrxSynPDFExport;
+begin
+  frxReport.LoadFromFile(DesU.PROGRAM_PATH + fr3FileName);
+  frxReport.PrepareReport;
 
   // vytvoøená faktura se zpracuje do vlastního formuláøe a pøevede se do PDF
   // uložení pomocí Synopse
-  frxReport.LoadFromFile(DesU.PROGRAM_PATH + fr3FileName);
-  frxReport.PrepareReport; 
-  
-
   frxSynPDFExport := TfrxSynPDFExport.Create(nil);
   with frxSynPDFExport do try
-    FileName := pdfFileName;
+    FileName := reportData['pdfFileName'];
     Title := reportData['Title'];
     Author := reportData['Author'];
     EmbeddedFonts := False;
@@ -154,10 +125,14 @@ begin
   finally
     Free;
   end;
+end;
 
-  qrAbraRadky.Close;
-  qrAbraDPH.Close;
-
+function TDesFrxU.tisk(fr3FileName : string; reportData: TAArray) : string;
+begin
+  frxReport.LoadFromFile(DesU.PROGRAM_PATH + fr3FileName);
+  frxReport.PrepareReport;
+  frxReport.PrintOptions.ShowDialog := true;
+  frxReport.Print;
 end;
 
 
@@ -201,10 +176,6 @@ begin
   end;  
   
 end;
-
-
-
-
 
 
 end.
