@@ -15,9 +15,15 @@ uses
   FImail in 'FImail.pas' {dmMail: TDataModule},
   FIprevod in 'FIprevod.pas' {dmPrevod: TDataModule},
   FItisk in 'FItisk.pas' {dmTisk: TDataModule},
-  frxExportSynPDF in 'frxExportSynPDF.pas' {frxExportSynPDF},
   FImain in 'FImain.pas' {fmMain},
-  DesFrxUtils in '..\DE$_Common\DesFrxUtils.pas' {DesFrxU};
+  DesFrxUtils in '..\DE$_Common\frxExport\DesFrxUtils.pas' {DesFrxU},
+  frxExportSynPDF in '..\DE$_Common\frxExport\frxExportSynPDF.pas' {frxExportSynPDF},
+  SynCommons in '..\DE$_Common\frxExport\SynCommons.pas',
+  SynCrypto in '..\DE$_Common\frxExport\SynCrypto.pas',
+  SynGdiPlus in '..\DE$_Common\frxExport\SynGdiPlus.pas',
+  SynLZ in '..\DE$_Common\frxExport\SynLZ.pas',
+  SynPdf in '..\DE$_Common\frxExport\SynPdf.pas',
+  SynZip in '..\DE$_Common\frxExport\SynZip.pas';
 
 {$R *.res}
 
@@ -33,6 +39,5 @@ begin
   Application.CreateForm(TdmPrevod, dmPrevod);
   Application.CreateForm(TdmTisk, dmTisk);
   Application.CreateForm(TDesFrxU, DesFrxU);
-  //Application.CreateForm(TfrxExportSynPDF, frxExportSynPDF);
   Application.Run;
 end.
