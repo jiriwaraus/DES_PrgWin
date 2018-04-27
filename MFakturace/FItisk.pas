@@ -212,10 +212,10 @@ begin
 
 
       if rbSeSlozenkou.Checked then
-        DesFrxU.fakturaTisk('FOseSlozenkou.fr3', reportData)
+        DesFrxU.fakturaTisk('FOseSlozenkou.fr3')
       else begin
         reportData['sQrKodem'] := true;
-        DesFrxU.fakturaTisk('FOsPDP.fr3', reportData);
+        DesFrxU.fakturaTisk('FOsPDP.fr3');
       end;
 
 

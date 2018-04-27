@@ -144,7 +144,7 @@ type
     DRCVATIndex_Id,
     VATRate_Id,
     VATIndex_Id: string[10];
-    FStr,                              // prefix faktury
+    FStr,                              // prefix faktury TODO smazat
     PDFDir,
     fiVoipCustomersView,
     fiBBmaxView,

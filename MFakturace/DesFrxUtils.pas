@@ -10,7 +10,14 @@ uses
   Data.DB, ZAbstractRODataset, ZAbstractDataset, ZDataset,
   ZAbstractConnection, ZConnection, AArray,
 
-  frxClass, frxDBSet, frxDesgn, pCore2D, pBarcode2D, pQRCode;
+  frxClass, frxDBSet, frxDesgn, pCore2D, pBarcode2D, pQRCode,
+
+  IdBaseComponent, IdComponent, IdTCPConnection,
+  IdTCPClient, IdSMTP, IdHTTP, IdMessage, IdMessageClient, IdText, IdMessageParts,
+  IdAntiFreezeBase, IdAntiFreeze, IdIOHandler,
+  IdIOHandlerSocket, IdSSLOpenSSL, IdExplicitTLSClientServerBase, IdSMTPBase, IdAttachmentFile
+
+  ;
 
 
 
@@ -22,6 +29,9 @@ type
     fdsDPH: TfrxDBDataset;
     fdsRadky: TfrxDBDataset;
     QRCode: TBarcode2D_QRCode;
+    idMessage: TIdMessage;
+    idSMTP: TIdSMTP;
+
 
     procedure frxReportGetValue(const ParName: string; var ParValue: Variant);
     procedure frxReportBeginDoc(Sender: TObject);
@@ -31,12 +41,26 @@ type
     //pdfFileName, fr3FileName : string;
     reportData: TAArray;
 
+{ vyhodim reportData
     function fakturaVytvorPfd(pdfFileName, fr3FileName : string; reportData: TAArray) : string;
     function fakturaTisk(fr3FileName : string; reportData: TAArray) : string;
     function faktura(action, fr3FileName : string; reportData: TAArray) : string;
 
     function vytvorPdf(fr3FileName : string; reportData: TAArray) : string;
     function tisk(fr3FileName : string; reportData: TAArray) : string;
+}
+
+    function fakturaVytvorPfd(pdfFileName, fr3FileName : string) : string;
+    function fakturaTisk(fr3FileName : string) : string;
+    function faktura(action, fr3FileName : string) : string;
+
+    function vytvorPdf(fr3FileName : string) : string;
+    function tisk(fr3FileName : string) : string;
+
+
+    function fakturaNactiData(iDocQueue_Id:  string; iOrdNumber:  integer; iRok:  integer) : string;
+
+    function posliPdfEmailem(pdfFile, emailAddrStr, emailPredmet, emailZprava, emailOdesilatel : string) : string;
 
   end;
 
@@ -49,25 +73,24 @@ uses DesUtils, AbraEntities, frxExportSynPDF;
 
 {$R *.dfm}
 
-function TDesFrxU.fakturaVytvorPfd(pdfFileName, fr3FileName : string; reportData: TAArray) : string;
+function TDesFrxU.fakturaVytvorPfd(pdfFileName, fr3FileName : string) : string;
 begin
   reportData['pdfFileName'] := pdfFileName;
-  faktura('vytvoreniPdf', fr3FileName, reportData);
+  faktura('vytvoreniPdf', fr3FileName);
 end;
 
-function TDesFrxU.fakturaTisk(fr3FileName : string; reportData: TAArray) : string;
+function TDesFrxU.fakturaTisk(fr3FileName : string) : string;
 begin
-  faktura('tisk', fr3FileName, reportData);
+  faktura('tisk', fr3FileName);
 end;
 
-function TDesFrxU.faktura(action, fr3FileName : string; reportData: TAArray) : string;
+function TDesFrxU.faktura(action, fr3FileName : string) : string;
 var
   ASymbolWidth,
   ASymbolHeight,
   AWidth,
   AHeight: integer;
 begin
-  self.reportData := reportData;
 
   // øádky faktury
   with qrAbraRadky do begin
@@ -90,20 +113,21 @@ begin
   end;
 
   if action = 'vytvoreniPdf' then begin
-    tisk(fr3FileName, reportData);
+    vytvorPdf(fr3FileName);
   end;
 
   if action = 'tisk' then begin
-    tisk(fr3FileName, reportData);
+    tisk(fr3FileName);
   end;
 
   qrAbraRadky.Close;
   qrAbraDPH.Close;
 end;
 
-function TDesFrxU.vytvorPdf(fr3FileName : string; reportData: TAArray) : string;
+function TDesFrxU.vytvorPdf(fr3FileName : string) : string;
 var
     frxSynPDFExport: TfrxSynPDFExport;
+    i : integer;
 begin
   frxReport.LoadFromFile(DesU.PROGRAM_PATH + fr3FileName);
   frxReport.PrepareReport;
@@ -125,9 +149,16 @@ begin
   finally
     Free;
   end;
+
+  // èekání na soubor - max. 5s
+  for i := 1 to 50 do begin
+    if FileExists( reportData['pdfFileName'] ) then Break;
+    Sleep(100);
+  end;
+
 end;
 
-function TDesFrxU.tisk(fr3FileName : string; reportData: TAArray) : string;
+function TDesFrxU.tisk(fr3FileName : string) : string;
 begin
   frxReport.LoadFromFile(DesU.PROGRAM_PATH + fr3FileName);
   frxReport.PrepareReport;
@@ -173,9 +204,273 @@ begin
       Height := AHeight;
       QRCode.DrawTo(Canvas, 0, 0);
     end;
-  end;  
-  
+  end;
+
 end;
 
+
+//
+
+function TDesFrxU.fakturaNactiData(iDocQueue_Id:  string; iOrdNumber:  integer; iRok:  integer) : string;
+var
+  slozenkaCastka,
+  slozenkaVS,
+  slozenkaSS,
+  FrfFileName,
+  OutFileName,
+  OutDir,
+  iPeriod_Id,
+  SQLStr: string;
+  Celkem,
+  Saldo,
+  Zaplatit,
+  Zaplaceno: double;
+  i: integer;
+
+begin
+  iPeriod_Id := DesU.getAbraPeriodId(IntToStr(iRok));
+
+  with DesU.qrAbra do begin
+
+    // údaje z faktury do globálních promìnných
+    Close;
+    SQLStr := 'SELECT Code, Name, Street, City, PostCode, OrgIdentNumber, VATIdentNumber,'
+      +' II.ID, II.VarSymbol, II.IsReverseChargeDeclared,'
+      + ' DocDate$DATE, DueDate$DATE, VATDate$DATE, LocalAmount, LocalPaidAmount'
+      + ' FROM Firms F, Addresses A, IssuedInvoices II'
+      + ' WHERE F.ID = II.Firm_ID'
+      + ' AND A.ID = F.ResidenceAddress_ID'
+      + ' AND F.Hidden = ''N''' ;
+//      + ' AND F.Firm_ID IS NULL';                             // poslední, bez následovníka
+    SQLStr := SQLStr + ' AND II.Period_ID = ' + Ap + iPeriod_Id + Ap
+    + ' AND II.OrdNumber = ' + IntToStr(iOrdNumber)
+    + ' AND II.DocQueue_ID = ';
+
+
+    SQL.Text := SQLStr + Ap + iDocQueue_Id + Ap;
+    Open;
+
+    if RecordCount = 0 then begin
+      Result := Format('Neexistuje faktura %d nebo zákazník %s.', [iOrdNumber, 'TODO']);
+      Close;
+      Exit;
+    end;
+    if Trim(FieldByName('Code').AsString) = '' then begin
+      Result := Format('Faktura %d: zákazník nemá kód Abry.', [iOrdNumber]);
+      Close;
+      Exit;
+    end;
+
+    reportData := TAArray.Create;
+    reportData['Title'] := 'Faktura za pøipojení k internetu';
+    reportData['Author'] := 'Družstvo Eurosignal';
+
+    reportData['AbraKod'] := FieldByName('Code').AsString;
+    reportData['OJmeno'] := FieldByName('Name').AsString;
+    reportData['OUlice'] := FieldByName('Street').AsString;
+    reportData['OObec'] := FieldByName('PostCode').AsString + ' ' + FieldByName('City').AsString;
+    reportData['OICO'] := FieldByName('OrgIdentNumber').AsString;
+    reportData['ODIC'] := FieldByName('VATIdentNumber').AsString;
+    reportData['ID'] := FieldByName('ID').AsString;
+    reportData['DatumDokladu'] := FieldByName('DocDate$DATE').AsFloat;
+    reportData['DatumPlneni'] := FieldByName('VATDate$DATE').AsFloat;
+    reportData['DatumSplatnosti'] := FieldByName('DueDate$DATE').AsFloat;
+    reportData['VS'] := FieldByName('VarSymbol').AsString;;
+    reportData['Celkem'] := FieldByName('LocalAmount').AsFloat;
+    reportData['Zaplaceno'] := FieldByName('LocalPaidAmount').AsFloat;
+    if FieldByName('IsReverseChargeDeclared').AsString = 'A' then
+      reportData['DRCText'] := 'Podle §92a zákona è. 235/2004 Sb. o DPH daò odvede zákazník.  '
+    else
+      reportData['DRCText'] := ' ';
+
+
+
+    Close;
+
+
+
+    // všechny Firm_Id pro Abrakód firmy
+    SQLStr := 'SELECT * FROM DE$_Code_To_Firm_Id (' + Ap + reportData['AbraKod'] + ApZ;
+    SQL.Text := SQLStr;
+    Open;
+    if Fields[0].AsString = 'MULTIPLE' then begin
+      Result := Format('%s (%s): Více zákazníkù pro kód %s.', [reportData['OJmeno'], reportData['VS'], reportData['AbraKod']]);
+      Close;
+      Exit;
+    end;
+
+    Saldo := 0;
+    // a saldo pro všechny Firm_Id (saldo je záporné, pokud zákazník dluží)
+    while not EOF do with DesU.qrAbra2 do begin
+      Close;
+      SQL.Text := 'SELECT SaldoPo + SaldoZLPo + Ucet325 FROM DE$_Firm_Totals (' + Ap + DesU.qrAbra.Fields[0].AsString + ApC + FloatToStr(reportData['DatumDokladu']) + ')';
+      Open;
+      Saldo := Saldo + Fields[0].AsFloat;
+      DesU.qrAbra.Next;
+    end; // while not EOF do with DesU.qrAbra2
+  end;  // with DesU.qrAbra
+
+  // právì pøevádìná faktura mùže být pøed splatností
+  //    if Date <= DatumSplatnosti then begin
+  Saldo := Saldo + reportData['Zaplaceno'];          // Saldo je po splatnosti (SaldoPo), je-li faktura už zaplacena, pøiète se platba
+  Zaplatit := reportData['Celkem'] - Saldo;          // Celkem k úhradì = Celkem za fakt. období - Zùstatek minulých období(saldo)
+  // anebo je po splatnosti
+  {end else begin
+    Zaplatit := -Saldo;
+    Saldo := Saldo + Celkem;             // èástka faktury se odeète ze salda, aby tam nebyla dvakrát
+  end;  }
+
+  if Zaplatit < 0 then Zaplatit := 0;
+
+  reportData['Saldo'] :=  Saldo;
+  reportData['ZaplatitCislo'] := Zaplatit;
+  reportData['Zaplatit'] := Format('%.2f Kè', [Zaplatit]);
+
+  // text na fakturu
+  if Saldo > 0 then reportData['Platek'] := 'pøeplatek'
+  else if Saldo < 0 then reportData['Platek'] := 'nedoplatek'
+  else reportData['Platek'] := ' ';
+
+  reportData['Vystaveni'] := FormatDateTime('dd.mm.yyyy', reportData['DatumDokladu']);
+  reportData['Plneni'] := FormatDateTime('dd.mm.yyyy', reportData['DatumPlneni']);
+  reportData['Splatnost'] := FormatDateTime('dd.mm.yyyy', reportData['DatumSplatnosti']);
+
+  reportData['SS'] := Format('%6.6d%2.2d', [iOrdNumber, iRok - 2000]);
+  reportData['Cislo'] := Format('%s-%5.5d/%d', [DesU.getAbraDocqueueCodeById(iDocQueue_Id), iOrdNumber, iRok]);
+
+  reportData['Resume'] := Format('Èástku %.0f,- Kè uhraïte, prosím, do %s na úèet 2100098382/2010 s variabilním symbolem %s.',
+                                  [Zaplatit, reportData['Splatnost'], reportData['VS']]);
+
+  // údaje z tabulky Smlouvy do globálních promìnných
+  with DesU.qrZakos do begin
+    Close;
+    SQLStr := 'SELECT Postal_name, Postal_street, Postal_PSC, Postal_city FROM customers'
+    + ' WHERE Variable_symbol = ' + Ap + reportData['VS'] + Ap;
+    SQL.Text := SQLStr;
+    Open;
+    reportData['PJmeno'] := FieldByName('Postal_name').AsString;
+    reportData['PUlice'] := FieldByName('Postal_street').AsString;
+    reportData['PObec'] := FieldByName('Postal_PSC').AsString + ' ' + FieldByName('Postal_city').AsString;
+    Close;
+  end;  // with DesU.qrZakos
+
+  // zasílací adresa
+  if (reportData['PJmeno'] = '') or (reportData['PObec'] = '') then begin
+    reportData['PJmeno'] := reportData['OJmeno'];
+    reportData['PUlice'] := reportData['OUlice'];
+    reportData['PObec'] := reportData['OObec'];
+  end;
+
+
+  slozenkaCastka := Format('%6.0f', [Zaplatit]);
+  //nahradíme vlnovkou poslední mezeru, tedy dáme vlnovku pøed první èíslici
+  for i := 2 to 6 do
+    if slozenkaCastka[i] <> ' ' then begin
+      slozenkaCastka[i-1] := '~';
+      Break;
+    end;
+
+  //pro starší osmimístná èísla smluv se pøidají dvì nuly na zaèátek
+  if Length(reportData['VS']) = 8 then
+    slozenkaVS := '00' + reportData['VS']
+  else
+    slozenkaVS := reportData['VS'];
+
+
+  slozenkaSS := Format('%8.8d%2.2d', [iOrdNumber, iRok]);
+
+  reportData['C1'] := slozenkaCastka[1];
+  reportData['C2'] := slozenkaCastka[2];
+  reportData['C3'] := slozenkaCastka[3];
+  reportData['C4'] := slozenkaCastka[4];
+  reportData['C5'] := slozenkaCastka[5];
+  reportData['C6'] := slozenkaCastka[6];
+  reportData['V01'] := slozenkaVS[1];
+  reportData['V02'] := slozenkaVS[2];
+  reportData['V03'] := slozenkaVS[3];
+  reportData['V04'] := slozenkaVS[4];
+  reportData['V05'] := slozenkaVS[5];
+  reportData['V06'] := slozenkaVS[6];
+  reportData['V07'] := slozenkaVS[7];
+  reportData['V08'] := slozenkaVS[8];
+  reportData['V09'] := slozenkaVS[9];
+  reportData['V10'] := slozenkaVS[10];
+  reportData['S01'] := slozenkaSS[1];
+  reportData['S02'] := slozenkaSS[2];
+  reportData['S03'] := slozenkaSS[3];
+  reportData['S04'] := slozenkaSS[4];
+  reportData['S05'] := slozenkaSS[5];
+  reportData['S06'] := slozenkaSS[6];
+  reportData['S07'] := slozenkaSS[7];
+  reportData['S08'] := slozenkaSS[8];
+  reportData['S09'] := slozenkaSS[9];
+  reportData['S10'] := slozenkaSS[10];
+
+  reportData['VS2'] := reportData['VS']; //*hw* TODO je toto dobøe? nestaèil by jeden VS?
+  reportData['SS2'] := slozenkaSS; // SS2 se liší od SS tak, že má 8 míst. SS má 6 míst (zleva jsou vždy pøidané nuly)
+
+  reportData['Castka'] := slozenkaCastka + ',-';
+
+
+end;
+
+function TDesFrxU.posliPdfEmailem(pdfFile, emailAddrStr, emailPredmet, emailZprava, emailOdesilatel : string) : string;
+begin
+  idSMTP.Host :=  DesU.getIniValue('Mail', 'SMTPServer');
+  idSMTP.Username := DesU.getIniValue('Mail', 'SMTPLogin');
+  idSMTP.Password := DesU.getIniValue('Mail', 'SMTPPW');
+
+  emailAddrStr := StringReplace(emailAddrStr, ',', ';', [rfReplaceAll]);    // èárky za støedníky
+
+  with idMessage do begin
+    Clear;
+    From.Address := emailOdesilatel;
+    ReceiptRecipient.Text := emailOdesilatel;
+
+    // více mailových adres oddìlených støedníky se rozdìlí
+    while Pos(';', emailAddrStr) > 0 do begin
+      Recipients.Add.Address := Trim(Copy(emailAddrStr, 1, Pos(';', emailAddrStr)-1));
+      emailAddrStr := Copy(emailAddrStr, Pos(';', emailAddrStr)+1, Length(emailAddrStr));
+    end;
+    Recipients.Add.Address := Trim(emailAddrStr);
+
+    Subject := emailPredmet;
+
+    with TIdText.Create(idMessage.MessageParts, nil) do begin
+      Body.Text := emailZprava;
+      ContentType := 'text/plain';
+      Charset := 'utf-8';
+    end;
+
+    with TIdAttachmentFile.Create(IdMessage.MessageParts, pdfFile) do begin
+      ContentType := 'application/pdf';
+      FileName := extractfilename (pdfFile);
+    end;
+
+    { zatim vyhodim TODO
+    // pøidá se pøíloha, je-li vybrána a zákazníkovi se posílá reklama
+    if (Ints[6, Radek] = 0) and (fePriloha.FileName <> '') then
+    with TIdAttachmentFile.Create(IdMessage.MessageParts, PDFFile) do begin
+      ContentType := ''; //co je priloha za typ?
+      FileName := fePriloha.FileName;
+    end;
+
+    ContentType := 'multipart/mixed';
+    }
+
+    { uz bylo vyhozeny
+    with idSMTP do begin
+      Port := 25;
+      if Username = '' then AuthenticationType := atNone
+      else AuthenticationType := atLogin;
+    end;
+    }
+
+    if not idSMTP.Connected then idSMTP.Connect;
+    idSMTP.Send(idMessage);
+
+  end;
+
+end;
 
 end.

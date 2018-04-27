@@ -87,6 +87,8 @@ procedure TdmCommon.Zprava(TextZpravy: string);
 var
   TimeOut: integer;
 begin
+  if TextZpravy = '' then Exit;
+
   TimeOut := 0;
   with fmMain do begin
     lbxLog.Items.Add(FormatDateTime('dd.mm.yy hh:nn:ss  ', Now) + TextZpravy);

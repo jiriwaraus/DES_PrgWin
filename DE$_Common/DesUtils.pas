@@ -78,6 +78,7 @@ type
       function getAbraPeriodId(pYear : string) : string; overload;
       function getAbraPeriodId(pDate : double) : string; overload;
       function getAbraDocqueueId(code, documentType : string) : string;
+      function getAbraDocqueueCodeById(id : string) : string;
       function getAbraVatrateId(code : string) : string;
       function getAbraVatindexId(code : string) : string;
       function getAbraIncometypeId(code : string) : string;
@@ -1114,6 +1115,19 @@ begin
     Open;
     if not Eof then begin
       Result := FieldByName('Id').AsString;
+    end;
+    Close;
+  end;
+end;
+
+function TDesU.getAbraDocqueueCodeById(id : string) : string;
+begin
+  with DesU.qrAbra do begin
+    SQL.Text := 'SELECT Code FROM DocQueues'
+              + ' WHERE Hidden = ''N'' AND Id = ''' + id  + '''';
+    Open;
+    if not Eof then begin
+      Result := FieldByName('Code').AsString;
     end;
     Close;
   end;
