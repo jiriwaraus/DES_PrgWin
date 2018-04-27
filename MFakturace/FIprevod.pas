@@ -117,7 +117,7 @@ begin
     desFrxUtilsResult := DesFrxU.fakturaNactiData(globalAA['abraIiDocQueue_Id'], Ints[2, Radek], aseRok.Value);
     dmCommon.Zprava(desFrxUtilsResult);
 
-    Mesic := MonthOf(DesFrxU.reportData['DatumDokladu']);
+    Mesic := MonthOf(DesFrxU.reportData['DatumPlneni']); //opravdu datum plneni, tedy VATDate$DATE
     // adresáø pro ukládání faktur v PDF nemusí existovat
     if not DirectoryExists(PDFDir) then CreateDir(PDFDir);
     OutDir := PDFDir + Format('\%4d', [aseRok.Value]);
