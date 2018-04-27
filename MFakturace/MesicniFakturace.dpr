@@ -16,8 +16,8 @@ uses
   FIprevod in 'FIprevod.pas' {dmPrevod: TDataModule},
   FItisk in 'FItisk.pas' {dmTisk: TDataModule},
   frxExportSynPDF in 'frxExportSynPDF.pas' {frxExportSynPDF},
-  DesFrxUtils in 'DesFrxUtils.pas' {DesFrxU},
-  FImain in 'FImain.pas' {fmMain};
+  FImain in 'FImain.pas' {fmMain},
+  DesFrxUtils in '..\DE$_Common\DesFrxUtils.pas' {DesFrxU};
 
 {$R *.res}
 

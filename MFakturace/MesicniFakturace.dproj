@@ -129,12 +129,12 @@
             <Form>frxExportSynPDF</Form>
             <FormType>dfm</FormType>
         </DCCReference>
-        <DCCReference Include="DesFrxUtils.pas">
-            <Form>DesFrxU</Form>
-            <FormType>dfm</FormType>
-        </DCCReference>
         <DCCReference Include="FImain.pas">
             <Form>fmMain</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
+        <DCCReference Include="..\DE$_Common\DesFrxUtils.pas">
+            <Form>DesFrxU</Form>
             <FormType>dfm</FormType>
         </DCCReference>
         <BuildConfiguration Include="Debug">
