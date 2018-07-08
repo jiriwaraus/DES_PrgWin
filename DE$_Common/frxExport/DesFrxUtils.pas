@@ -234,9 +234,9 @@ begin
 
     // údaje z faktury do globálních promìnných
     Close;
-    SQLStr := 'SELECT Code, Name, Street, City, PostCode, OrgIdentNumber, VATIdentNumber,'
+    SQLStr := 'SELECT F.Code, F.Name, A.Street, A.City, A.PostCode, F.OrgIdentNumber, F.VATIdentNumber,'
       +' II.ID, II.VarSymbol, II.IsReverseChargeDeclared,'
-      + ' DocDate$DATE, DueDate$DATE, VATDate$DATE, LocalAmount, LocalPaidAmount'
+      + ' II.DocDate$DATE, II.DueDate$DATE, II.VATDate$DATE, II.LocalAmount, II.LocalPaidAmount'
       + ' FROM Firms F, Addresses A, IssuedInvoices II'
       + ' WHERE F.ID = II.Firm_ID'
       + ' AND A.ID = F.ResidenceAddress_ID'
