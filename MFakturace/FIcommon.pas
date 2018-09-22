@@ -213,7 +213,7 @@ var
   Dotaz,
   Radek: integer;
   VarSymbol,
-  FId: string[10];
+  Firm_ID: string[10];
   Zakaznik,
   SQLStr: string;
 begin
@@ -235,7 +235,7 @@ begin
       // ***
       if rbPodleSmlouvy.Checked then begin
         // Fakturace
-        if rbFakturace.Checked then begin          // 7.10.14 výbìr zákazníkù/smluv k fakturaci
+        if rbFakturace.Checked then begin          //výbìr zákazníkù/smluv k fakturaci
           // kontrola mìsíce a roku fakturace
           if (aseRok.Value * 12 + aseMesic.Value > YearOf(Date) * 12 + MonthOf(Date) + 1)     // vìtší než pøíští mìsíc, èi menší
            or (aseRok.Value * 12 + aseMesic.Value < YearOf(Date) * 12 + MonthOf(Date) - 1) then begin       // než minulý mìsíc
@@ -255,7 +255,7 @@ begin
 
 
         end else begin              // if rbFakturace.Checked
-          // ne Fakturace
+          // ne Fakturace - tedy Pøevod, tisk, mail
           dmCommon.Zprava(Format('Naètení faktur na období %s.%s od VS %s do %s.', [aseMesic.Text, aseRok.Text, aedOd.Text, aedDo.Text]));
 
           if cbBezVoIP.Checked then dmCommon.Zprava('      - zákazníci bez VoIP');
@@ -304,7 +304,7 @@ begin
               Close;
               DesU.dbAbra.Reconnect;
               // faktura(y) v Abøe v mìsíci aseMesic
-              SQLStr := 'SELECT DISTINCT F.Id AS FId, Name FROM Firms F, IssuedInvoices II'
+              SQLStr := 'SELECT DISTINCT F.Id AS Firm_ID, Name FROM Firms F, IssuedInvoices II'
               + ' WHERE F.ID = II.Firm_ID'
               + ' AND F.Firm_ID IS NULL'
               + ' AND F.Hidden = ''N'''
@@ -325,11 +325,11 @@ begin
                   Exit;
                 end;
               end;
-              FId := FieldByName('FId').AsString;
+              Firm_ID := FieldByName('Firm_ID').AsString;
               Zakaznik := FieldByName('Name').AsString;
               Close;
-              SQLStr := 'SELECT OrdNumber, Amount FROM IssuedInvoices II'
-              + ' WHERE Firm_ID = ' + Ap + FId + Ap
+              SQLStr := 'SELECT ID, OrdNumber, Amount FROM IssuedInvoices II'
+              + ' WHERE Firm_ID = ' + Ap + Firm_ID + Ap
               + ' AND VATDate$DATE >= ' + FloatToStr(Trunc(StartOfAMonth(aseRok.Value, aseMesic.Value)))
               + ' AND VATDate$DATE <= ' + FloatToStr(Trunc(EndOfAMonth(aseRok.Value, aseMesic.Value)));
 
@@ -380,6 +380,7 @@ begin
               Cells[2, Radek] := Format('%5.5d', [FieldByName('OrdNumber').AsInteger]);     // faktura
               Floats[3, Radek] := FieldByName('Amount').AsFloat;                    // èástka
               Cells[4, Radek] := Zakaznik;                                           // jméno
+              Cells[7, Radek] := FieldByName('ID').AsString;                         // ID faktury
             end;  // if rbFakturace.Checked else...
             Cells[5, Radek] := DesU.qrZakos.FieldByName('Mail').AsString;                // mail
             Ints[6, Radek] := DesU.qrZakos.FieldByName('Reklama').AsInteger;             // reklama
@@ -395,7 +396,7 @@ begin
         Close;
         dmCommon.Zprava(Format('Naètení faktur od %s do %s.', [aedOd.Text, aedDo.Text]));
 // faktura(y) v Abøe v mìsíci aseMesic
-        SQLStr := 'SELECT Name, OrdNumber, VarSymbol, Amount FROM Firms F, IssuedInvoices II'
+        SQLStr := 'SELECT II.ID, F.Name, II.OrdNumber, II.VarSymbol, II.Amount FROM IssuedInvoices II, Firms F'
         + ' WHERE II.Firm_ID = F.ID'
         + ' AND OrdNumber >= ' + aedOd.Text
         + ' AND OrdNumber <= ' + aedDo.Text
@@ -457,6 +458,8 @@ begin
               Cells[4, Radek] := Zakaznik;                                           // jméno
               Cells[5, Radek] := FieldByName('Mail').AsString;                       // mail
               Ints[6, Radek] := FieldByName('Reklama').AsInteger;                    // reklama
+              Cells[7, Radek] := DesU.qrAbra.FieldByName('ID').AsString;             // ID faktury
+
               Next;
             end;  // while not EOF
           end; //with DesU.qrZakos

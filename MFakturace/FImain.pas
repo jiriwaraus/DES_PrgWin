@@ -251,6 +251,7 @@ begin
   abraDrcArticle := TAbraDrcArticle.create('21');
   globalAA['abraDrcArticle_Id'] := abraDrcArticle.id;
 
+
 end;
 
 
@@ -316,6 +317,12 @@ begin
   rbPodleFaktury.Checked := True;
   apnVyberPodle.Visible := True;
   aseRokChange(Self);
+
+
+  {* HW testovaci nastaveni *}
+  aseMesic.Value := 3;
+  aedOd.Text := '17020';
+
 end;
 
 // ------------------------------------------------------------------------------------------------

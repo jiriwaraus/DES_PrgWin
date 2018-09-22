@@ -41,14 +41,6 @@ type
     //pdfFileName, fr3FileName : string;
     reportData: TAArray;
 
-{ vyhodim reportData
-    function fakturaVytvorPfd(pdfFileName, fr3FileName : string; reportData: TAArray) : string;
-    function fakturaTisk(fr3FileName : string; reportData: TAArray) : string;
-    function faktura(action, fr3FileName : string; reportData: TAArray) : string;
-
-    function vytvorPdf(fr3FileName : string; reportData: TAArray) : string;
-    function tisk(fr3FileName : string; reportData: TAArray) : string;
-}
 
     function fakturaVytvorPfd(pdfFileName, fr3FileName : string) : string;
     function fakturaTisk(fr3FileName : string) : string;
@@ -58,7 +50,7 @@ type
     function tisk(fr3FileName : string) : string;
 
 
-    function fakturaNactiData(iDocQueue_Id:  string; iOrdNumber:  integer; iRok:  integer) : string;
+    function fakturaNactiData(II_Id:  string) : string;
 
     function posliPdfEmailem(pdfFile, emailAddrStr, emailPredmet, emailZprava, emailOdesilatel : string) : string;
 
@@ -211,7 +203,7 @@ end;
 
 //
 
-function TDesFrxU.fakturaNactiData(iDocQueue_Id:  string; iOrdNumber:  integer; iRok:  integer) : string;
+function TDesFrxU.fakturaNactiData(II_Id:  string) : string;
 var
   slozenkaCastka,
   slozenkaVS,
@@ -219,53 +211,56 @@ var
   FrfFileName,
   OutFileName,
   OutDir,
-  iPeriod_Id,
+  iDocQueue_Id,
   SQLStr: string;
   Celkem,
   Saldo,
   Zaplatit,
   Zaplaceno: double;
-  i: integer;
+  i, iOrdNumber, iRok: integer;
+
 
 begin
-  iPeriod_Id := DesU.getAbraPeriodId(IntToStr(iRok));
 
   with DesU.qrAbra do begin
 
-    // údaje z faktury do globálních promìnných
+    // údaje z faktury do reportData[] asociativního pole
     Close;
-    SQLStr := 'SELECT F.Code, F.Name, A.Street, A.City, A.PostCode, F.OrgIdentNumber, F.VATIdentNumber,'
-      +' II.ID, II.VarSymbol, II.IsReverseChargeDeclared,'
-      + ' II.DocDate$DATE, II.DueDate$DATE, II.VATDate$DATE, II.LocalAmount, II.LocalPaidAmount'
-      + ' FROM Firms F, Addresses A, IssuedInvoices II'
+    SQL.Text := 'SELECT F.Code as AbraKod, F.Name, A.Street, A.City, A.PostCode, F.OrgIdentNumber, F.VATIdentNumber,'
+      +' II.ID, II.OrdNumber, II.DocQueue_ID, II.VarSymbol, II.IsReverseChargeDeclared,'
+      + ' II.DocDate$DATE, II.DueDate$DATE, II.VATDate$DATE, II.LocalAmount, II.LocalPaidAmount,'
+      + ' Periods.Code as Rok'
+      + ' FROM Firms F, Addresses A, IssuedInvoices II, Periods'
       + ' WHERE F.ID = II.Firm_ID'
       + ' AND A.ID = F.ResidenceAddress_ID'
-      + ' AND F.Hidden = ''N''' ;
-//      + ' AND F.Firm_ID IS NULL';                             // poslední, bez následovníka
-    SQLStr := SQLStr + ' AND II.Period_ID = ' + Ap + iPeriod_Id + Ap
-    + ' AND II.OrdNumber = ' + IntToStr(iOrdNumber)
-    + ' AND II.DocQueue_ID = ';
+      + ' AND Periods.ID = II.Period_ID'
+      + ' AND F.Hidden = ''N'''
+      + ' AND II.ID = ' + Ap + II_Id + Ap ;
 
-
-    SQL.Text := SQLStr + Ap + iDocQueue_Id + Ap;
     Open;
 
     if RecordCount = 0 then begin
-      Result := Format('Neexistuje faktura %d nebo zákazník %s.', [iOrdNumber, 'TODO']);
+      Result := Format('Neexistuje faktura s ID %d', [II_Id]);
       Close;
       Exit;
     end;
-    if Trim(FieldByName('Code').AsString) = '' then begin
+
+    iOrdNumber := FieldByName('OrdNumber').AsInteger;
+    iRok := FieldByName('Rok').AsInteger;
+    iDocQueue_Id := FieldByName('DocQueue_ID').AsString;
+
+    if Trim(FieldByName('AbraKod').AsString) = '' then begin
       Result := Format('Faktura %d: zákazník nemá kód Abry.', [iOrdNumber]);
       Close;
       Exit;
     end;
 
+
     reportData := TAArray.Create;
     reportData['Title'] := 'Faktura za pøipojení k internetu';
     reportData['Author'] := 'Družstvo Eurosignal';
 
-    reportData['AbraKod'] := FieldByName('Code').AsString;
+    reportData['AbraKod'] := FieldByName('AbraKod').AsString;
     reportData['OJmeno'] := FieldByName('Name').AsString;
     reportData['OUlice'] := FieldByName('Street').AsString;
     reportData['OObec'] := FieldByName('PostCode').AsString + ' ' + FieldByName('City').AsString;

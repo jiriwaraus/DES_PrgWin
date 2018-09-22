@@ -6,26 +6,13 @@ uses
   Windows, Classes, Forms, Controls, SysUtils, Variants, DateUtils, Registry, Printers, Dialogs;
 
 type
-  Ch32 = array [0..31] of char;
   TdmPrevod = class(TDataModule)
   private
-{$IFNDEF ABAK}
-    PWDbuf: Ch32;
-    JePrint2PDF: boolean;
-{$ENDIF}
     procedure FakturaPrevod(Radek: integer);
   public
     procedure PrevedFaktury;
   end;
 
-{$IFNDEF ABAK}
-const
-  PWD: Ch32 =
-    (char($44), char($F5), char($B3), char($27), char($D5), char($4D), char($01), char($1F),
-     char($42), char($78), char($5E), char($DB), char($5B), char($4D), char($31), char($09),
-     char($C6), char($DE), char($DA), char($F9), char($BD), char($69), char($CC), char($5A),
-     char($64), char($4F), char($F6), char($12), char($A8), char($F8), char($3F), char($55));
-{$ENDIF}
 
 var
   dmPrevod: TdmPrevod;
@@ -114,7 +101,9 @@ begin
 
   with fmMain, fmMain.asgMain do begin
 
-    desFrxUtilsResult := DesFrxU.fakturaNactiData(globalAA['abraIiDocQueue_Id'], Ints[2, Radek], aseRok.Value);
+    //desFrxUtilsResult := DesFrxU.fakturaNactiData(globalAA['abraIiDocQueue_Id'], Ints[2, Radek], aseRok.Value); //takhle to bylo
+    desFrxUtilsResult := DesFrxU.fakturaNactiData(Cells[7, Radek]);
+
     dmCommon.Zprava(desFrxUtilsResult);
 
     Mesic := MonthOf(DesFrxU.reportData['DatumPlneni']); //opravdu datum plneni, tedy VATDate$DATE
