@@ -216,8 +216,8 @@ begin
 
   if (not dbZakos.Connected) AND (dbZakos.Database <> '') then try begin
     dbZakos.Connect;
-    //qrZakos.SQL.Text := 'SET CHARACTER SET cp1250'; // *hw* je potøeba?
-    //qrZakos.ExecSQL;
+    qrZakos.SQL.Text := 'SET CHARACTER SET cp1250';
+    qrZakos.ExecSQL;
   end;
   except on E: exception do
     begin

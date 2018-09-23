@@ -230,8 +230,7 @@ begin
         BusTransaction_Id := Fields[0].AsString;
         Close;
       end;
-// prefix faktury
-      FStr := 'FO1';
+
 // kontrola poslední faktury
       Close;
       SQLStr := 'SELECT OrdNumber, DocDate$DATE, VATDate$DATE, Amount FROM IssuedInvoices'
@@ -247,7 +246,7 @@ begin
         dmCommon.Zprava(Format('%s (%s): %d. faktura se stejným datem.',
          [Zakaznik, Cells[1, Radek], RecordCount + 1]));
         Dotaz := Application.MessageBox(PChar(Format('Pro zákazníka "%s" existuje faktura %s-%s s datem %s na èástku %s Kè. Má se vytvoøit další?',
-         [Zakaznik, FStr, FieldByName('OrdNumber').AsString, DateToStr(FieldByName('DocDate$DATE').AsFloat), FieldByName('Amount').AsString])),
+         [Zakaznik, globalAA['invoiceDocQueueCode'], FieldByName('OrdNumber').AsString, DateToStr(FieldByName('DocDate$DATE').AsFloat), FieldByName('Amount').AsString])),
           'Pozor', MB_ICONQUESTION + MB_YESNOCANCEL + MB_DEFBUTTON1);
         if Dotaz = IDNO then begin
           dmCommon.Zprava('Ruèní zásah - faktura nevytvoøena.');
@@ -480,8 +479,7 @@ begin
       ID := FObject.CreateNewFromValues(FData);
       FData := FObject.GetValues(ID);
       FCena := double(FData.Value[dmCommon.IndexByName(FData, 'Amount')]);
-      FStr := string(FData.Value[dmCommon.IndexByName(FData, 'DisplayName')]);
-      dmCommon.Zprava(Format('%s (%s): Vytvoøena faktura %s.', [Zakaznik, Cells[1, Radek], FStr]));
+      dmCommon.Zprava(Format('%s (%s): Vytvoøena faktura %s.', [Zakaznik, Cells[1, Radek], string(FData.Value[dmCommon.IndexByName(FData, 'DisplayName')])]));
       Ints[0, Radek] := 0;
       Cells[2, Radek] := string(FData.Value[dmCommon.IndexByName(FData, 'OrdNumber')]);    // faktura
       Cells[3, Radek] := IntToStr(Round(FCena));                                                 // èástka

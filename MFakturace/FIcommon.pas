@@ -328,7 +328,7 @@ begin
               Firm_ID := FieldByName('Firm_ID').AsString;
               Zakaznik := FieldByName('Name').AsString;
               Close;
-              SQLStr := 'SELECT ID, OrdNumber, Amount FROM IssuedInvoices II'
+              SQLStr := 'SELECT ID, OrdNumber, Amount, VATDate$DATE, DocDate$DATE FROM IssuedInvoices II'
               + ' WHERE Firm_ID = ' + Ap + Firm_ID + Ap
               + ' AND VATDate$DATE >= ' + FloatToStr(Trunc(StartOfAMonth(aseRok.Value, aseMesic.Value)))
               + ' AND VATDate$DATE <= ' + FloatToStr(Trunc(EndOfAMonth(aseRok.Value, aseMesic.Value)));
@@ -381,6 +381,8 @@ begin
               Floats[3, Radek] := FieldByName('Amount').AsFloat;                    // èástka
               Cells[4, Radek] := Zakaznik;                                           // jméno
               Cells[7, Radek] := FieldByName('ID').AsString;                         // ID faktury
+              Cells[8, Radek] := DateToStr(FieldByName('VATDate$DATE').AsFloat);
+              Cells[9, Radek] := DateToStr(FieldByName('DocDate$DATE').AsFloat);
             end;  // if rbFakturace.Checked else...
             Cells[5, Radek] := DesU.qrZakos.FieldByName('Mail').AsString;                // mail
             Ints[6, Radek] := DesU.qrZakos.FieldByName('Reklama').AsInteger;             // reklama
@@ -396,12 +398,12 @@ begin
         Close;
         dmCommon.Zprava(Format('Naètení faktur od %s do %s.', [aedOd.Text, aedDo.Text]));
 // faktura(y) v Abøe v mìsíci aseMesic
-        SQLStr := 'SELECT II.ID, F.Name, II.OrdNumber, II.VarSymbol, II.Amount FROM IssuedInvoices II, Firms F'
+        SQLStr := 'SELECT II.ID, F.Name, II.OrdNumber, II.VarSymbol, II.Amount, II.VATDate$DATE, II.DocDate$DATE FROM IssuedInvoices II, Firms F'
         + ' WHERE II.Firm_ID = F.ID'
         + ' AND OrdNumber >= ' + aedOd.Text
         + ' AND OrdNumber <= ' + aedDo.Text
-        + ' AND VATDate$DATE >= ' + FloatToStr(Trunc(StartOfAMonth(aseRok.Value, aseMesic.Value)))
-        + ' AND VATDate$DATE <= ' + FloatToStr(Trunc(EndOfAMonth(aseRok.Value, aseMesic.Value)));
+        + ' AND VATDate$DATE >= ' + FloatToStr(Trunc(StartOfAYear(aseRok.Value)))  // bylo StartOfAMonth(aseRok.Value, aseMesic.Value)
+        + ' AND VATDate$DATE <= ' + FloatToStr(Trunc(EndOfAYear(aseRok.Value))); ///bylo EndOfAMonth(aseRok.Value, aseMesic.Value)
         if rbMail.Checked then SQLStr := SQLStr + ' AND F.Firm_ID IS NULL';
 
         SQLStr := SQLStr + ' AND DocQueue_ID = ' + Ap + globalAA['abraIiDocQueue_Id'] + Ap;
@@ -459,6 +461,9 @@ begin
               Cells[5, Radek] := FieldByName('Mail').AsString;                       // mail
               Ints[6, Radek] := FieldByName('Reklama').AsInteger;                    // reklama
               Cells[7, Radek] := DesU.qrAbra.FieldByName('ID').AsString;             // ID faktury
+              Cells[8, Radek] := DateToStr(DesU.qrAbra.FieldByName('VATDate$DATE').AsFloat);
+              Cells[9, Radek] := DateToStr(DesU.qrAbra.FieldByName('DocDate$DATE').AsFloat);
+
 
               Next;
             end;  // while not EOF

@@ -93,15 +93,14 @@ var
   emailPredmet,
   emailZprava,
   emailOdesilatel,
-  pdfFile: string;
+  FullPdfFileName: string;
 begin
   with fmMain, fmMain.asgMain do begin
-    FStr := 'FO1';
 // musí existovat PDF soubor s fakturou
-    PDFFile := Format('%s\%4d\%2.2d\%s-%5.5d.pdf', [PDFDir, aseRok.Value, aseMesic.Value, FStr, Ints[2, Radek]]);
-    //PDFFileName := Format('%s-%5.5d.pdf', [FStr, Ints[2, Radek]]); // neni potreba doufam
-    if not FileExists(PDFFile) then begin
-      dmCommon.Zprava(Format('%s (%s): Soubor %s neexistuje. Pøeskoèeno.', [Cells[4, Radek], Cells[1, Radek], PDFFile]));
+    FullPdfFileName := Format('%s\%4d\%2.2d\%s-%5.5d.pdf', [PDFDir, aseRok.Value, aseMesic.Value, globalAA['invoiceDocQueueCode'], Ints[2, Radek]]);
+    //PDFFileName := Format('%s-%5.5d.pdf', [globalAA['invoiceDocQueueCode'], Ints[2, Radek]]); // neni potreba doufam
+    if not FileExists(FullPdfFileName) then begin
+      dmCommon.Zprava(Format('%s (%s): Soubor %s neexistuje. Pøeskoèeno.', [Cells[4, Radek], Cells[1, Radek], FullPdfFileName]));
       Exit;
     end;
 // alespoò nìjaká kontrola mailové adresy
@@ -110,7 +109,7 @@ begin
       Exit;
     end;
 
-
+    emailAddrStr := Cells[5, Radek];
     emailOdesilatel := 'uctarna@eurosignal.cz';
     emailPredmet := Format('Družstvo EUROSIGNAL, faktura za internet FO1-%5.5d/%d', [Ints[2, Radek], aseRok.Value]);
 
@@ -126,14 +125,14 @@ begin
 
     try
       // !!! samotné poslání mailu
-      DesFrxU.posliPdfEmailem(pdfFile, emailAddrStr, emailPredmet, emailZprava, emailOdesilatel);
+      DesFrxU.posliPdfEmailem(FullPdfFileName, emailAddrStr, emailPredmet, emailZprava, emailOdesilatel);
 
       dmCommon.Zprava(Format('%s (%s): Soubor %s byl odeslán na adresu %s.',
-       [Cells[4, Radek], Cells[1, Radek], PDFFile, Cells[5, Radek]]));
+       [Cells[4, Radek], Cells[1, Radek], FullPdfFileName, Cells[5, Radek]]));
       Ints[0, Radek] := 0;
     except on E: exception do
       dmCommon.Zprava(Format('%s (%s): Soubor %s se nepodaøilo odeslat na adresu %s.' + #13#10 + 'Chyba: %s',
-       [Cells[4, Radek], Cells[1, Radek], PDFFile, Cells[5, Radek], E.Message]));
+       [Cells[4, Radek], Cells[1, Radek], FullPdfFileName, Cells[5, Radek], E.Message]));
     end;
     Application.ProcessMessages;
 

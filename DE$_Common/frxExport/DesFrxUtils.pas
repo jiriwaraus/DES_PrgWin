@@ -41,6 +41,7 @@ type
     //pdfFileName, fr3FileName : string;
     reportData: TAArray;
 
+    function fakturaNactiData(II_Id:  string) : string;
 
     function fakturaVytvorPfd(pdfFileName, fr3FileName : string) : string;
     function fakturaTisk(fr3FileName : string) : string;
@@ -48,9 +49,6 @@ type
 
     function vytvorPdf(fr3FileName : string) : string;
     function tisk(fr3FileName : string) : string;
-
-
-    function fakturaNactiData(II_Id:  string) : string;
 
     function posliPdfEmailem(pdfFile, emailAddrStr, emailPredmet, emailZprava, emailOdesilatel : string) : string;
 
@@ -68,12 +66,12 @@ uses DesUtils, AbraEntities, frxExportSynPDF;
 function TDesFrxU.fakturaVytvorPfd(pdfFileName, fr3FileName : string) : string;
 begin
   reportData['pdfFileName'] := pdfFileName;
-  faktura('vytvoreniPdf', fr3FileName);
+  Result := faktura('vytvoreniPdf', fr3FileName);
 end;
 
 function TDesFrxU.fakturaTisk(fr3FileName : string) : string;
 begin
-  faktura('tisk', fr3FileName);
+  Result := faktura('tisk', fr3FileName);
 end;
 
 function TDesFrxU.faktura(action, fr3FileName : string) : string;
@@ -105,11 +103,11 @@ begin
   end;
 
   if action = 'vytvoreniPdf' then begin
-    vytvorPdf(fr3FileName);
+    Result := vytvorPdf(fr3FileName);
   end;
 
   if action = 'tisk' then begin
-    tisk(fr3FileName);
+    Result := tisk(fr3FileName);
   end;
 
   qrAbraRadky.Close;
@@ -148,14 +146,27 @@ begin
     Sleep(100);
   end;
 
+  Result := 'Vytvoøana faaaaa ' + reportData['pdfFileName'];
+
 end;
 
 function TDesFrxU.tisk(fr3FileName : string) : string;
 begin
-  frxReport.LoadFromFile(DesU.PROGRAM_PATH + fr3FileName);
-  frxReport.PrepareReport;
-  frxReport.PrintOptions.ShowDialog := true;
-  frxReport.Print;
+  try
+    frxReport.LoadFromFile(DesU.PROGRAM_PATH + fr3FileName);
+    frxReport.PrepareReport;
+    //frxReport.PrintOptions.ShowDialog := true;
+    frxReport.PrintOptions.ShowDialog := false;
+    frxReport.Print;
+  except on E: exception do
+    begin
+      Result := Format('%s (%s): Fakturu %s se nepodaøilo vytisknout.' + #13#10 + 'Chyba: %s',
+       [reportData['OJmeno'], reportData['VS'], reportData['Cislo'], E.Message]);
+      Exit;
+    end;
+  end;  // try
+
+  Result := 'Tisk OK';
 end;
 
 
@@ -278,15 +289,10 @@ begin
     else
       reportData['DRCText'] := ' ';
 
-
-
     Close;
 
-
-
     // všechny Firm_Id pro Abrakód firmy
-    SQLStr := 'SELECT * FROM DE$_Code_To_Firm_Id (' + Ap + reportData['AbraKod'] + ApZ;
-    SQL.Text := SQLStr;
+    SQL.Text := 'SELECT * FROM DE$_Code_To_Firm_Id (' + Ap + reportData['AbraKod'] + ApZ;
     Open;
     if Fields[0].AsString = 'MULTIPLE' then begin
       Result := Format('%s (%s): Více zákazníkù pro kód %s.', [reportData['OJmeno'], reportData['VS'], reportData['AbraKod']]);
@@ -336,7 +342,7 @@ begin
   reportData['Resume'] := Format('Èástku %.0f,- Kè uhraïte, prosím, do %s na úèet 2100098382/2010 s variabilním symbolem %s.',
                                   [Zaplatit, reportData['Splatnost'], reportData['VS']]);
 
-  // údaje z tabulky Smlouvy do globálních promìnných
+  // naètení údajù z tabulky Smlouvy
   with DesU.qrZakos do begin
     Close;
     SQLStr := 'SELECT Postal_name, Postal_street, Postal_PSC, Postal_city FROM customers'
@@ -347,7 +353,7 @@ begin
     reportData['PUlice'] := FieldByName('Postal_street').AsString;
     reportData['PObec'] := FieldByName('Postal_PSC').AsString + ' ' + FieldByName('Postal_city').AsString;
     Close;
-  end;  // with DesU.qrZakos
+  end;
 
   // zasílací adresa
   if (reportData['PJmeno'] = '') or (reportData['PObec'] = '') then begin
@@ -401,7 +407,7 @@ begin
   reportData['S09'] := slozenkaSS[9];
   reportData['S10'] := slozenkaSS[10];
 
-  reportData['VS2'] := reportData['VS']; //*hw* TODO je toto dobøe? nestaèil by jeden VS?
+  reportData['VS2'] := reportData['VS']; // asi by staèil jeden VS, ale nevadí
   reportData['SS2'] := slozenkaSS; // SS2 se liší od SS tak, že má 8 míst. SS má 6 míst (zleva jsou vždy pøidané nuly)
 
   reportData['Castka'] := slozenkaCastka + ',-';

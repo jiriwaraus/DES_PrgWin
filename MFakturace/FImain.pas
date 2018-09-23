@@ -117,7 +117,7 @@ type
     F: TextFile;
     DRC,
     Check,
-    Prerusit: boolean;
+    Prerusit: boolean; //prerusit potrebujeme
     //Mesic,
     VATRate: integer;
     Celkem,
@@ -144,7 +144,7 @@ type
     DRCVATIndex_Id,
     VATRate_Id,
     VATIndex_Id: string[10];
-    FStr,                              // prefix faktury TODO smazat
+    //FStr,                              // prefix faktury TODO smazat
     PDFDir,
     fiVoipCustomersView,
     fiBBmaxView,
@@ -238,6 +238,7 @@ begin
   //nastavení globálních promìnných pøi startu programu
   PDFDir := DesU.getIniValue('Preferences', 'PDFDir');
 
+  globalAA['invoiceDocQueueCode'] := 'FO1'; //kód øady faktur, tento program vystavuje pouze to této øady
   globalAA['abraIiDocQueue_Id'] := DesU.getAbraDocqueueId('FO1', '03');
 
   abraVatIndex := TAbraVatIndex.create('Výst21');
@@ -346,6 +347,13 @@ begin
   rbPodleFaktury.Checked := True;
   apnVyberPodle.Visible := True;
   aseRokChange(Self);
+
+  {* HW testovaci nastaveni *}
+  aseMesic.Value := 3;
+  aedOd.Text := '6319';
+  aedDo.Text := '6500';
+
+
 end;
 
 // ------------------------------------------------------------------------------------------------
