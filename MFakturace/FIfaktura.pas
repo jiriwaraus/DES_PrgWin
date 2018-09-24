@@ -18,6 +18,7 @@ uses
 type
   TdmFaktura = class(TDataModule)
   private
+    isDRC : boolean;
     procedure FakturaAbra(Radek: integer);
   public
     procedure VytvorFaktury;
@@ -176,7 +177,7 @@ begin
         + ' WHERE Variable_Symbol = ' + Ap + Cells[1, Radek] + ApZ + ')';
     SQL.Text := SQLStr;
     Open;
-    DRC := Fields[0].AsInteger > 0;
+    isDRC := Fields[0].AsInteger > 0;
 // vyhledání údajù o smlouvách
     Close;
     SQLStr := 'SELECT VS, AbraKod, Typ, Smlouva, AktivniOd, AktivniDo, FakturovatOd, Tarif, Posilani, Perioda, Text, Cena, DPH, Tarifni, CTU'
@@ -218,7 +219,7 @@ begin
         FirmOffice_Id := Fields[3].AsString;
       end;
 // 24.1.2017 obchodní pøípady pro ÈTÚ - platí pro celou faktury
-      if DRC then BusTransactionCode := 'VO'                  // velkoobchod
+      if isDRC then BusTransactionCode := 'VO'                  // velkoobchod
       else if IC = '' then BusTransactionCode := 'F'         //  fyzická osoba
       else BusTransactionCode := 'P';                         //  právnická osoba
       with qrAbra do begin
@@ -241,7 +242,7 @@ begin
       SQLStr := SQLStr + ' ORDER BY OrdNumber DESC';
       SQL.Text := SQLStr;
       Open;
-      if Check then dmCommon.Zprava('Vyhledána data z Abry');
+      if isDebugMode then dmCommon.Zprava('Vyhledána data z Abry');
       if RecordCount > 0 then begin
         dmCommon.Zprava(Format('%s (%s): %d. faktura se stejným datem.',
          [Zakaznik, Cells[1, Radek], RecordCount + 1]));
@@ -281,7 +282,7 @@ begin
     FData.ValueByName('PricesWithVAT') := True;
     FData.ValueByName('VATFromAbovePrecision') := 6;
     FData.ValueByName('TotalRounding') := 259;                // zaokrouhlení na koruny dolù
-    if DRC then begin
+    if isDRC then begin
       FData.ValueByName('IsReverseChargeDeclared') := True;
       FData.ValueByName('TotalRounding') := 0;
       FData.ValueByName('VATFromAbovePrecision') := 0;
@@ -350,7 +351,7 @@ begin
         + ' AND Month = ' + aseMesic.Text;
         SQL.Text := SQLStr;
         Open;
-        HovorneVoIP := (100 + VATRate)/100 * Fields[0].AsFloat;
+        HovorneVoIP := (100 + globalAA['abraVatRate'])/100 * Fields[0].AsFloat;
         Close;
       end;
 // 24.1.2017 zakázky pro ÈTÚ - mohou být rùzné podle smlouvy
@@ -380,29 +381,29 @@ begin
           if qrSmlouva.FieldByName('Typ').AsString = 'TvContract' then FRow.ValueByName('BusOrder_ID') := '1700000101';
           FRow.ValueByName('BusTransaction_ID') := BusTransaction_Id;
           FRow.ValueByName('Division_ID') := '1000000101';
-          FRow.ValueByName('VATRate_ID') := VATRate_Id;
-          FRow.ValueByName('VATRate') := IntToStr(VATRate);
+          FRow.ValueByName('VATRate_ID') := globalAA['abraVatRate_Id'];
+          FRow.ValueByName('VATRate') := IntToStr(globalAA['abraVatRate']);
           FRow.ValueByName('IncomeType_ID') := '2000000000';
           FRow.ValueByName('RowType') := '1';
           FRow.ValueByName('Text') :=
             Format('podle smlouvy  %s  službu  %s', [FieldByName('Smlouva').AsString, FieldByName('Text').AsString]);
           FRow.ValueByName('TotalPrice') := Format('%f', [CenaTarifu * Redukce]);
           FRowsCollection.Add(FRow);
-          if DRC then begin                                              // 19.10.2016
-            FRow.ValueByName('VATIndex_ID') := DRCVATIndex_Id;
-            FRow.ValueByName('DRCArticle_ID') := DRCArticle_Id;          // typ plnìní 21
+          if isDRC then begin                                              // 19.10.2016
+            FRow.ValueByName('VATIndex_ID') := globalAA['abraDrcVatIndex_Id'];
+            FRow.ValueByName('DRCArticle_ID') := globalAA['abraDrcArticle_Id'];          // typ plnìní 21
             FRow.ValueByName('VATMode') := 1;
             FRow.ValueByName('TotalPrice') := Format('%f', [FieldByName('Cena').AsFloat * Redukce / 1.21]);
-          end else FRow.ValueByName('VATIndex_ID') := VATIndex_Id;
+          end else FRow.ValueByName('VATIndex_ID') := globalAA['abraVatIndex_Id'];
         end else begin                                   // platby za VoIP
           if HovorneVoIP > 0 then begin                                      // hovorné
             FRow:= AbraOLE.CreateValues('@IssuedInvoiceRow');
             FRow.ValueByName('BusOrder_ID') := '1500000101';
             FRow.ValueByName('BusTransaction_ID') := BusTransaction_Id;
             FRow.ValueByName('Division_ID') := '1000000101';
-            FRow.ValueByName('VATRate_ID') := VATRate_Id;
-            FRow.ValueByName('VATIndex_ID') := VATIndex_Id;
-            FRow.ValueByName('VATRate') := IntToStr(VATRate);
+            FRow.ValueByName('VATRate_ID') := globalAA['abraVatRate_Id'];
+            FRow.ValueByName('VATIndex_ID') := globalAA['abraVatIndex_Id'];
+            FRow.ValueByName('VATRate') := IntToStr(globalAA['abraVatRate']);
             FRow.ValueByName('IncomeType_ID') := '2000000000';
             FRow.ValueByName('RowType') := '1';
             FRow.ValueByName('Text') := 'hovorné VoIP';
@@ -414,9 +415,9 @@ begin
           FRow.ValueByName('BusOrder_ID') := '2000000101';
           FRow.ValueByName('BusTransaction_ID') := BusTransaction_Id;
           FRow.ValueByName('Division_ID') := '1000000101';
-          FRow.ValueByName('VATRate_ID') := VATRate_Id;
-          FRow.ValueByName('VATIndex_ID') := VATIndex_Id;
-          FRow.ValueByName('VATRate') := IntToStr(VATRate);
+          FRow.ValueByName('VATRate_ID') := globalAA['abraVatRate_Id'];
+          FRow.ValueByName('VATIndex_ID') := globalAA['abraVatIndex_Id'];
+          FRow.ValueByName('VATRate') := IntToStr(globalAA['abraVatRate']);
           FRow.ValueByName('IncomeType_ID') := '2000000000';
           FRow.ValueByName('RowType') := '1';
           FRow.ValueByName('Text') := Format('podle smlouvy  %s  mìsíèní platbu VoIP %s',
@@ -437,14 +438,14 @@ begin
         FRow.ValueByName('Text') := FieldByName('Text').AsString;
         FRow.ValueByName('TotalPrice') := Format('%f', [FieldByName('Cena').AsFloat * Redukce]);
         if FieldByName('DPH').AsString = '21%' then begin                   // 4.1.2013
-          FRow.ValueByName('VATRate_ID') := VATRate_Id;
-          if DRC then begin                                              // 19.10.2016
-            FRow.ValueByName('VATIndex_ID') := DRCVATIndex_Id;
-            FRow.ValueByName('DRCArticle_ID') := DRCArticle_Id;          // typ plnìní 21
+          FRow.ValueByName('VATRate_ID') := globalAA['abraVatRate_Id'];
+          if isDRC then begin                                              // 19.10.2016
+            FRow.ValueByName('VATIndex_ID') := globalAA['abraDrcVatIndex_Id'];
+            FRow.ValueByName('DRCArticle_ID') := globalAA['abraDrcArticle_Id'];          // typ plnìní 21
             FRow.ValueByName('VATMode') := 1;
             FRow.ValueByName('TotalPrice') := Format('%f', [FieldByName('Cena').AsFloat * Redukce / 1.21]);
-          end else FRow.ValueByName('VATIndex_ID') := VATIndex_Id;
-          FRow.ValueByName('VATRate') := IntToStr(VATRate);
+          end else FRow.ValueByName('VATIndex_ID') := globalAA['abraVatIndex_Id'];
+          FRow.ValueByName('VATRate') := IntToStr(globalAA['abraVatRate']);
         end else begin
           FRow.ValueByName('VATRate_ID') := '00000X0000';
           FRow.ValueByName('VATIndex_ID') := '7000000000';
@@ -462,9 +463,9 @@ begin
       FRow.ValueByName('BusOrder_ID') := '1000000101';
       FRow.ValueByName('BusTransaction_ID') := BusTransaction_Id;
       FRow.ValueByName('Division_ID') := '1000000101';
-      FRow.ValueByName('VATRate_ID') := VATRate_Id;
-      FRow.ValueByName('VATIndex_ID') := VATIndex_Id;
-      FRow.ValueByName('VATRate') := IntToStr(VATRate);
+      FRow.ValueByName('VATRate_ID') := globalAA['abraVatRate_Id'];
+      FRow.ValueByName('VATIndex_ID') := globalAA['abraVatIndex_Id'];
+      FRow.ValueByName('VATRate') := IntToStr(globalAA['abraVatRate']);
       FRow.ValueByName('IncomeType_ID') := '2000000000';
       FRow.ValueByName('RowType') := '1';
       FRow.ValueByName('Text') := 'manipulaèní poplatek';
@@ -473,7 +474,7 @@ begin
     end;
     Description := Description + Cells[1, Radek];        // VS
     FData.ValueByName('Description') := Description;
-    if Check then dmCommon.Zprava('Data faktury pøipravena');
+    if isDebugMode then dmCommon.Zprava('Data faktury pøipravena');
 // vytvoøení faktury
     try
       ID := FObject.CreateNewFromValues(FData);

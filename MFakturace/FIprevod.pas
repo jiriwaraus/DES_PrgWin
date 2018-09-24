@@ -108,7 +108,7 @@ begin
     Mesic := MonthOf(DesFrxU.reportData['DatumPlneni']); //opravdu datum plneni, tedy VATDate$DATE
 
     // adresáø pro ukládání faktur v PDF nemusí existovat
-    PdfDirName := Format('%s\%4d\%2.2d', [PDFDir, aseRok.Value, Mesic]);  // Mesic misto jednoducheho aseMesic.Value
+    PdfDirName := Format('%s\%4d\%2.2d', [globalAA['PDFDir'], aseRok.Value, Mesic]);  // Mesic misto jednoducheho aseMesic.Value
     if not DirectoryExists(PdfDirName) then Forcedirectories(PdfDirName);
 
     // jméno souboru s fakturou

@@ -114,57 +114,22 @@ type
     procedure rbMailClick(Sender: TObject);
     procedure Button1Click(Sender: TObject);
   public
-    F: TextFile;
-    DRC,
-    Check,
-    Prerusit: boolean; //prerusit potrebujeme
-    //Mesic,
-    VATRate: integer;
-    Celkem,
-    Zaplaceno,
-    Saldo,
-    Zaplatit,
-    DatumDokladu,
-    DatumPlneni,
-    DatumSplatnosti: double;
+    //F: TextFile;
 
-    //pak smazat
+    isDebugMode,
+    Prerusit: boolean;
+
 
     AbraOLE: variant;
 
-    C, V, S: string[10];                           // pole èísel na složenku
     User_Id: string[10]; //User_ID do ABRY
 
-    ID,
-    Firm_Id,
-    //Period_Id,
-    //IiDocQueue_Id,
-    //VDocQueue_Id,
-    DRCArticle_Id,
-    DRCVATIndex_Id,
-    VATRate_Id,
-    VATIndex_Id: string[10];
-    //FStr,                              // prefix faktury TODO smazat
-    PDFDir,
+
     fiVoipCustomersView,
     fiBBmaxView,
     fiBillingView,
     fiInvoiceView: ShortString;
-    Cislo,
-    VS,
-    SS,
-    PJmeno,
-    PUlice,
-    PObec,
-    OJmeno,
-    OUlice,
-    OObec,
-    OICO,
-    ODIC,
-    Vystaveni,
-    Plneni,
-    Splatnost,
-    Platek: AnsiString;
+
   end;
 
 var
@@ -185,7 +150,7 @@ var
   FIIni: TIniFile;
   LogDir,
   LogFileName,
-  FIFileName: AnsiString;
+  FIFileName: string;
   abraVatIndex : TAbraVatIndex;
   abraDrcArticle : TAbraDrcArticle;
 
@@ -193,19 +158,8 @@ begin
   //adresáø pro logy
   LogDir := DesU.PROGRAM_PATH + '\logy\Mìsíèní fakturace\';
   if not DirectoryExists(LogDir) then Forcedirectories(LogDir);
-
-// vytvoøení logfile, pokud neexistuje - 5.11. do jména pøidáno datum - 9.4.15 jen rok a mìsíc
-// 2.1.  LogFileName := ExtractFilePath(ParamStr(0)) + FormatDateTime('"Fakturace "dd.mm.yyyy".log"', Date);
-// 8.4.  LogFileName := LogDir + FormatDateTime('\yyyy.mm.dd".log"', Date);
-  LogFileName := LogDir + FormatDateTime('yyyy.mm".log"', Date);
-  if not FileExists(LogFileName) then begin
-    FileHandle := FileCreate(LogFileName);
-    FileClose(FileHandle);
-  end;
-  AssignFile(F, LogFileName);
-  Append(F);
-  Writeln(F);
-  CloseFile(F);
+  globalAA['LogFileName'] := LogDir + FormatDateTime('yyyy.mm".log"', Date);
+  DesUtils.appendToFile(globalAA['LogFileName'],''); //vloží prázdný øádek dek do logu
   dmCommon.Zprava('Start programu "Mìsíèní fakturace".');
 
 
@@ -236,18 +190,19 @@ begin
 
 
   //nastavení globálních promìnných pøi startu programu
-  PDFDir := DesU.getIniValue('Preferences', 'PDFDir');
+
+  globalAA['PDFDir'] := DesU.getIniValue('Preferences', 'PDFDir');
 
   globalAA['invoiceDocQueueCode'] := 'FO1'; //kód øady faktur, tento program vystavuje pouze to této øady
   globalAA['abraIiDocQueue_Id'] := DesU.getAbraDocqueueId('FO1', '03');
 
   abraVatIndex := TAbraVatIndex.create('Výst21');
-  globalAA['abraVatIndex_Id'] := abraVatIndex.id;
-  globalAA['abraVatRate_Id'] := abraVatIndex.vatrateId;
-  globalAA['abraVatRate'] := abraVatIndex.tariff;
+  globalAA['abraVatIndex_Id'] := abraVatIndex.id; //VATIndex_Id
+  globalAA['abraVatRate_Id'] := abraVatIndex.vatrateId; //VATRate_Id
+  globalAA['abraVatRate'] := abraVatIndex.tariff; //VATRate
 
   abraVatIndex := TAbraVatIndex.create('VýstR21');
-  globalAA['abraDrcVatIndex_Id'] := abraVatIndex.id;
+  globalAA['abraDrcVatIndex_Id'] := abraVatIndex.id; // DRCVATIndex_Id
 
   abraDrcArticle := TAbraDrcArticle.create('21');
   globalAA['abraDrcArticle_Id'] := abraDrcArticle.id;
@@ -270,6 +225,70 @@ begin
   except
   end;
 end;
+
+// ------------------------------------------------------------------------------------------------
+
+procedure TfmMain.btVytvoritClick(Sender: TObject);
+// pro zadaný mìsíc se vytvoøí faktury v Abøe, nebo pøevedou do PDF, vytisknou èi rozešlou mailem
+begin
+  btVytvorit.Enabled := False;
+  btKonec.Caption := '&Pøerušit';
+  Prerusit := False;
+  Application.ProcessMessages;
+  try
+
+    // *** Naplnìní asgMain ***
+    if btVytvorit.Caption = '&Naèíst' then dmCommon.Plneni_asgMain
+    else begin
+
+      // *** Fakturace ***
+      if rbFakturace.Checked then dmFaktura.VytvorFaktury;
+
+      // *** Pøevod do PDF ***
+      if rbPrevod.Checked then dmPrevod.PrevedFaktury;
+
+      // *** Tisk ***
+      if rbTisk.Checked then dmTisk.TiskniFaktury;
+
+      // *** Posílání mailem ***
+      if rbMail.Checked then dmMail.PosliFaktury;
+
+    end;
+  finally
+    btKonec.Caption := '&Konec';
+    btVytvorit.Enabled := True;
+  end;
+end;
+
+procedure TfmMain.btKonecClick(Sender: TObject);
+begin
+  if btKonec.Caption = '&Pøerušit' then begin
+    Prerusit := True;
+    dmCommon.Zprava('Pøerušeno uživatelem.');
+    btKonec.Caption := '&Konec';
+  end else begin
+    dmCommon.Zprava('Konec programu "Mìsíèní fakturace".');
+    Close;
+  end;
+end;
+
+procedure TfmMain.btSablonaClick(Sender: TObject);
+begin
+  // *hw* TODO frxReport.DesignReport(True, False);
+end;
+
+procedure TfmMain.btOdeslatClick(Sender: TObject);
+// odeslání faktur pøevedených do PDF na vzdálený server
+begin
+
+  //WinExec(PChar(Format('WinSCP.com /command "option batch abort" "option confirm off" "open AbraPDF" "synchronize remote '
+  // + '%s\%4d\%2.2d /home/abrapdf/%4d" "exit"', [PDFDir, aseRok.Value, aseMesic.Value, aseRok.Value])), SW_SHOWNORMAL);
+
+  RunCMD (Format('WinSCP.com /command "option batch abort" "option confirm off" "open AbraPDF" "synchronize remote '
+   + '%s\%4d\%2.2d /home/abrapdf/%4d" "exit"', [globalAA['PDFDir'], aseRok.Value, aseMesic.Value, aseRok.Value]), SW_SHOWNORMAL);
+
+end;
+
 
 // ------------------------------------------------------------------------------------------------
 
@@ -381,37 +400,6 @@ end;
 
 // ------------------------------------------------------------------------------------------------
 
-procedure TfmMain.glbFakturaceClick(Sender: TObject);
-begin
-  rbFakturace.Checked := True;
-  rbFakturaceClick(nil);
-end;
-
-// ------------------------------------------------------------------------------------------------
-
-procedure TfmMain.glbPrevodClick(Sender: TObject);
-begin
-  rbPrevod.Checked := True;
-  rbPrevodClick(nil);
-end;
-
-// ------------------------------------------------------------------------------------------------
-
-procedure TfmMain.glbTiskClick(Sender: TObject);
-begin
-  rbTisk.Checked := True;
-  rbTiskClick(nil);
-end;
-
-// ------------------------------------------------------------------------------------------------
-
-procedure TfmMain.glbMailClick(Sender: TObject);
-begin
-  rbMail.Checked := True;
-  rbMailClick(nil);
-end;
-
-// ------------------------------------------------------------------------------------------------
 
 procedure TfmMain.aseMesicChange(Sender: TObject);
 begin
@@ -669,69 +657,39 @@ end;
 
 // ------------------------------------------------------------------------------------------------
 
-procedure TfmMain.btVytvoritClick(Sender: TObject);
-// pro zadaný mìsíc se vytvoøí faktury v Abøe, nebo pøevedou do PDF, vytisknou èi rozešlou mailem
+
+procedure TfmMain.glbFakturaceClick(Sender: TObject);
 begin
-  btVytvorit.Enabled := False;
-  btKonec.Caption := '&Pøerušit';
-  Prerusit := False;
-  Application.ProcessMessages;
-  try
-
-    // *** Naplnìní asgMain ***
-    if btVytvorit.Caption = '&Naèíst' then dmCommon.Plneni_asgMain
-    else begin
-
-      // *** Fakturace ***
-      if rbFakturace.Checked then dmFaktura.VytvorFaktury;
-
-      // *** Pøevod do PDF ***
-      if rbPrevod.Checked then dmPrevod.PrevedFaktury;
-
-      // *** Tisk ***
-      if rbTisk.Checked then dmTisk.TiskniFaktury;
-
-      // *** Posílání mailem ***
-      if rbMail.Checked then dmMail.PosliFaktury;
-
-    end;
-  finally
-    btKonec.Caption := '&Konec';
-    btVytvorit.Enabled := True;
-  end;
+  rbFakturace.Checked := True;
+  rbFakturaceClick(nil);
 end;
-
-procedure TfmMain.btKonecClick(Sender: TObject);
-begin
-  if btKonec.Caption = '&Pøerušit' then begin
-    Prerusit := True;
-    dmCommon.Zprava('Pøerušeno uživatelem.');
-    btKonec.Caption := '&Konec';
-  end else begin
-    dmCommon.Zprava('Konec programu "Mìsíèní fakturace".');
-    Close;
-  end;
-end;
-
-procedure TfmMain.btSablonaClick(Sender: TObject);
-begin
-  // *hw* TODO frxReport.DesignReport(True, False);
-end;
-
-procedure TfmMain.btOdeslatClick(Sender: TObject);
-// odeslání faktur pøevedených do PDF na vzdálený server
-begin
-
-  //WinExec(PChar(Format('WinSCP.com /command "option batch abort" "option confirm off" "open AbraPDF" "synchronize remote '
-  // + '%s\%4d\%2.2d /home/abrapdf/%4d" "exit"', [PDFDir, aseRok.Value, aseMesic.Value, aseRok.Value])), SW_SHOWNORMAL);
-
-  RunCMD (Format('WinSCP.com /command "option batch abort" "option confirm off" "open AbraPDF" "synchronize remote '
-   + '%s\%4d\%2.2d /home/abrapdf/%4d" "exit"', [PDFDir, aseRok.Value, aseMesic.Value, aseRok.Value]), SW_SHOWNORMAL);
-
-end;
-
 
 // ------------------------------------------------------------------------------------------------
+
+procedure TfmMain.glbPrevodClick(Sender: TObject);
+begin
+  rbPrevod.Checked := True;
+  rbPrevodClick(nil);
+end;
+
+// ------------------------------------------------------------------------------------------------
+
+procedure TfmMain.glbTiskClick(Sender: TObject);
+begin
+  rbTisk.Checked := True;
+  rbTiskClick(nil);
+end;
+
+// ------------------------------------------------------------------------------------------------
+
+procedure TfmMain.glbMailClick(Sender: TObject);
+begin
+  rbMail.Checked := True;
+  rbMailClick(nil);
+end;
+
+// ------------------------------------------------------------------------------------------------
+
 
 procedure TfmMain.Button1Click(Sender: TObject);
 var

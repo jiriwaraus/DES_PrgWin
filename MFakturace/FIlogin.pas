@@ -33,10 +33,9 @@ begin
   aedHeslo.Clear;
   with fmMain, DesU.qrAbra do begin
     Close;
-    SQLStr := 'SELECT LoginName FROM SecurityUsers'
+    SQL.Text := 'SELECT LoginName FROM SecurityUsers'
     + ' WHERE Locked = ''N'' '
     + ' ORDER BY LoginName';
-    SQL.Text := SQLStr;
     Open;
     while not EOF do begin
       acbJmeno.Items.Append(Fields[0].AsString);
@@ -52,9 +51,8 @@ var
 begin
   with fmMain, DesU.qrAbra do begin
     Close;
-    SQLStr := 'SELECT ID FROM SecurityUsers'
+    SQL.Text := 'SELECT ID FROM SecurityUsers'
     + ' WHERE LoginName = ''' + acbJmeno.Text + '''';
-    SQL.Text := SQLStr;
     Open;
     fmMain.User_Id := Fields[0].AsString;
   end;

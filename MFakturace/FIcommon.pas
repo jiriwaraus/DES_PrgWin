@@ -91,9 +91,13 @@ begin
 
   TimeOut := 0;
   with fmMain do begin
-    lbxLog.Items.Add(FormatDateTime('dd.mm.yy hh:nn:ss  ', Now) + TextZpravy);
+    TextZpravy := FormatDateTime('dd.mm.yy hh:nn:ss  ', Now) + TextZpravy;
+    lbxLog.Items.Add(TextZpravy);
     lbxLog.ItemIndex := lbxLog.Count - 1;
     Application.ProcessMessages;
+    DesUtils.appendToFile(globalAA['LogFileName'],TextZpravy);
+
+    { *HW* nelíbí se mi to takhle
     while TimeOut < 1000 do try         // 30.11.17 zkouší to 10x po 100 ms
       Append(F);
       Writeln (F, Format('(%s - %s) ', [Trim(CompName), Trim(UserName)]) + FormatDateTime('dd.mm.yy hh:nn:ss  ', Now) + TextZpravy);
@@ -103,6 +107,8 @@ begin
       Sleep(100);
       Inc(TimeOut, 100);
     end;  
+  end;
+  }
   end;
 end;
 
@@ -428,9 +434,7 @@ begin
           end;
           with DesU.qrZakos do begin
             Close;
-            // nekontroluje se v fiInvoiceView
-//            SQLStr := 'SELECT DISTINCT Mail, Reklama FROM ' + fiInvoiceView
-//            + ' WHERE VS = ' + VarSymbol;
+
             SQLStr := 'SELECT DISTINCT Postal_mail AS Mail, Disable_mailings AS Reklama FROM customers Cu'
             + ' WHERE Variable_symbol = ' + VarSymbol;
 
@@ -471,7 +475,7 @@ begin
           Application.ProcessMessages;
           Next;
         end;  // while not EOF
-        if Check then dmCommon.Zprava('Vyhledány fakturované smlouvy');
+        if isDebugMode then dmCommon.Zprava('Vyhledány fakturované smlouvy');
       end;  // if rbPodleFaktury.Checked with DesU.qrAbra
       //      AutoSize := True;
       if not rbFakturace.Checked then begin
