@@ -26,8 +26,8 @@ type
     castkaNezaplaceno  : Currency;
     cisloDokladu : string[20];
   //published
-    //constructor create(qrAbra : TZQuery); overload;
-    constructor create(Document_ID : string; Document_Type : string = '03'); //overload;
+    constructor create(qrAbra : TZQuery); overload;
+    constructor create(Document_ID : string; Document_Type : string = '03'); overload;
   end;
 
   TAbraBankAccount = class
@@ -84,14 +84,22 @@ uses
 {** class TDoklad **}
 
 
-{
 constructor TDoklad.create(qrAbra : TZQuery);
 begin
-  with DesU.qrAbra do begin //do qrAbra je naètený øádek z DB
-
-  end;
+ with qrAbra do begin //do qrAbra je naètený øádek z DB
+  self.ID := FieldByName('ID').AsString;
+  self.Firm_ID := FieldByName('Firm_ID').AsString;
+  self.FirmName := FieldByName('FirmName').AsString;
+  self.DatumDokladu := FieldByName('DocDate$Date').asFloat;
+  self.Castka := FieldByName('LocalAmount').AsCurrency;
+  self.CastkaZaplaceno := FieldByName('LocalPaidAmount').AsCurrency
+                                - FieldByName('LocalPaidCreditAmount').AsCurrency;
+  self.CastkaDobropisovano := FieldByName('LocalCreditAmount').AsCurrency;
+  self.CastkaNezaplaceno := self.Castka - self.CastkaZaplaceno - self.CastkaDobropisovano;
+  self.CisloDokladu := FieldByName('CisloDokladu').AsString;
+  self.DocumentType := FieldByName('DocumentType').AsString;
+ end;
 end;
-}
 
 constructor TDoklad.create(Document_ID : string; Document_Type : string = '03');
 begin
