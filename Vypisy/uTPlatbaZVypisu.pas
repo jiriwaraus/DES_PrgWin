@@ -241,8 +241,8 @@ end;
 
 procedure TPlatbaZVypisu.loadDokladyPodleVS();
 var
-  SQLiiSelect, SQLiiJoin, SQLiiJenNezaplacene, SQLiiWhere, SQLiiOrder,
-  SQLStr : AnsiString;
+  SQLiiSelect, SQLiiJenNezaplacene, SQLiiOrder,
+  SQLStr : string;
 begin
   self.DokladyList := TList.Create;
 
@@ -251,56 +251,41 @@ begin
 
   with qrAbra do begin
 
-    // cteni z IssuedInvoices
-    SQLiiSelect :=
-              'SELECT ii.ID, ii.DOCQUEUE_ID, ii.DOCDATE$DATE, ii.FIRM_ID, ii.DESCRIPTION, D.DOCUMENTTYPE, '
-            + 'D.Code || ''-'' || II.OrdNumber || ''/'' || substring(P.Code from 3 for 2) as CisloDokladu, '
-            + 'ii.LOCALAMOUNT, ii.LOCALPAIDAMOUNT, ii.LOCALCREDITAMOUNT, ii.LOCALPAIDCREDITAMOUNT, '
-            //+ 'ii.DUEDATE$DATE, ii.ACCDOCQUEUE_ID, ii.FIRMOFFICE_ID, ii.DOCUUID, '
-            + 'firms.Name as FirmName '
-            + 'FROM ISSUEDINVOICES ii ';
-    SQLiiJoin :=
-              'JOIN Firms ON ii.Firm_ID = Firms.ID '
-            + 'JOIN DocQueues D ON ii.DocQueue_ID = D.ID '
-            + 'JOIN Periods P ON ii.Period_ID = P.ID ';
-    SQLiiWhere := 'WHERE ii.VarSymbol = ''' + self.VS  + ''' ';
-    SQLiiJenNezaplacene :=  'AND (ii.LOCALAMOUNT - ii.LOCALPAIDAMOUNT - ii.LOCALCREDITAMOUNT + ii.LOCALPAIDCREDITAMOUNT) <> 0 ';
-    SQLiiOrder := 'order by ii.DocDate$Date DESC';
+    // cteni z IssuedInvoices (faktury)
+    SQLiiSelect := 'SELECT ii.ID FROM ISSUEDINVOICES ii'
+                 + ' WHERE ii.VarSymbol = ''' + self.VS  + '''';
+
+    SQLiiJenNezaplacene :=  ' AND (ii.LOCALAMOUNT - ii.LOCALPAIDAMOUNT - ii.LOCALCREDITAMOUNT + ii.LOCALPAIDCREDITAMOUNT) <> 0';
+    SQLiiOrder := ' order by ii.DocDate$Date DESC';
 
     if self.vsechnyDoklady then
-      SQL.Text := SQLiiSelect + SQLiiJoin + SQLiiWhere + SQLiiOrder
+      SQL.Text := SQLiiSelect +  SQLiiOrder
     else
-      SQL.Text := SQLiiSelect + SQLiiJoin + SQLiiJenNezaplacene + SQLiiWhere + SQLiiOrder;
+      SQL.Text := SQLiiSelect + SQLiiJenNezaplacene + SQLiiOrder;
+
     Open;
     while not Eof do begin
-      self.DokladyList.Add(TDoklad.create(qrAbra));
+      self.DokladyList.Add(TDoklad.create(FieldByName('ID').AsString, '03'));
       Next;
     end;
     Close;
 
-    // cteni z IssuedDInvoices - zalohove listy
-    SQLiiSelect :=                                                       // ZL je D.DOCUMENTTYPE 10, Faktura je D.DOCUMENTTYPE 03
-              'SELECT ii.ID, ii.DOCQUEUE_ID, ii.DOCDATE$DATE, ii.FIRM_ID, ii.DESCRIPTION, D.DOCUMENTTYPE, '
-            + 'D.Code || ''-'' || II.OrdNumber || ''/'' || substring(P.Code from 3 for 2) as CisloDokladu, '
-            + 'ii.LOCALAMOUNT, ii.LOCALPAIDAMOUNT, 0 as LOCALCREDITAMOUNT, 0 as LOCALPAIDCREDITAMOUNT, '
-            //+ 'ii.DUEDATE$DATE, ii.ACCDOCQUEUE_ID, ii.FIRMOFFICE_ID, ii.DOCUUID, '
-            + 'firms.Name as FirmName '
-            + 'FROM ISSUEDDINVOICES ii ';
-    SQLiiJoin :=
-              'JOIN Firms ON ii.Firm_ID = Firms.ID '
-            + 'JOIN DocQueues D ON ii.DocQueue_ID = D.ID '
-            + 'JOIN Periods P ON ii.Period_ID = P.ID ';
-    SQLiiWhere := 'WHERE ii.VarSymbol = ''' + self.VS  + ''' ';
-    SQLiiJenNezaplacene :=  'AND (ii.LOCALAMOUNT - ii.LOCALPAIDAMOUNT) <> 0 ';
-    SQLiiOrder := 'order by ii.DocDate$Date DESC';
+    // cteni z IssuedDInvoices (zalohove listy)
+
+    SQLiiSelect := 'SELECT ii.ID FROM ISSUEDDINVOICES ii'
+                 + ' WHERE ii.VarSymbol = ''' + self.VS  + '''';
+
+    SQLiiJenNezaplacene :=  ' AND (ii.LOCALAMOUNT - ii.LOCALPAIDAMOUNT) <> 0';
+    SQLiiOrder := ' order by ii.DocDate$Date DESC';
 
     if self.vsechnyDoklady then
-      SQL.Text := SQLiiSelect + SQLiiJoin + SQLiiWhere + SQLiiOrder
+      SQL.Text := SQLiiSelect +  SQLiiOrder
     else
-      SQL.Text := SQLiiSelect + SQLiiJoin + SQLiiJenNezaplacene + SQLiiWhere + SQLiiOrder;
+      SQL.Text := SQLiiSelect + SQLiiJenNezaplacene + SQLiiOrder;
+
     Open;
     while not Eof do begin
-      self.DokladyList.Add(TDoklad.create(qrAbra));
+      self.DokladyList.Add(TDoklad.create(FieldByName('ID').AsString, '10'));
       Next;
     end;
     Close;
@@ -311,24 +296,23 @@ begin
     // když se nenajde nezaplacená faktura ani zálohový list, natáhnu 1 zaplacený abych mohl pøiøadit firmu
     if DokladyList.Count = 0 then begin
 
-      SQLStr := 'SELECT FIRST 1 ii.ID, ii.DOCQUEUE_ID, ii.DOCDATE$DATE, ii.FIRM_ID, ii.DESCRIPTION, D.DOCUMENTTYPE, '
-              + 'D.Code || ''-'' || II.OrdNumber || ''/'' || substring(P.Code from 3 for 2) as CisloDokladu, '
-              + 'ii.LOCALAMOUNT, ii.LOCALPAIDAMOUNT, ii.LOCALCREDITAMOUNT, ii.LOCALPAIDCREDITAMOUNT, '
-              + 'ii.DUEDATE$DATE, ii.ACCDOCQUEUE_ID, ii.FIRMOFFICE_ID, ii.DOCUUID, firms.Name as FirmName '
-              + 'FROM ISSUEDINVOICES ii ';
-      SQLStr := SQLStr
-              + 'JOIN Firms ON ii.Firm_ID = Firms.ID '
-              + 'JOIN DocQueues D ON ii.DocQueue_ID = D.ID '
-              + 'JOIN Periods P ON ii.Period_ID = P.ID '
-              + 'WHERE ii.VarSymbol = ''' + self.VS  + ''' ';
-      SQLStr := SQLStr + 'order by ii.DocDate$Date DESC';
-      SQL.Text := SQLStr;
+      SQL.Text := 'SELECT FIRST 1 ii.ID FROM ISSUEDINVOICES ii'
+                   + ' WHERE ii.VarSymbol = ''' + self.VS  + ''''
+                   + ' order by ii.DocDate$Date DESC';
+
+      if self.vsechnyDoklady then
+        SQL.Text := SQLiiSelect +  SQLiiOrder
+      else
+        SQL.Text := SQLiiSelect + SQLiiJenNezaplacene + SQLiiOrder;
+
       Open;
-      while not Eof do begin
-        self.DokladyList.Add(TDoklad.create(qrAbra));
-        Next;
+      if not Eof then begin
+        self.DokladyList.Add(TDoklad.create(FieldByName('ID').AsString, '03'));
       end;
       Close;
+
+
+
     end;
   end;
 end;

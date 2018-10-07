@@ -26,8 +26,8 @@ type
     castkaNezaplaceno  : Currency;
     cisloDokladu : string[20];
   //published
-    constructor create(qrAbra : TZQuery); overload;
-    constructor create(Document_ID : string; Document_Type : string = '03'); overload;
+    //constructor create(qrAbra : TZQuery); overload;
+    constructor create(Document_ID : string; Document_Type : string = '03'); //overload;
   end;
 
   TAbraBankAccount = class
@@ -84,6 +84,7 @@ uses
 {** class TDoklad **}
 
 
+{
 constructor TDoklad.create(qrAbra : TZQuery);
 begin
  with qrAbra do begin //do qrAbra je naètený øádek z DB
@@ -100,24 +101,34 @@ begin
   self.DocumentType := FieldByName('DocumentType').AsString;
  end;
 end;
+}
 
 constructor TDoklad.create(Document_ID : string; Document_Type : string = '03');
 begin
-  with DesU.qrAbra do begin
+  with DesU.qrAbraOC do begin
     // cteni z IssuedInvoices
     SQL.Text :=
         'SELECT ii.ID, ii.DOCQUEUE_ID, ii.DOCDATE$DATE, ii.FIRM_ID, ii.DESCRIPTION, D.DOCUMENTTYPE,'
       + ' D.Code || ''-'' || II.OrdNumber || ''/'' || substring(P.Code from 3 for 2) as CisloDokladu,'
-      + ' ii.LOCALAMOUNT, ii.LOCALPAIDAMOUNT, ii.LOCALCREDITAMOUNT, ii.LOCALPAIDCREDITAMOUNT,'
-      + ' firms.Name as FirmName'
-      + ' FROM ISSUEDINVOICES ii'
+      + ' ii.LOCALAMOUNT, ii.LOCALPAIDAMOUNT, firms.Name as FirmName, ';
 
+    if Document_Type = '10' then  //10 mají z8lohové listy (ZL)
+        SQL.Text := SQL.Text
+        + ' 0 as LOCALCREDITAMOUNT, 0 as LOCALPAIDCREDITAMOUNT'
+        + ' FROM ISSUEDDINVOICES ii'
+    else
+        SQL.Text := SQL.Text
+        + ' ii.LOCALCREDITAMOUNT, ii.LOCALPAIDCREDITAMOUNT'
+        + ' FROM ISSUEDINVOICES ii';
+
+    SQL.Text := SQL.Text
       + ' JOIN Firms ON ii.Firm_ID = Firms.ID'
       + ' JOIN DocQueues D ON ii.DocQueue_ID = D.ID'
       + ' JOIN Periods P ON ii.Period_ID = P.ID'
       + ' WHERE ii.ID = ''' + Document_ID + '''';
 
     Open;
+
     if not Eof then begin
       self.ID := FieldByName('ID').AsString;
       self.Firm_ID := FieldByName('Firm_ID').AsString;
@@ -139,12 +150,12 @@ end;
 
 constructor TAbraBankAccount.create();
 begin
-  //self.qrAbra := DesU.qrAbra;
+  //self.qrAbra := DesU.qrAbraOC;
 end;
 
 procedure TAbraBankAccount.loadByNumber(baNumber : string);
 begin
-  with DesU.qrAbra do begin
+  with DesU.qrAbraOC do begin
 
     SQL.Text := 'SELECT ID, NAME, BANKACCOUNT, ACCOUNT_ID, BANKSTATEMENT_ID '
               + 'FROM BANKACCOUNTS '
@@ -165,7 +176,7 @@ end;
 
 function TAbraBankAccount.getPoradoveCisloMaxVypisu(pYear : string) : integer;
 begin
-  with DesU.qrAbra do begin
+  with DesU.qrAbraOC do begin
     SQL.Text := 'SELECT MAX(bs.OrdNumber) as MaxOrdNumber '  //nemìlo by být max externalnumber?
               + ' FROM BANKSTATEMENTS bs, PERIODS p '
               + 'WHERE bs.DOCQUEUE_ID = ''' + self.bankStatementDocqueueId  + ''''
@@ -182,7 +193,7 @@ end;
 
 function TAbraBankAccount.getExtPoradoveCisloMaxVypisu(pYear : string) : integer;
 begin
-  with DesU.qrAbra do begin
+  with DesU.qrAbraOC do begin
     SQL.Text := 'SELECT bs1.OrdNumber as MaxOrdNumber, bs1.EXTERNALNUMBER as MaxExtOrdNumber'
               + ' FROM BANKSTATEMENTS bs1'
               + ' WHERE bs1.DOCQUEUE_ID = ''' + self.bankStatementDocqueueId  + ''''
@@ -200,7 +211,7 @@ end;
 
 function TAbraBankAccount.getDatumMaxVypisu(pYear : string) : double;
 begin
-  with DesU.qrAbra do begin
+  with DesU.qrAbraOC do begin
     SQL.Text := 'SELECT MAX(bs.DOCDATE$DATE) as PosledniDatum'
               + ' FROM BANKSTATEMENTS bs, PERIODS p '
               + 'WHERE bs.DOCQUEUE_ID = ''' + self.bankStatementDocqueueId  + ''''
@@ -218,7 +229,7 @@ end;
 
 function TAbraBankAccount.getPosledniDatumVypisu(pYear : string) : double;
 begin
-  with DesU.qrAbra do begin
+  with DesU.qrAbraOC do begin
     SQL.Text := 'SELECT bs1.DOCDATE$DATE'
               + ' FROM BANKSTATEMENTS bs1'
               + ' WHERE bs1.DOCQUEUE_ID = ''' + self.bankStatementDocqueueId  + ''''
@@ -236,7 +247,7 @@ end;
 
 function TAbraBankAccount.getPocetVypisu(pYear : string) : integer;
 begin
-  with DesU.qrAbra do begin
+  with DesU.qrAbraOC do begin
     SQL.Text := 'SELECT count(*) as PocetVypisu '
               + ' FROM BANKSTATEMENTS bs, PERIODS p '
               + 'WHERE bs.DOCQUEUE_ID = ''' + self.bankStatementDocqueueId  + ''''
@@ -263,7 +274,7 @@ end;
 constructor TAbraPeriod.create(pYear : string);
 begin
 
-  with DesU.qrAbra do begin
+  with DesU.qrAbraOC do begin
 
     SQL.Text := 'SELECT ID, CODE, NAME, DATEFROM$DATE, DATETO$DATE'
               + ' FROM PERIODS'
@@ -284,7 +295,7 @@ end;
 constructor TAbraPeriod.create(pDate : double);
 begin
 
-  with DesU.qrAbra do begin
+  with DesU.qrAbraOC do begin
 
     SQL.Text := 'SELECT ID, CODE, NAME, DATEFROM$DATE, DATETO$DATE '
               + ' FROM PERIODS'
@@ -308,7 +319,7 @@ end;
 
 constructor TAbraVatIndex.create(iCode : string);
 begin
-  with DesU.qrAbra do begin
+  with DesU.qrAbraOC do begin
     SQL.Text := 'SELECT Id, Code, Tariff, Vatrate_Id'
               + ' FROM VatIndexes'
               + ' WHERE Hidden = ''N'' AND Code = ''' + iCode  + '''';
@@ -329,7 +340,7 @@ end;
 
 constructor TAbraDrcArticle.create(iCode : string);
 begin
-  with DesU.qrAbra do begin
+  with DesU.qrAbraOC do begin
     SQL.Text := 'SELECT Id, Code, Name'
               + ' FROM DrcArticles'
               + ' WHERE Hidden = ''N'' AND Code = ''' + iCode  + '''';

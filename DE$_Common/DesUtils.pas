@@ -20,8 +20,10 @@ type
     qrZakos: TZQuery;
     qrAbra2: TZQuery;
     qrAbra3: TZQuery;
+    qrAbraOC: TZQuery;
     dbVoip: TZConnection;
     qrVoip: TZQuery;
+
 
 
     procedure FormCreate(Sender: TObject);
@@ -875,7 +877,7 @@ begin
   //pozor, funguje jen pro faktury, tedy PDocumentType "03"
 
   dbAbra.Reconnect;
-  with qrAbra do begin
+  with qrAbraOC do begin
 
       // naètu dluh na faktuøe. když není kladný, konèíme
       SQL.Text := 'SELECT'
@@ -886,9 +888,11 @@ begin
       if not Eof then begin
         if FieldByName('Dluh').AsCurrency <= 0 then begin
           Result := 'no_unpaid_amount';
+          Close;
           Exit;
         end;
       end;
+      Close;
   end;
 
   //spárovat fakturu Vypis_ID s øádkem výpisu RadekVypisu_ID
@@ -912,7 +916,7 @@ begin
   begin
     preplatek := - faktura.castkaNezaplaceno;
 
-    with qrAbra do begin
+    with qrAbraOC do begin
 
       // naètu èástku z øádky výpisu
       SQL.Text := 'SELECT amount, text,'
@@ -1109,7 +1113,7 @@ end;
 
 function TDesU.getAbraDocqueueId(code, documentType : string) : string;
 begin
-  with DesU.qrAbra do begin
+  with DesU.qrAbraOC do begin
     SQL.Text := 'SELECT Id FROM DocQueues'
               + ' WHERE Hidden = ''N'' AND Code = ''' + code  + ''' AND DocumentType = ''' + documentType + '''';
     Open;
@@ -1122,7 +1126,7 @@ end;
 
 function TDesU.getAbraDocqueueCodeById(id : string) : string;
 begin
-  with DesU.qrAbra do begin
+  with DesU.qrAbraOC do begin
     SQL.Text := 'SELECT Code FROM DocQueues'
               + ' WHERE Hidden = ''N'' AND Id = ''' + id  + '''';
     Open;
@@ -1136,7 +1140,7 @@ end;
 { takhle bylo napøímo
 function TDesU.getAbraVatrateId(code : string) : string;
 begin
-  with DesU.qrAbra do begin
+  with DesU.qrAbraOC do begin
     SQL.Text := 'SELECT VatRate_Id FROM VatIndexes'
               + ' WHERE Hidden = ''N'' AND Code = ''' + code + '''';
     Open;
@@ -1159,7 +1163,7 @@ end;
 { takhle bylo napøímo
 function TDesU.getAbraVatindexId(code : string) : string;
 begin
-  with DesU.qrAbra do begin
+  with DesU.qrAbraOC do begin
     SQL.Text := 'SELECT Id FROM VatIndexes'
               + ' WHERE Hidden = ''N'' AND Code = ''' + code  + '''';
     Open;
@@ -1181,7 +1185,7 @@ end;
 
 function TDesU.getAbraIncometypeId(code : string) : string;
 begin
-  with DesU.qrAbra do begin
+  with DesU.qrAbraOC do begin
     SQL.Text := 'SELECT Id FROM IncomeTypes'
               + ' WHERE Code = ''' + code + '''';
     Open;
@@ -1194,7 +1198,7 @@ end;
 
 function TDesU.getAbraBusorderId(name : string) : string;
 begin
-  with DesU.qrAbra do begin
+  with DesU.qrAbraOC do begin
     SQL.Text := 'SELECT Id FROM BusOrders'
               + ' WHERE Name = ''' + name + '''';
     Open;
@@ -1244,7 +1248,7 @@ end;
 
 function TDesU.getFirmIdByCode(code : string) : string;
 begin
-  with DesU.qrAbra do begin
+  with DesU.qrAbraOC do begin
     SQL.Text := 'SELECT Id FROM Firms'
               + ' WHERE Code = ''' + code + '''';
     Open;
@@ -1265,7 +1269,7 @@ pocatecniZustatek, aktualniZustatek: double;
 
 begin
 
-  with DesU.qrAbra do begin
+  with DesU.qrAbraOC do begin
 
     currentAbraPeriod := TAbraPeriod.create(datum);
 
@@ -1343,7 +1347,7 @@ begin
   dbAbra.Reconnect;
 
   //nutné rozdìlit do dvou èástí: pøetypování (CAST) padá, pokud existuje VS jako prázný øetìzec
-  with DesU.qrAbra do begin
+  with DesU.qrAbraOC do begin
 
     // existuje fa s prázným VS?
     SQL.Text := 'SELECT Id, DE$_CISLO_DOKLADU(DOCQUEUE_ID, ORDNUMBER, PERIOD_ID) as DOKLAD '

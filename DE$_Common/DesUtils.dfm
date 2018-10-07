@@ -2,8 +2,8 @@ object DesU: TDesU
   Left = 0
   Top = 0
   Caption = 'DesU'
-  ClientHeight = 260
-  ClientWidth = 246
+  ClientHeight = 243
+  ClientWidth = 390
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -89,5 +89,11 @@ object DesU: TDesU
     Params = <>
     Left = 56
     Top = 152
+  end
+  object qrAbraOC: TZQuery
+    Connection = dbAbra
+    Params = <>
+    Left = 208
+    Top = 8
   end
 end
