@@ -127,7 +127,7 @@ begin
   //self.kodMeny := copy(gpcLine, 119, 4);
   self.Datum := Str6digitsToDate(copy(gpcLine, 123, 6));
 
-  //self.isInternetKredit := false; //asi nebude vlastost, protoze platba muze but rozdelena a cast bude kredit a cast ne
+  //self.isInternetKredit := false; // nebude vlastost, protoze platba muze byt rozdelena a cast bude kredit a cast ne
   //self.isVoipKredit := false; //dtto
   self.znamyPripad := false;
   self.potrebaPotvrzeniUzivatelem := false;
@@ -271,7 +271,6 @@ begin
     Close;
 
     // cteni z IssuedDInvoices (zalohove listy)
-
     SQLiiSelect := 'SELECT ii.ID FROM ISSUEDDINVOICES ii'
                  + ' WHERE ii.VarSymbol = ''' + self.VS  + '''';
 
@@ -291,8 +290,6 @@ begin
     Close;
 
 
-    // v RecievedInvoices bych musel hledat vydane faktury
-
     // když se nenajde nezaplacená faktura ani zálohový list, natáhnu 1 zaplacený abych mohl pøiøadit firmu
     if DokladyList.Count = 0 then begin
 
@@ -310,8 +307,6 @@ begin
         self.DokladyList.Add(TDoklad.create(FieldByName('ID').AsString, '03'));
       end;
       Close;
-
-
 
     end;
   end;

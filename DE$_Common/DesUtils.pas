@@ -20,7 +20,7 @@ type
     qrZakos: TZQuery;
     qrAbra2: TZQuery;
     qrAbra3: TZQuery;
-    qrAbraOC: TZQuery;
+    qrAbraOC: TZQuery; //pro jednorázové servisní Open/Close použití
     dbVoip: TZConnection;
     qrVoip: TZQuery;
 
@@ -1350,7 +1350,8 @@ begin
   with DesU.qrAbraOC do begin
 
     // existuje fa s prázným VS?
-    SQL.Text := 'SELECT Id, DE$_CISLO_DOKLADU(DOCQUEUE_ID, ORDNUMBER, PERIOD_ID) as DOKLAD '
+//    SQL.Text := 'SELECT Id, DE$_CISLO_DOKLADU(DOCQUEUE_ID, ORDNUMBER, PERIOD_ID) as DOKLAD '  //takhle je to pomocí stored function, ale ABRA neumí stored function zálohovat
+    SQL.Text := 'SELECT Id, (SELECT DOKLAD FROM DE$_CISLO_DOKLADU(DOCQUEUE_ID, ORDNUMBER, PERIOD_ID) as DOKLAD) '
               + ' FROM IssuedInvoices WHERE VarSymbol = ''''';
     Open;
     if not Eof then begin
@@ -1362,7 +1363,7 @@ begin
     Close;
 
     // existuje zálohový list s prázným VS?
-    SQL.Text := 'SELECT Id, DE$_CISLO_DOKLADU(DOCQUEUE_ID, ORDNUMBER, PERIOD_ID) as DOKLAD '
+    SQL.Text := 'SELECT Id, (SELECT DOKLAD FROM DE$_CISLO_DOKLADU(DOCQUEUE_ID, ORDNUMBER, PERIOD_ID) as DOKLAD) '
               + ' FROM IssuedDInvoices WHERE VarSymbol = ''''';
     Open;
     if not Eof then begin
@@ -1375,7 +1376,7 @@ begin
 
     // existuje fa s VS, který obahuje pouze nuly?
     SQL.Text := 'SELECT ID, VARSYMBOL, DOKLAD'
-          + ' FROM (SELECT ID, VARSYMBOL, CAST(VARSYMBOL AS INTEGER) as VS_INT, DE$_CISLO_DOKLADU(DOCQUEUE_ID, ORDNUMBER, PERIOD_ID) as DOKLAD'
+          + ' FROM (SELECT ID, VARSYMBOL, CAST(VARSYMBOL AS INTEGER) as VS_INT, (SELECT DOKLAD FROM DE$_CISLO_DOKLADU(DOCQUEUE_ID, ORDNUMBER, PERIOD_ID) as DOKLAD)'
           + ' FROM IssuedInvoices where VARSYMBOL < ''1'')'
           + ' WHERE VS_INT = 0';
     Open;
@@ -1387,7 +1388,7 @@ begin
 
     // existuje zálohový list s VS, který obahuje pouze nuly?
     SQL.Text := 'SELECT ID, VARSYMBOL, DOKLAD'
-          + ' FROM (SELECT ID, VARSYMBOL, CAST(VARSYMBOL AS INTEGER) as VS_INT, DE$_CISLO_DOKLADU(DOCQUEUE_ID, ORDNUMBER, PERIOD_ID) as DOKLAD'
+          + ' FROM (SELECT ID, VARSYMBOL, CAST(VARSYMBOL AS INTEGER) as VS_INT, (SELECT DOKLAD FROM DE$_CISLO_DOKLADU(DOCQUEUE_ID, ORDNUMBER, PERIOD_ID) as DOKLAD)'
           + ' FROM IssuedDInvoices where VARSYMBOL < ''1'')'
           + ' WHERE VS_INT = 0';
     Open;
@@ -1396,7 +1397,6 @@ begin
       messagestr := messagestr + 'POZOR! V Abøe existuje zál. list ' + FieldByName('DOKLAD').AsString + ' s VS "' + FieldByName('VARSYMBOL').AsString + '"' + sLineBreak;
       Next;
     end;
-
 
     if messagestr <> '' then ShowMessage(messagestr);
 

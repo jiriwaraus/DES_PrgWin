@@ -203,10 +203,11 @@ begin
     ]);
 
 
-  /// ÈSOB Spoøicí
+  /// ÈSOB
   abraBankaccount.loadByNumber('171336270/0300');
   maxCisloVypisu := abraBankaccount.getPoradoveCisloMaxVypisu(fRok);
-  hledanyGpcSoubor := 'BB117641_171336270_' + fRok + '*_' + IntToStr(maxCisloVypisu + 1) + '.gpc';
+  //hledanyGpcSoubor := 'BB117641_171336270_' + fRok + '*_' + IntToStr(maxCisloVypisu + 1) + '.gpc'; //takhle to bylo do zmìny v létì 2018
+  hledanyGpcSoubor := '171336270_' + fRok + '*_' + IntToStr(maxCisloVypisu + 1) + '.gpc';
   nalezenyGpcSoubor := FindInFolder(DesU.GPC_PATH, hledanyGpcSoubor, true);
 
   if nalezenyGpcSoubor = '' then begin //nenašel se
