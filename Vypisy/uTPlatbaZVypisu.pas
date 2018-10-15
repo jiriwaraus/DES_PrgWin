@@ -291,16 +291,11 @@ begin
 
 
     // když se nenajde nezaplacená faktura ani zálohový list, natáhnu 1 zaplacený abych mohl pøiøadit firmu
-    if DokladyList.Count = 0 then begin
+    if self.DokladyList.Count = 0 then begin
 
       SQL.Text := 'SELECT FIRST 1 ii.ID FROM ISSUEDINVOICES ii'
                    + ' WHERE ii.VarSymbol = ''' + self.VS  + ''''
                    + ' order by ii.DocDate$Date DESC';
-
-      if self.vsechnyDoklady then
-        SQL.Text := SQLiiSelect +  SQLiiOrder
-      else
-        SQL.Text := SQLiiSelect + SQLiiJenNezaplacene + SQLiiOrder;
 
       Open;
       if not Eof then begin
