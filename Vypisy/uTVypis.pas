@@ -1,4 +1,4 @@
-unit uTVypis;
+unit uTVypis; //test
 
 interface
 
@@ -62,7 +62,7 @@ end;
 function TVypis.isNavazujeNaRadu() : boolean;
 begin
   if (self.poradoveCislo - self.maxExistujiciPoradoveCislo = 1)
-    OR (self.poradoveCislo = 0) then //PayU nikdy nenavazuje, v˝pis m· vûdy ËÌslo 0
+    OR (self.poradoveCislo = 0) then //PayU nikdy nenavazuje, v√Ωpis m√° v≈ædy √®√≠slo 0
     Result := true
   else
     Result := false;
@@ -100,7 +100,7 @@ begin
 
   self.abraBankaccount.loadByNumber(self.cisloUctuVlastni);
 
-  self.datum := TPlatbaZVypisu(self.Platby[self.Platby.Count - 1]).Datum; //datum vypisu se urci jako datum poslednÌ platby
+  self.datum := TPlatbaZVypisu(self.Platby[self.Platby.Count - 1]).Datum; //datum vypisu se urci jako datum posledn√≠ platby
   self.nactiMaxExistujiciPoradoveCislo();
 
   payuProvize := 0;
@@ -108,7 +108,7 @@ begin
   begin
     iPlatba := TPlatbaZVypisu(self.Platby[i]);
 
-    // seËÌst PayU provize
+    // se√®√≠st PayU provize
     if iPlatba.isPayuProvize then
     begin
       //payuProvizePP := iPlatba;
